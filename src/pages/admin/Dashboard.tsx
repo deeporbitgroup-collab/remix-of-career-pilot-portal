@@ -22,12 +22,14 @@ import ClientManagement from "@/components/admin/ClientManagement";
 import AdminClientFeedback from "@/components/admin/AdminClientFeedback";
 import AdminClientProjects from "@/components/admin/AdminClientProjects";
 import PrepMaterialsManagement from "@/components/admin/PrepMaterialsManagement";
+import AdminCRM from "@/components/admin/AdminCRM";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
   const { language } = useLanguage();
+  const [mainTab, setMainTab] = useState("associates");
   const [stats, setStats] = useState({
     verifiedPayments: 0,
     totalAssociates: 0,
@@ -217,11 +219,10 @@ const AdminDashboard = () => {
                 </div>
                 <ExternalLink className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
               </a>
-              <a
-                href="https://www.dropbox.com/scl/fo/gih7c31cm14qtow654yg2/AB6ql5OmdcbL94N2hnkxK94?rlkey=zngqkbvz474ryahqm384em50n&st=gcdcka2o&dl=0"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="group flex items-center justify-between gap-3 p-4 rounded-lg border border-border hover:border-primary hover:bg-primary/5 transition-all"
+              <button
+                type="button"
+                onClick={() => setMainTab("crm")}
+                className="group flex items-center justify-between gap-3 p-4 rounded-lg border border-border hover:border-primary hover:bg-primary/5 transition-all text-left"
               >
                 <div className="flex items-center gap-3">
                   <div className="h-10 w-10 rounded-md bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
@@ -229,18 +230,18 @@ const AdminDashboard = () => {
                   </div>
                   <div>
                     <div className="font-medium">CRM</div>
-                    <div className="text-xs text-muted-foreground">Dropbox CRM folder</div>
+                    <div className="text-xs text-muted-foreground">Client Email Tracker</div>
                   </div>
                 </div>
-                <ExternalLink className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
-              </a>
+                <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+              </button>
             </div>
           </CardContent>
         </Card>
 
         {/* Main Content Tabs */}
-        <Tabs defaultValue="associates" className="space-y-4">
-          <TabsList className="w-full grid grid-cols-3">
+        <Tabs value={mainTab} onValueChange={setMainTab} className="space-y-4">
+          <TabsList className="w-full grid grid-cols-4">
             <TabsTrigger value="associates" className="gap-2">
               <Users className="h-4 w-4" />
               ASSOCIATES
@@ -257,6 +258,10 @@ const AdminDashboard = () => {
                   {stats.pendingClients + stats.pendingPayments}
                 </Badge>
               )}
+            </TabsTrigger>
+            <TabsTrigger value="crm" className="gap-2">
+              <FileCode className="h-4 w-4" />
+              CRM
             </TabsTrigger>
           </TabsList>
 
@@ -404,6 +409,11 @@ const AdminDashboard = () => {
                 </Card>
               </TabsContent>
             </Tabs>
+          </TabsContent>
+
+          {/* CRM AREA */}
+          <TabsContent value="crm">
+            <AdminCRM />
           </TabsContent>
 
         </Tabs>

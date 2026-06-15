@@ -1,0 +1,511 @@
+{% extends "base.html" %}
+{% block title %} · {{ contact.name or contact.email }}{% endblock %}
+
+{% block content %}
+<a href="/?tab={{ back_tab }}" class="text-sm mb-4 inline-block" style="color: var(--tx3); text-decoration: none;">← Back to list</a>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-fade-up">
+
+  <!-- ── Left: profile + actions ─────────────────────────────────────────── -->
+  <div class="lg:col-span-1 space-y-4">
+
+    <!-- Profile card -->
+    <div class="card p-5" x-data="{ editing: false, merging: false }">
+      <div class="flex items-center gap-3 mb-3">
+        <div class="avatar w-12 h-12 text-lg"
+             style="background: oklch(0.93 0.05 {{ contact.email | avatar_hue }}); color: oklch(0.40 0.13 {{ contact.email | avatar_hue }});">
+          {{ (contact.name or contact.email)[0]|upper }}
+        </div>
+        <div class="min-w-0">
+          <div class="font-bold truncate" style="color: var(--tx);">{{ contact.name or contact.email }}</div>
+          <div class="text-xs truncate" style="color: var(--tx3);">{{ contact.email }}</div>
+        </div>
+      </div>
+
+      <div class="flex flex-wrap gap-2 mb-3">
+        {% if contact.status == 'scheduled' %}
+          <span class="badge badge-vi">📅 Call {{ contact.next_call_at | ts_datetime }}</span>
+        {% elif contact.status == 'called' %}
+          <span class="badge badge-ok">✅ Completed {{ contact.last_call_at | ts_datetime }}</span>
+        {% elif contact.status == 'needs_reply' %}
+          <span class="badge badge-err">Needs reply · {{ contact.last_message_at | age_days }}d</span>
+        {% elif contact.status == 'no_reply' %}
+          <span class="badge badge-warn">No reply yet</span>
+        {% elif contact.status == 'snoozed' %}
+          <span class="badge badge-neutral">💤 Snoozed until {{ contact.follow_up_at | ts_date }}</span>
+        {% elif contact.status == 'archived' %}
+          <span class="badge badge-neutral">Archived</span>
+        {% else %}
+          <span class="badge badge-neutral">Waiting on them</span>
+        {% endif %}
+        {% if contact.due %}<span class="badge badge-warn">⏰ Follow-up due</span>{% endif %}
+        {% if contact.priority %}<span class="badge badge-err">★ High priority</span>{% endif %}
+        {% if contact.company %}<span class="badge badge-acc">{{ contact.company }}</span>{% endif %}
+        {% if contact.stage %}<span class="badge badge-vi">{{ stage_labels[contact.stage] }}</span>{% endif %}
+        {% for t in (contact.tags or '').split(',') if t.strip() %}
+          <span class="chip">{{ t.strip() }}</span>
+        {% endfor %}
+      </div>
+
+      <!-- edit profile -->
+      <form method="post" action="/client/{{ contact.email }}/profile" x-show="editing" x-cloak class="space-y-2 mb-3">
+        <input type="hidden" name="csrf_token" value="{{ csrf }}">
+        <div class="grid grid-cols-2 gap-2">
+          <input type="text" name="name" placeholder="Name" value="{{ contact.name or '' }}" class="px-3 py-2">
+          <input type="text" name="company" placeholder="Company" value="{{ contact.company or '' }}" class="px-3 py-2">
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <select name="stage" class="px-3 py-2">
+            {% for s in stages %}
+              <option value="{{ s }}" {% if s == (contact.stage or '') %}selected{% endif %}>
+                {{ stage_labels[s] if s else 'No stage' }}</option>
+            {% endfor %}
+          </select>
+          <label class="flex items-center gap-2 text-sm px-2" style="color: var(--tx2);">
+            <input type="checkbox" name="priority" value="1" {% if contact.priority %}checked{% endif %}>
+            High priority
+          </label>
+        </div>
+        <input type="text" name="tags" placeholder="Tags, comma-separated" value="{{ contact.tags or '' }}" class="w-full px-3 py-2">
+        <div>
+          <label class="block text-xs font-medium mb-1" style="color: var(--tx2);">Assign calls to</label>
+          <select name="call_owner" class="w-full px-3 py-2">
+            <option value="">— unassigned —</option>
+            {% for p in profiles %}
+              <option value="{{ p.email }}"
+                {% if contact.call_owner == p.email %}selected{% endif %}>
+                {{ p.name }}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="flex gap-2">
+          <button type="submit" class="btn btn-acc btn-sm">Save</button>
+          <button type="button" class="btn btn-outline btn-sm" @click="editing = false">Cancel</button>
+        </div>
+      </form>
+
+      <!-- merge -->
+      <form method="post" action="/client/{{ contact.email }}/merge" x-show="merging" x-cloak class="space-y-2 mb-3"
+            onsubmit="return confirm('Merge {{ contact.email }} into the address below? Their messages and notes move over, and future mail files under the survivor.')">
+        <input type="hidden" name="csrf_token" value="{{ csrf }}">
+        <input type="text" name="target" placeholder="Merge into… (their other email)" class="w-full px-3 py-2" required>
+        <div class="flex gap-2">
+          <button type="submit" class="btn btn-acc btn-sm">Merge</button>
+          <button type="button" class="btn btn-outline btn-sm" @click="merging = false">Cancel</button>
+        </div>
+      </form>
+
+      <div class="flex flex-wrap gap-2">
+        <button type="button" class="btn btn-outline btn-sm" @click="editing = !editing; merging = false">✏️ Edit</button>
+        <button type="button" class="btn btn-outline btn-sm" @click="merging = !merging; editing = false"
+                title="Same person with two addresses? Fold this one into the other.">⇄ Merge</button>
+        {% if contact.archived %}
+          <form method="post" action="/client/{{ contact.email }}/status">
+            <input type="hidden" name="csrf_token" value="{{ csrf }}">
+            <input type="hidden" name="action" value="unarchive">
+            <button class="btn btn-outline btn-sm">Unarchive</button>
+          </form>
+        {% else %}
+          <form method="post" action="/client/{{ contact.email }}/status">
+            <input type="hidden" name="csrf_token" value="{{ csrf }}">
+            <input type="hidden" name="action" value="archive">
+            <button class="btn btn-outline btn-sm">Archive</button>
+          </form>
+        {% endif %}
+        {% if contact.call_hidden and (contact.next_call_at or contact.last_call_at) %}
+          <form method="post" action="/client/{{ contact.email }}/status">
+            <input type="hidden" name="csrf_token" value="{{ csrf }}">
+            <input type="hidden" name="action" value="show_call">
+            <button class="btn btn-outline btn-sm">Show in calls</button>
+          </form>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Follow-up / snooze -->
+    <div class="card p-5">
+      <h3 class="text-sm font-bold mb-3" style="color: var(--tx);">⏰ Follow-up reminder</h3>
+      {% if contact.follow_up_at %}
+        <p class="text-sm mb-3" style="color: var(--tx2);">
+          {% if contact.follow_up_at <= now_ts %}<b style="color: var(--warn);">Due now</b>
+          {% else %}Due {{ contact.follow_up_at | ts_datetime }}{% endif %}
+        </p>
+      {% else %}
+        <p class="text-xs mb-3" style="color: var(--tx3);">
+          No reminder set. Snoozing hides them from Waiting / No-reply until due,
+          then surfaces them in “Due today”.
+        </p>
+      {% endif %}
+      <div class="flex flex-wrap gap-2 mb-2">
+        {% for label, days in [('1 day', 1), ('3 days', 3), ('1 week', 7), ('2 weeks', 14)] %}
+          <form method="post" action="/client/{{ contact.email }}/snooze">
+            <input type="hidden" name="csrf_token" value="{{ csrf }}">
+            <input type="hidden" name="days" value="{{ days }}">
+            <button class="btn btn-outline btn-sm">{{ label }}</button>
+          </form>
+        {% endfor %}
+      </div>
+      <form method="post" action="/client/{{ contact.email }}/snooze" class="flex gap-2">
+        <input type="hidden" name="csrf_token" value="{{ csrf }}">
+        <input type="date" name="date" class="flex-1 px-3 py-2" required>
+        <button class="btn btn-outline btn-sm">Set date</button>
+      </form>
+      {% if contact.follow_up_at %}
+        <form method="post" action="/client/{{ contact.email }}/snooze" class="mt-2">
+          <input type="hidden" name="csrf_token" value="{{ csrf }}">
+          <input type="hidden" name="action" value="clear">
+          <button class="btn btn-outline btn-sm w-full">Clear reminder</button>
+        </form>
+      {% endif %}
+    </div>
+
+    <!-- Schedule meeting -->
+    <div class="card p-5">
+      <h3 class="text-sm font-bold mb-3" style="color: var(--tx);">📅 Schedule a meeting</h3>
+      <form method="post" action="/client/{{ contact.email }}/invite" class="space-y-3">
+        <input type="hidden" name="csrf_token" value="{{ csrf }}">
+        <div>
+          <label class="block text-xs font-medium mb-1" style="color: var(--tx2);">Title</label>
+          <input type="text" name="title" required class="w-full px-3 py-2"
+                 value="Meeting with {{ contact.name or contact.email }}">
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block text-xs font-medium mb-1" style="color: var(--tx2);">Date</label>
+            <input type="date" name="date" required class="w-full px-3 py-2"
+                   value="{{ default_date }}">
+          </div>
+          <div>
+            <label class="block text-xs font-medium mb-1" style="color: var(--tx2);">Time (24h)</label>
+            <select name="time" class="w-full px-3 py-2">
+              {% for h in range(0, 24) %}{% for m in (0, 15, 30, 45) %}
+                {% set t = '%02d:%02d' | format(h, m) %}
+                <option value="{{ t }}" {% if t == default_time %}selected{% endif %}>{{ t }}</option>
+              {% endfor %}{% endfor %}
+            </select>
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block text-xs font-medium mb-1" style="color: var(--tx2);">Duration</label>
+            <select name="duration" class="w-full px-3 py-2">
+              <option value="15">15 min</option>
+              <option value="30" selected>30 min</option>
+              <option value="45">45 min</option>
+              <option value="60">60 min</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-medium mb-1" style="color: var(--tx2);">Timezone</label>
+            <input type="text" name="timezone" value="{{ default_timezone }}" class="w-full px-3 py-2">
+          </div>
+        </div>
+        <div>
+          <label class="block text-xs font-medium mb-1" style="color: var(--tx2);">Notes (optional)</label>
+          <textarea name="description" rows="2" class="w-full px-3 py-2"
+                    placeholder="Agenda, video link, etc."></textarea>
+        </div>
+        <button type="submit" class="btn btn-vi w-full">Send Google Meet invite</button>
+      </form>
+      <p class="text-xs mt-2" style="color: var(--tx3);">
+        Creates a Google Meet event and emails {{ contact.email }} plus your team
+        ({{ always_invite | join(', ') }}) an invite.
+      </p>
+    </div>
+
+    <!-- Notes -->
+    <div class="card p-5">
+      <h3 class="text-sm font-bold mb-3" style="color: var(--tx);">📝 Private notes</h3>
+      <form method="post" action="/client/{{ contact.email }}/notes">
+        <input type="hidden" name="csrf_token" value="{{ csrf }}">
+        <textarea name="notes" rows="4" class="w-full px-3 py-2 mb-2"
+                  placeholder="Only you can see this.">{{ contact.notes }}</textarea>
+        <button type="submit" class="btn btn-outline btn-sm">Save notes</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ── Right: AI + meeting notes + conversation ────────────────────────── -->
+  <div class="lg:col-span-2 space-y-6">
+
+    {% if ai_configured %}
+    <!-- AI summary + draft -->
+    <div class="card p-5" x-data="aiTools()">
+      <div class="flex items-center justify-between mb-3">
+        <h3 class="text-sm font-bold" style="color: var(--tx);">✨ AI assistant</h3>
+        <div class="flex gap-2">
+          <button type="button" class="btn btn-outline btn-sm" @click="summarize()" :disabled="busy">
+            <span x-show="!busy">Summarize relationship</span><span x-show="busy" x-cloak>Working…</span>
+          </button>
+          <button type="button" class="btn btn-acc btn-sm" @click="draft()" :disabled="busy">Draft reply</button>
+        </div>
+      </div>
+
+      {% if contact.ai_summary %}
+        <div class="rounded-lg px-4 py-3 mb-3 text-sm md" id="ai-summary"
+             style="background: var(--panel); color: var(--tx);"
+             data-md="{{ contact.ai_summary }}"></div>
+        <p class="text-xs mb-3" style="color: var(--tx3);">Summary cached {{ contact.ai_summary_at | ts_datetime }} — re-run to refresh.</p>
+      {% else %}
+        <div class="rounded-lg px-4 py-3 mb-3 text-sm md hidden" id="ai-summary"
+             style="background: var(--panel); color: var(--tx);"></div>
+      {% endif %}
+
+      <div x-show="draftOpen" x-cloak>
+        <input type="text" x-model="instructions" class="w-full px-3 py-2 mb-2"
+               placeholder="Optional instructions, e.g. “propose Tuesday afternoon, keep it short”"
+               @keydown.enter.prevent="draft()">
+        <form method="post" action="/client/{{ contact.email }}/gmail_draft">
+          <input type="hidden" name="csrf_token" value="{{ csrf }}">
+          <textarea name="body" x-model="draftText" rows="8" class="w-full px-3 py-2 mb-2"
+                    placeholder="The AI draft appears here — edit before saving."></textarea>
+          <div class="flex gap-2">
+            <button type="submit" class="btn btn-acc btn-sm" :disabled="!draftText.trim()"
+                    title="{% if has_compose %}Saves as a draft in your Gmail — nothing is sent{% else %}Needs a one-time reconnect to grant the drafts permission{% endif %}">
+              💾 Save to Gmail drafts</button>
+            <button type="button" class="btn btn-outline btn-sm" :disabled="!draftText.trim()"
+                    @click="navigator.clipboard.writeText(draftText).then(() => toast('Copied'))">Copy</button>
+            <button type="button" class="btn btn-outline btn-sm" @click="draft()" :disabled="busy">↻ Regenerate</button>
+          </div>
+        </form>
+        {% if not has_compose %}
+          <p class="text-xs mt-2" style="color: var(--warn);">
+            Saving drafts needs a one-time permission upgrade: Connection → Reconnect.
+          </p>
+        {% endif %}
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Meeting notes (rich paste from Spark / Granola) -->
+    <div class="card p-5" x-data="{ open: false }">
+      <div class="flex items-center justify-between mb-3">
+        <h3 class="text-sm font-bold" style="color: var(--tx);">
+          🗒️ Meeting notes <span style="color: var(--tx3); font-weight: 500;">· {{ meeting_notes|length }}</span>
+        </h3>
+        <button type="button" class="btn btn-acc btn-sm" @click="open = !open"
+                x-text="open ? 'Cancel' : '+ Add note'"></button>
+      </div>
+
+      <!-- add-note form: paste keeps formatting -->
+      <form method="post" action="/client/{{ contact.email }}/note" x-show="open" x-cloak
+            class="mb-4"
+            @submit="document.getElementById('note_html').value = document.getElementById('note_editor').innerHTML">
+        <input type="hidden" name="csrf_token" value="{{ csrf }}">
+        <div class="grid grid-cols-3 gap-2 mb-2">
+          <input type="text" name="title" id="note_title" required placeholder="Title (auto-filled from line 1)"
+                 class="col-span-2 px-3 py-2">
+          <input type="text" name="subtitle" id="note_when" placeholder="When (line 2)"
+                 class="px-3 py-2">
+        </div>
+        <div id="note_editor" contenteditable="true"
+             class="note-editor note-body w-full px-3 py-2 mb-2"
+             style="min-height: 140px; border: 1px solid var(--border); border-radius: 0.5rem; background: var(--surface); overflow: auto;"
+             data-placeholder="Paste your Spark / Granola summary here — bold, headings and bullets are kept."></div>
+        <input type="hidden" name="html" id="note_html">
+        <button type="submit" class="btn btn-acc btn-sm">Save note</button>
+      </form>
+
+      {% if not meeting_notes %}
+        <p class="text-sm" style="color: var(--tx3);">No notes yet — paste a meeting summary above.</p>
+      {% else %}
+        <div class="space-y-3">
+          {% for n in meeting_notes %}
+            <div class="rounded-xl px-4 py-3" style="background: var(--panel); border: 1px solid var(--border);">
+              <div class="flex items-baseline justify-between mb-2 gap-2">
+                <div class="min-w-0">
+                  <div class="text-sm font-bold" style="color: var(--tx);">{{ n.title }}</div>
+                  {% if n.subtitle %}<div class="text-xs" style="color: var(--tx2);">🕑 {{ n.subtitle }}</div>{% endif %}
+                </div>
+                <div class="flex items-center gap-2 flex-shrink-0">
+                  <span class="text-xs" style="color: var(--tx3);">{{ n.created_at | ts_datetime }}</span>
+                  <form method="post" action="/client/{{ contact.email }}/note/{{ n.id }}/delete"
+                        onsubmit="return confirm('Delete this note?')">
+                    <input type="hidden" name="csrf_token" value="{{ csrf }}">
+                    <button class="text-xs" style="color: var(--err); background: none; border: none; cursor: pointer;">Delete</button>
+                  </form>
+                </div>
+              </div>
+              <div class="note-body text-sm" style="color: var(--tx);">{{ n.html | safe }}</div>
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    </div>
+
+    <!-- Conversation -->
+    <div class="card p-5" x-data="{ showAll: false }">
+      <div class="flex items-center justify-between mb-4 gap-2">
+        <h3 class="text-sm font-bold" style="color: var(--tx);">
+          Conversation <span style="color: var(--tx3); font-weight: 500;">· {{ conversation|length }} messages</span>
+        </h3>
+        {% if conversation %}
+          {% set tid = conversation[-1].thread_id %}
+          {% if my_addr %}
+            {% set gmail_url = 'https://mail.google.com/mail/?authuser=' ~ my_addr ~ '#all/' ~ tid %}
+          {% else %}
+            {% set gmail_url = 'https://mail.google.com/mail/u/0/#all/' ~ tid %}
+          {% endif %}
+          <a href="{{ gmail_url }}" target="_blank" rel="noopener"
+             class="btn btn-outline btn-sm flex-shrink-0">↗ Open in Gmail</a>
+        {% endif %}
+      </div>
+
+      {% if not conversation %}
+        <p class="text-sm" style="color: var(--tx3);">No messages found.</p>
+      {% else %}
+        {% set cutoff = 6 %}
+        {% if conversation|length > cutoff %}
+          <button type="button" class="btn btn-outline btn-sm w-full mb-3" x-show="!showAll"
+                  @click="showAll = true">
+            Show {{ conversation|length - cutoff }} earlier message(s)
+          </button>
+        {% endif %}
+        <div class="space-y-3">
+          {% for m in conversation %}
+            <div class="flex {% if m.direction == 'out' %}justify-end{% else %}justify-start{% endif %}"
+                 {% if conversation|length > cutoff and loop.index0 < conversation|length - cutoff %}x-show="showAll" x-cloak{% endif %}>
+              <div class="rounded-xl px-4 py-3" style="max-width: 85%; {% if m.direction == 'out' %}background: var(--acc-bg);{% else %}background: var(--panel); border: 1px solid var(--border);{% endif %}">
+                <div class="flex items-center gap-2 mb-1">
+                  <span class="text-xs font-semibold" style="color: {% if m.direction == 'out' %}var(--acc-tx){% else %}var(--tx2){% endif %};">
+                    {% if m.direction == 'out' %}You{% elif m.from_email == contact.email %}{{ contact.name or contact.email }}{% else %}{{ m.from_email }}{% endif %}
+                  </span>
+                  <span class="text-xs" style="color: var(--tx3);">{{ m.ts | ts_datetime }}</span>
+                  {% if my_addr %}
+                    <a href="https://mail.google.com/mail/?authuser={{ my_addr }}#all/{{ m.id }}"
+                       target="_blank" rel="noopener" class="text-xs" style="color: var(--tx3); text-decoration: none;"
+                       title="Open this message in Gmail">↗</a>
+                  {% endif %}
+                </div>
+                {% if m.subject %}
+                  <div class="text-xs font-medium mb-1" style="color: var(--tx2);">{{ m.subject }}</div>
+                {% endif %}
+                <div class="text-sm whitespace-pre-wrap" style="color: var(--tx);">{{ (m.body_text | clean_body) or m.snippet }}</div>
+                {% if m.attachments %}
+                  <div class="text-xs mt-2" style="color: var(--tx2);">
+                    📎 {{ m.attachments }}
+                  </div>
+                {% endif %}
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='md.js') }}"></script>
+<script>
+  // Render the cached AI summary (stored as markdown) on load.
+  (function () {
+    const el = document.getElementById('ai-summary');
+    if (el && el.dataset.md) el.innerHTML = mdToHtml(el.dataset.md);
+  })();
+
+  function aiTools() {
+    return {
+      busy: false, draftOpen: false, draftText: '', instructions: '',
+      summarize() {
+        this.busy = true;
+        fetch('/client/{{ contact.email }}/summarize', {
+          method: 'POST', headers: { 'X-CSRF-Token': CSRF }
+        })
+          .then(r => r.json())
+          .then(d => {
+            this.busy = false;
+            if (d.error) { toast('⚠️ ' + d.error); return; }
+            const el = document.getElementById('ai-summary');
+            el.classList.remove('hidden');
+            el.innerHTML = mdToHtml(d.summary);
+          })
+          .catch(e => { this.busy = false; toast('⚠️ ' + e); });
+      },
+      draft() {
+        this.busy = true; this.draftOpen = true;
+        fetch('/client/{{ contact.email }}/ai_draft', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': CSRF },
+          body: JSON.stringify({ instructions: this.instructions })
+        })
+          .then(r => r.json())
+          .then(d => {
+            this.busy = false;
+            if (d.error) { toast('⚠️ ' + d.error); return; }
+            this.draftText = d.draft;
+          })
+          .catch(e => { this.busy = false; toast('⚠️ ' + e); });
+      }
+    }
+  }
+
+  // Spark pastes clean semantic HTML (h1/h3/p/ul/li) but every element carries a
+  // huge junk style string (caret-color, orphans, widows, text-stroke, …) which
+  // is what bogs the editor down. Keep the tags + only the *useful* style props
+  // (sizes, weight, indent), drop the rest.
+  (function () {
+    const ed = document.getElementById('note_editor');
+    if (!ed) return;
+
+    const KEEP_TAG = new Set(['H1','H2','H3','H4','H5','H6','P','UL','OL','LI',
+                              'A','BR','STRONG','B','EM','I','U','BLOCKQUOTE','SPAN','DIV']);
+    const DROP_TAG = new Set(['SCRIPT','STYLE','META','HEAD','LINK','TITLE','O:P']);
+    const KEEP_STYLE = ['font-size','font-weight','font-style','text-decoration',
+                        'text-decoration-line','text-align','margin-left',
+                        'padding-left','text-indent','margin-top','margin-bottom'];
+
+    function copyStyle(src, el) {
+      if (!src.style) return;
+      const keep = [];
+      KEEP_STYLE.forEach(function (p) {
+        const v = src.style.getPropertyValue(p);
+        if (v) keep.push(p + ':' + v);
+      });
+      if (keep.length) el.setAttribute('style', keep.join(';'));
+    }
+
+    function rebuild(src, dest) {
+      src.childNodes.forEach(function (n) {
+        if (n.nodeType === 3) { dest.appendChild(document.createTextNode(n.nodeValue)); return; }
+        if (n.nodeType !== 1) return;
+        const tag = n.tagName;
+        if (DROP_TAG.has(tag)) return;
+        if (KEEP_TAG.has(tag)) {
+          const el = document.createElement(tag);
+          if (tag === 'A' && n.getAttribute('href')) el.setAttribute('href', n.getAttribute('href'));
+          copyStyle(n, el);
+          rebuild(n, el);
+          dest.appendChild(el);
+        } else {
+          rebuild(n, dest);  // unwrap anything unknown, keep its contents
+        }
+      });
+    }
+
+    ed.addEventListener('paste', function () {
+      // run after the browser inserts the pasted content, then slim it down
+      setTimeout(function () {
+        const clean = document.createElement('div');
+        rebuild(ed, clean);
+
+        // Spark format: line 1 = call title, line 2 = meeting time.
+        // Pull them into the Title / When fields and drop them from the body.
+        const blocks = clean.children;
+        if (blocks.length && blocks[0].textContent.trim()) {
+          document.getElementById('note_title').value = blocks[0].textContent.trim();
+          blocks[0].remove();
+        }
+        if (blocks.length && blocks[0].textContent.trim()) {
+          document.getElementById('note_when').value = blocks[0].textContent.trim();
+          blocks[0].remove();
+        }
+
+        ed.innerHTML = clean.innerHTML;
+      }, 0);
+    });
+  })();
+</script>
+{% endblock %}

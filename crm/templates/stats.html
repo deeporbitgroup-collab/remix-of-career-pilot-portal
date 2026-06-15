@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+{% block title %} · Stats{% endblock %}
+
+{% block content %}
+<div class="animate-fade-up">
+  <h1 class="text-2xl font-bold mb-1" style="color: var(--tx);">Stats</h1>
+  <p class="text-xs mb-6" style="color: var(--tx3);">
+    Computed locally from your synced mail — refreshes with every sync.
+  </p>
+
+  <!-- headline numbers -->
+  <div class="grid grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+    <div class="card p-5">
+      <div class="text-2xl font-bold" style="color: var(--err);">{{ counts.needs }}</div>
+      <div class="text-sm" style="color: var(--tx2);">need a reply from you</div>
+      {% if due_count %}<div class="text-xs mt-1" style="color: var(--warn);">⏰ {{ due_count }} due today</div>{% endif %}
+    </div>
+    <div class="card p-5">
+      <div class="text-2xl font-bold" style="color: var(--tx);">
+        {{ stats.your_avg_reply_days if stats.your_avg_reply_days is not none else '—' }}<span class="text-sm" style="color: var(--tx3);"> days</span>
+      </div>
+      <div class="text-sm" style="color: var(--tx2);">your avg. reply time</div>
+      <div class="text-xs mt-1" style="color: var(--tx3);">over {{ stats.your_replies_measured }} replies</div>
+    </div>
+    <div class="card p-5">
+      <div class="text-2xl font-bold" style="color: var(--tx);">
+        {{ stats.their_avg_reply_days if stats.their_avg_reply_days is not none else '—' }}<span class="text-sm" style="color: var(--tx3);"> days</span>
+      </div>
+      <div class="text-sm" style="color: var(--tx2);">their avg. reply time</div>
+      <div class="text-xs mt-1" style="color: var(--tx3);">over {{ stats.their_replies_measured }} replies</div>
+    </div>
+    <div class="card p-5">
+      <div class="text-2xl font-bold" style="color: var(--ok);">
+        {{ stats.outreach_rate ~ '%' if stats.outreach_rate is not none else '—' }}
+      </div>
+      <div class="text-sm" style="color: var(--tx2);">outreach conversion</div>
+      <div class="text-xs mt-1" style="color: var(--tx3);">
+        {{ stats.outreach_converted }} of {{ stats.outreach_total }} contacts you wrote first eventually replied
+      </div>
+    </div>
+    <div class="card p-5">
+      <div class="text-2xl font-bold" style="color: var(--vi);">{{ counts.scheduled }}</div>
+      <div class="text-sm" style="color: var(--tx2);">calls scheduled</div>
+      <div class="text-xs mt-1" style="color: var(--tx3);">{{ counts.called }} completed</div>
+    </div>
+    <div class="card p-5">
+      <div class="text-2xl font-bold" style="color: var(--tx);">{{ counts.all }}</div>
+      <div class="text-sm" style="color: var(--tx2);">active contacts</div>
+      <div class="text-xs mt-1" style="color: var(--tx3);">{{ counts.archived }} archived · {{ counts.snoozed }} snoozed</div>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- weekly volume -->
+    <div class="card p-5 lg:col-span-2">
+      <h3 class="text-sm font-bold mb-4" style="color: var(--tx);">📈 Email volume — last 12 weeks</h3>
+      {% if not stats.weeks %}
+        <p class="text-sm" style="color: var(--tx3);">No recent messages.</p>
+      {% else %}
+        {% set maxv = stats.weeks | map(attribute='n_in') | list + stats.weeks | map(attribute='n_out') | list %}
+        {% set peak = maxv | max %}
+        <div class="space-y-2">
+          {% for w in stats.weeks %}
+            <div class="flex items-center gap-2 text-xs">
+              <span class="whitespace-nowrap" style="color: var(--tx3); width: 4.5rem;">wk {{ w.wk[-2:] }}</span>
+              <div class="flex-1 space-y-1">
+                <div class="bar"><div style="width: {{ (100 * w.n_in / peak) | round(1) if peak else 0 }}%; background: var(--acc);"></div></div>
+                <div class="bar"><div style="width: {{ (100 * w.n_out / peak) | round(1) if peak else 0 }}%; background: var(--vi);"></div></div>
+              </div>
+              <span class="whitespace-nowrap" style="color: var(--tx2); width: 6.5rem;">↓{{ w.n_in }} in · ↑{{ w.n_out }} out</span>
+            </div>
+          {% endfor %}
+        </div>
+        <p class="text-xs mt-3" style="color: var(--tx3);">
+          <span style="color: var(--acc);">▮</span> received ·
+          <span style="color: var(--vi);">▮</span> sent
+        </p>
+      {% endif %}
+    </div>
+
+    <div class="space-y-6">
+      <!-- pipeline funnel -->
+      <div class="card p-5">
+        <h3 class="text-sm font-bold mb-3" style="color: var(--tx);">🪜 Pipeline stages</h3>
+        {% if not stats.stages %}
+          <p class="text-xs" style="color: var(--tx3);">
+            No stages assigned yet — set them from a client's Edit panel.
+          </p>
+        {% else %}
+          <div class="space-y-2">
+            {% for s in ['lead', 'contacted', 'call_booked', 'proposal', 'won', 'lost'] %}
+              {% if stats.stages.get(s) %}
+                <div class="flex items-center justify-between text-sm">
+                  <span style="color: var(--tx2);">{{ stage_labels[s] }}</span>
+                  <span class="badge badge-acc">{{ stats.stages[s] }}</span>
+                </div>
+              {% endif %}
+            {% endfor %}
+          </div>
+        {% endif %}
+      </div>
+
+      <!-- busiest companies -->
+      <div class="card p-5">
+        <h3 class="text-sm font-bold mb-3" style="color: var(--tx);">🏢 Most active companies</h3>
+        {% if not stats.companies %}
+          <p class="text-xs" style="color: var(--tx3);">No company data yet.</p>
+        {% else %}
+          <div class="space-y-2">
+            {% for c in stats.companies %}
+              <div class="flex items-center justify-between text-sm">
+                <span class="truncate" style="color: var(--tx2);">{{ c.company }}</span>
+                <span class="text-xs whitespace-nowrap" style="color: var(--tx3);">{{ c.n }} msgs</span>
+              </div>
+            {% endfor %}
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

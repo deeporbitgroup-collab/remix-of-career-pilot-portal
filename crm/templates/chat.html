@@ -1,0 +1,156 @@
+{% extends "base.html" %}
+{% block title %} · Ask AI{% endblock %}
+
+{% block content %}
+{% if not configured %}
+  <!-- ── First-run: ask for the free Gemini key ─────────────────────────── -->
+  <div class="max-w-2xl mx-auto animate-fade-up">
+    <h1 class="text-2xl font-bold mb-1" style="color: var(--tx);">✨ Ask AI about your emails</h1>
+    <p class="text-sm mb-6" style="color: var(--tx2);">
+      Powered by Google Gemini Flash. One-time setup — paste a free API key
+      (no credit card, no billing).
+    </p>
+    <div class="card p-6">
+      <ol class="text-sm space-y-2 mb-4 pl-5 list-decimal" style="color: var(--tx2);">
+        <li>Go to <span style="color: var(--acc-tx);">aistudio.google.com/apikey</span></li>
+        <li>Sign in and click <b>Create API key</b> (pick the free option)</li>
+        <li>Copy the key and paste it below</li>
+      </ol>
+      <form method="post" action="/chat/key" class="flex gap-2">
+        <input type="hidden" name="csrf_token" value="{{ csrf }}">
+        <input type="text" name="key" required placeholder="AIza…"
+               class="flex-1 px-3 py-2" autocomplete="off">
+        <button type="submit" class="btn btn-acc">Save key</button>
+      </form>
+      <p class="text-xs mt-3" style="color: var(--tx3);">
+        Stored locally on your machine (or set CT_GEMINI_API_KEY in the
+        environment to keep it out of the database entirely). Note: on Google's
+        free tier, your prompts may be used to improve their products — avoid
+        pasting anything you'd want kept strictly private.
+      </p>
+    </div>
+  </div>
+{% else %}
+  <!-- ── Chat UI ─────────────────────────────────────────────────────────── -->
+  <div x-data="chat()" x-init="scroll()" class="max-w-3xl mx-auto animate-fade-up">
+    <div class="flex items-center justify-between mb-4 gap-3 flex-wrap">
+      <h1 class="text-2xl font-bold" style="color: var(--tx);">✨ Ask AI</h1>
+      <div class="flex items-center gap-2">
+        <form method="post" action="/chat/clear"
+              onsubmit="return confirm('Clear the whole chat history?')">
+          <input type="hidden" name="csrf_token" value="{{ csrf }}">
+          <button class="nav-link text-xs" {% if not history %}disabled{% endif %}>Clear history</button>
+        </form>
+        <form method="post" action="/chat/model" class="flex items-center gap-2">
+          <input type="hidden" name="csrf_token" value="{{ csrf }}">
+          <label class="text-xs" style="color: var(--tx3);">Model</label>
+          <select name="model" onchange="this.form.submit()" class="px-2 py-1 text-xs">
+            {% for value, label, tier in model_choices %}
+              <option value="{{ value }}" {% if value == current_model %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
+        </form>
+      </div>
+    </div>
+
+    <!-- messages -->
+    <div class="card p-5 mb-3" style="min-height: 50vh; max-height: 64vh; overflow-y: auto;" x-ref="log">
+      <template x-if="messages.length === 0">
+        <div class="text-sm" style="color: var(--tx3);">
+          <p class="mb-3">Ask me things like:</p>
+          <div class="flex flex-col gap-2">
+            <template x-for="s in suggestions" :key="s">
+              <button @click="input = s; send()" class="text-left px-3 py-2 rounded-lg cursor-pointer"
+                      style="background: var(--panel); color: var(--tx2); border: none;" x-text="s"></button>
+            </template>
+          </div>
+        </div>
+      </template>
+
+      <template x-for="(m, i) in messages" :key="i">
+        <div class="flex mb-3" :class="m.role === 'user' ? 'justify-end' : 'justify-start'">
+          <div class="rounded-xl px-4 py-3 text-sm" style="max-width: 85%;"
+               :style="m.role === 'user'
+                 ? 'background: var(--acc-bg); color: var(--tx);'
+                 : 'background: var(--panel); border: 1px solid var(--border); color: var(--tx);'">
+            <div class="md" x-html="m.role === 'user' ? escapeHtml(m.text) : mdToHtml(m.text)"></div>
+            <button x-show="m.role === 'model'" type="button"
+                    class="text-xs mt-1 cursor-pointer"
+                    style="color: var(--tx3); background: none; border: none; padding: 0;"
+                    @click="navigator.clipboard.writeText(m.text).then(() => toast('Copied'))">⧉ copy</button>
+          </div>
+        </div>
+      </template>
+
+      <div x-show="thinking" x-cloak class="flex justify-start mb-3">
+        <div class="rounded-xl px-4 py-3 text-sm" style="background: var(--panel); color: var(--tx3);">
+          Thinking…
+        </div>
+      </div>
+    </div>
+
+    <!-- input -->
+    <form @submit.prevent="send()" class="flex gap-2">
+      <input type="text" x-model="input" :disabled="thinking" autocomplete="off"
+             placeholder="Ask about your emails…" class="flex-1 px-3 py-2">
+      <button type="submit" class="btn btn-acc" :disabled="thinking || !input.trim()">Send</button>
+    </form>
+    <p class="text-xs mt-2" style="color: var(--tx3);">
+      The AI sees a summary of your active clients, the full thread for anyone you
+      name, and full-text matches for the words in your question. History is saved locally.
+    </p>
+  </div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+{% if configured %}
+<script src="{{ url_for('static', filename='md.js') }}"></script>
+<script>
+  function escapeHtml(s) {
+    return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+            .replace(/\n/g, '<br>');
+  }
+  function chat() {
+    return {
+      input: '',
+      thinking: false,
+      messages: {{ history | tojson }},
+      suggestions: [
+        'Who am I overdue to reply to?',
+        'What follow-ups are due this week?',
+        'Draft a follow-up to the clients who never replied',
+        "What's the status of my pipeline this week?"
+      ],
+      scroll() {
+        this.$nextTick(() => { this.$refs.log.scrollTop = this.$refs.log.scrollHeight; });
+      },
+      send() {
+        const text = this.input.trim();
+        if (!text || this.thinking) return;
+        this.messages.push({ role: 'user', text });
+        this.input = '';
+        this.thinking = true;
+        this.scroll();
+        fetch('/chat/send', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': CSRF },
+          body: JSON.stringify({ history: this.messages })
+        })
+          .then(r => r.json())
+          .then(d => {
+            this.thinking = false;
+            this.messages.push({ role: 'model', text: d.error ? ('⚠️ ' + d.error) : d.reply });
+            this.scroll();
+          })
+          .catch(e => {
+            this.thinking = false;
+            this.messages.push({ role: 'model', text: '⚠️ ' + e });
+            this.scroll();
+          });
+      }
+    }
+  }
+</script>
+{% endif %}
+{% endblock %}

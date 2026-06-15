@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% block title %} · Connect{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto animate-fade-up space-y-4">
+  <h1 class="text-2xl font-bold mb-1" style="color: var(--tx);">Connect your Gmail</h1>
+  <p class="text-sm mb-6" style="color: var(--tx2);">
+    Read-only access to your mail. This tool never sends email — the only things
+    it creates are calendar invites and (optionally) Gmail drafts you ask for.
+  </p>
+
+  {% if connected %}
+    <div class="card p-6">
+      <div class="flex items-center gap-3 flex-wrap">
+        <span class="badge badge-ok">Connected</span>
+        <span class="text-sm" style="color: var(--tx2);">Your Gmail is linked and ready.</span>
+        {% if has_compose %}
+          <span class="badge badge-ok">Drafts enabled</span>
+        {% else %}
+          <span class="badge badge-warn">Drafts not yet granted</span>
+        {% endif %}
+      </div>
+      {% if needs_reconnect %}
+        <p class="alert alert-err mt-3">Google reports the access token expired or was
+        revoked — reconnect below to resume syncing.</p>
+      {% endif %}
+      {% if not has_compose %}
+        <p class="text-xs mt-3" style="color: var(--tx3);">
+          To let the AI save reply drafts into your Gmail (never sends), reconnect
+          once and approve the extra “manage drafts” permission.
+        </p>
+      {% endif %}
+      <div class="flex gap-2 mt-5 flex-wrap">
+        <a href="/" class="btn btn-acc">Go to clients →</a>
+        <form method="post" action="/connect/reset"
+              onsubmit="return confirm('Disconnect Google? You will sign in again on the next connect.')">
+          <input type="hidden" name="csrf_token" value="{{ csrf }}">
+          <button class="btn btn-outline">Reconnect (re-grant permissions)</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Settings -->
+    <div class="card p-6">
+      <h3 class="text-sm font-bold mb-3" style="color: var(--tx);">⚙️ Settings</h3>
+      <form method="post" action="/settings" class="flex items-center gap-2 flex-wrap">
+        <input type="hidden" name="csrf_token" value="{{ csrf }}">
+        <label class="text-sm" style="color: var(--tx2);">Full re-sync depth</label>
+        <input type="number" name="sync_max_threads" value="{{ sync_max_threads }}"
+               min="10" max="2000" class="px-3 py-2" style="width: 7rem;">
+        <span class="text-xs" style="color: var(--tx3);">threads</span>
+        <button type="submit" class="btn btn-outline btn-sm">Save</button>
+      </form>
+      <p class="text-xs mt-2" style="color: var(--tx3);">
+        How many recent Gmail threads a <b>Full re-sync</b> downloads. Day-to-day
+        syncs are incremental and unaffected. Raise this once to backfill older
+        relationships (e.g. 1000), then run Full re-sync.
+      </p>
+    </div>
+
+    <!-- Backups -->
+    <div class="card p-6">
+      <h3 class="text-sm font-bold mb-3" style="color: var(--tx);">🗄️ Backups</h3>
+      <p class="text-xs mb-3" style="color: var(--tx3);">
+        A daily copy of the database (contacts, notes, meeting summaries) is kept
+        automatically in <code>data/backups/</code> — the last 7 days are retained.
+        Emails are always recoverable from Gmail; your notes only live here.
+      </p>
+      <div class="flex gap-2">
+        <form method="post" action="/backup/now">
+          <input type="hidden" name="csrf_token" value="{{ csrf }}">
+          <button class="btn btn-outline btn-sm">Back up now</button>
+        </form>
+        <a href="/backup/download" class="btn btn-outline btn-sm">⬇ Download latest backup</a>
+      </div>
+    </div>
+  {% elif has_credentials %}
+    <div class="card p-6">
+      <p class="text-sm mb-4" style="color: var(--tx);">
+        Your <code>credentials.json</code> is in place. Click below to sign in —
+        a browser window will open asking you to grant access.
+      </p>
+      <form method="post" action="/auth">
+        <input type="hidden" name="csrf_token" value="{{ csrf }}">
+        <button type="submit" class="btn btn-acc">Connect Gmail</button>
+      </form>
+    </div>
+  {% else %}
+    <div class="card p-6">
+      <div class="flex items-center gap-3 mb-4">
+        <span class="badge badge-warn">Setup needed</span>
+        <span class="text-sm" style="color: var(--tx2);">One-time, ~5 minutes.</span>
+      </div>
+      <p class="text-sm mb-3" style="color: var(--tx);">
+        Google requires you to create your own OAuth credentials so only you can
+        access your mailbox. Steps (full details in <code>README.md</code>):
+      </p>
+      <ol class="text-sm space-y-2 mb-4 pl-5 list-decimal" style="color: var(--tx2);">
+        <li>Create a project at <span style="color: var(--acc-tx);">console.cloud.google.com</span></li>
+        <li>Enable the <b>Gmail API</b> and <b>Google Calendar API</b></li>
+        <li>Configure the OAuth consent screen (External; add yourself as a test user)</li>
+        <li>Create an <b>OAuth client ID → Desktop app</b></li>
+        <li>Download the JSON and save it as <code>client_tracker/credentials.json</code></li>
+      </ol>
+      <p class="text-sm" style="color: var(--tx3);">Reload this page once the file is in place.</p>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

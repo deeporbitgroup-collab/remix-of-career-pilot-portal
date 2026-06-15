@@ -1,0 +1,115 @@
+{# Contact rows + Due-today panel. Rendered inside dashboard.html and
+   re-rendered by GET /partial/contacts after a sync (no full page reload). #}
+
+{% if due and tab not in ['archived'] and not q %}
+  <div class="card p-4 mb-4" style="border-color: var(--warn-bd); background: var(--warn-bg);">
+    <div class="text-sm font-bold mb-2" style="color: var(--warn);">⏰ Due today · {{ due|length }}</div>
+    <div class="space-y-2">
+      {% for c in due[:8] %}
+        <div class="flex items-center gap-2 text-sm">
+          <a href="/client/{{ c.email }}?tab={{ tab }}" class="font-semibold truncate" style="color: var(--tx); text-decoration: none;">
+            {{ c.name or c.email }}</a>
+          <span class="text-xs" style="color: var(--tx2);">
+            {% if c.follow_up_at and c.follow_up_at <= now_ts %}
+              follow-up due
+            {% else %}
+              owed a reply for {{ c.last_message_at | age_days }}d
+            {% endif %}
+          </span>
+          <form method="post" action="/client/{{ c.email }}/snooze" class="ml-auto flex gap-1">
+            <input type="hidden" name="csrf_token" value="{{ csrf }}">
+            <input type="hidden" name="days" value="1">
+            <button class="nav-link text-xs" title="Push to tomorrow 9:00">+1d</button>
+          </form>
+        </div>
+      {% endfor %}
+      {% if due|length > 8 %}
+        <div class="text-xs" style="color: var(--tx2);">…and {{ due|length - 8 }} more</div>
+      {% endif %}
+    </div>
+  </div>
+{% endif %}
+
+{% if not contacts %}
+  <div class="card p-10 text-center animate-fade-in">
+    <p class="text-sm" style="color: var(--tx2);">
+      {% if q %}No clients match “{{ q }}”.
+      {% elif tab == 'needs' %}🎉 Nothing needs a reply right now.
+      {% elif tab == 'waiting' %}No open threads where someone owes you a reply.
+      {% elif tab == 'no_reply' %}No cold outreach waiting — everyone's replied.
+      {% elif tab == 'scheduled' %}No upcoming calls scheduled.
+      {% elif tab == 'called' %}No completed calls yet.
+      {% elif tab == 'snoozed' %}Nothing snoozed — set follow-ups from a client page.
+      {% elif tab == 'archived' %}Nothing archived.
+      {% else %}No clients yet — hit <b>Sync now</b> to pull your conversations.{% endif %}
+    </p>
+  </div>
+{% else %}
+  <div class="card divide-y animate-fade-up" id="contact-rows">
+    {% for c in contacts %}
+      <div class="row" data-email="{{ c.email }}"
+           :class="selected.includes('{{ c.email }}') ? 'is-selected' : ''">
+        <label class="pl-4 pr-1 py-3 flex-shrink-0 cursor-pointer">
+          <input type="checkbox" value="{{ c.email }}" x-model="selected">
+        </label>
+        <a href="/client/{{ c.email }}?tab={{ tab }}" class="row-link flex items-center gap-4 pl-1 pr-5 py-3 flex-1 min-w-0" style="text-decoration: none;">
+          <div class="avatar w-9 h-9 text-sm"
+               style="background: oklch(0.93 0.05 {{ c.email | avatar_hue }}); color: oklch(0.40 0.13 {{ c.email | avatar_hue }});">
+            {{ (c.name or c.email)[0]|upper }}
+          </div>
+          <div class="min-w-0 flex-1">
+            <div class="flex items-center gap-2 min-w-0">
+              <span class="text-sm font-semibold truncate" style="color: var(--tx);">{{ c.name or c.email }}</span>
+              {% if c.priority %}<span title="High priority" style="color: var(--err);">★</span>{% endif %}
+              {% if c.stage %}<span class="chip">{{ stage_labels[c.stage] }}</span>{% endif %}
+              {% for t in (c.tags or '').split(',') if t.strip() %}
+                <span class="chip">{{ t.strip() }}</span>
+              {% endfor %}
+            </div>
+            <div class="text-xs truncate" style="color: var(--tx3);">
+              {{ c.email }}{% if c.company %} · {{ c.company }}{% endif %}
+              {% if c.last_snippet %} — <span style="font-style: italic;">{{ c.last_snippet[:110] }}</span>{% endif %}
+            </div>
+          </div>
+          <div class="text-xs whitespace-nowrap" style="color: var(--tx3);">
+            {% if c.status == 'scheduled' and c.next_call_at %}{{ c.next_call_at | ts_datetime }}
+            {% elif c.status == 'called' and c.last_call_at %}{{ c.last_call_at | ts_datetime }}
+            {% elif c.status == 'snoozed' and c.follow_up_at %}due {{ c.follow_up_at | ts_date }}
+            {% elif c.last_message_at %}{{ c.last_message_at | ts_date }}{% endif %}
+          </div>
+          {% if c.due %}
+            <span class="badge badge-warn">⏰ Due</span>
+          {% endif %}
+          {% if tab == 'archived' %}
+            <span class="badge badge-neutral">Archived</span>
+          {% elif c.status == 'scheduled' %}
+            <span class="badge badge-vi">📅 Call scheduled</span>
+            {% if c.call_owner and profile_names.get(c.call_owner) %}
+              <span class="badge badge-neutral">{{ profile_names[c.call_owner] }}</span>
+            {% endif %}
+          {% elif c.status == 'called' %}
+            <span class="badge badge-ok">✅ Completed</span>
+            {% if c.call_owner and profile_names.get(c.call_owner) %}
+              <span class="badge badge-neutral">{{ profile_names[c.call_owner] }}</span>
+            {% endif %}
+          {% elif c.status == 'needs_reply' %}
+            <span class="badge badge-err">Needs reply{% if tab == 'needs' and c.last_message_at %} · {{ c.last_message_at | age_days }}d{% endif %}</span>
+          {% elif c.status == 'no_reply' %}
+            <span class="badge badge-warn">No reply yet</span>
+          {% elif c.status == 'snoozed' %}
+            <span class="badge badge-neutral">💤 Snoozed</span>
+          {% else %}
+            <span class="badge badge-neutral">Waiting</span>
+          {% endif %}
+        </a>
+        {% if tab in ['scheduled', 'called'] %}
+          <form method="post" action="/client/{{ c.email }}/status" class="pr-4 pl-2 flex-shrink-0">
+            <input type="hidden" name="csrf_token" value="{{ csrf }}">
+            <input type="hidden" name="action" value="hide_call">
+            <button class="btn btn-outline btn-sm" title="Hide this duplicate from the call list">Hide</button>
+          </form>
+        {% endif %}
+      </div>
+    {% endfor %}
+  </div>
+{% endif %}

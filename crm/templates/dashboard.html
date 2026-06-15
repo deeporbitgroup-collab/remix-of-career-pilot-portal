@@ -1,0 +1,233 @@
+{% extends "base.html" %}
+{% block title %} · Clients{% endblock %}
+
+{% block nav_actions %}
+  <div x-data="syncNav()" x-init="watch()" class="flex items-center gap-3">
+    <span class="text-xs" style="color: var(--tx3);" x-show="running" x-cloak
+          x-text="auto ? 'Auto-syncing…' : (phase || 'Syncing…')"></span>
+    <form method="post" action="/sync" @submit="running = true">
+      <input type="hidden" name="csrf_token" value="{{ csrf }}">
+      <button type="submit" name="full" value="0" class="btn btn-acc btn-sm" :disabled="running"
+              title="Fetch only what changed since the last sync">
+        <span x-show="!running">↻ Sync now</span>
+        <span x-show="running" x-cloak>Syncing…</span>
+      </button>
+    </form>
+    <form method="post" action="/sync" @submit="running = true">
+      <input type="hidden" name="csrf_token" value="{{ csrf }}">
+      <button type="submit" name="full" value="1" class="nav-link" :disabled="running"
+              style="font-size: 0.75rem;" title="Re-download everything from scratch">
+        Full re-sync
+      </button>
+    </form>
+  </div>
+{% endblock %}
+
+{% block content %}
+<div x-data="dashboard()" x-init="init()">
+
+  {% if needs_reconnect %}
+    <div class="alert alert-err mb-4">
+      Google access expired or was revoked — syncing is paused.
+      <a href="/connect" style="text-decoration: underline;">Reconnect Gmail →</a>
+    </div>
+  {% elif sync_error %}
+    <div class="alert alert-warn mb-4">
+      Last sync failed: {{ sync_error }} — will retry automatically.
+    </div>
+  {% endif %}
+
+  <div class="flex items-baseline justify-between mb-1">
+    <h1 class="text-2xl font-bold" style="color: var(--tx);">Clients</h1>
+    <span class="text-sm" style="color: var(--tx3);" x-show="running" x-cloak
+          x-text="total ? `Fetching ${fetched}/${total} threads…` : phase"></span>
+  </div>
+  <p class="text-xs mb-4" style="color: var(--tx3);">
+    Auto-syncs every {{ (180 / 60) | int }} minutes — the list refreshes in place.
+    {% if last_synced %}<span x-show="!running">Last synced {{ last_synced | ts_datetime }}.</span>{% endif %}
+  </p>
+
+  <!-- Search + export -->
+  <div class="flex items-center gap-2 mb-4">
+    <input type="search" id="search-box" placeholder="Search name, email, company, tag — or any words inside the emails…  ( / )"
+           class="flex-1 px-3 py-2" value="{{ q }}"
+           x-model="q" @input.debounce.300ms="refresh()">
+    <a href="/export.csv?tab={{ tab }}" class="btn btn-outline btn-sm" title="Download this tab as CSV">⬇ CSV</a>
+  </div>
+
+  <!-- Tabs -->
+  <div class="flex flex-wrap gap-1 mb-5">
+    {% set tabs = [
+      ('needs', 'Needs reply', counts.needs, 'badge-err'),
+      ('waiting', 'Waiting on them', counts.waiting, 'badge-neutral'),
+      ('no_reply', 'No reply yet', counts.no_reply, 'badge-neutral'),
+      ('scheduled', '📅 Call scheduled', counts.scheduled, 'badge-vi'),
+      ('called', '✅ Completed calls', counts.called, 'badge-ok'),
+      ('snoozed', '💤 Snoozed', counts.snoozed, 'badge-neutral'),
+      ('all', 'All', counts.all, 'badge-neutral'),
+      ('archived', 'Archived', counts.archived, 'badge-neutral')
+    ] %}
+    {% for key, label, n, badge in tabs %}
+      <a href="/?tab={{ key }}" class="nav-link {% if tab == key %}is-active{% endif %}">
+        {{ label }}
+        <span class="badge {{ badge }} ml-2" data-count="{{ key }}">{{ n }}</span>
+      </a>
+    {% endfor %}
+  </div>
+
+  <!-- Bulk action bar (appears once you tick clients) -->
+  <div x-show="selected.length" x-cloak
+       class="flex items-center gap-3 mb-3 px-4 py-2 rounded-lg"
+       style="background: var(--acc-bg);">
+    <label class="flex items-center gap-2 text-sm font-medium cursor-pointer" style="color: var(--acc-tx);">
+      <input type="checkbox" @change="toggleAll($event.target.checked)">
+      <span x-text="selected.length"></span>&nbsp;selected
+    </label>
+    <form method="post" action="/bulk/action" class="flex items-center gap-2">
+      <input type="hidden" name="csrf_token" value="{{ csrf }}">
+      <template x-for="em in selected" :key="em">
+        <input type="hidden" name="emails" :value="em">
+      </template>
+      {% if tab == 'archived' %}
+        <input type="hidden" name="action" value="unarchive">
+        <button class="btn btn-acc btn-sm">Unarchive selected</button>
+      {% elif tab in ['scheduled', 'called'] %}
+        <input type="hidden" name="action" value="hide_call">
+        <button class="btn btn-acc btn-sm">Hide selected</button>
+      {% else %}
+        <button class="btn btn-acc btn-sm" name="action" value="archive">Archive selected</button>
+        <button class="btn btn-outline btn-sm" name="action" value="snooze"
+                title="Hide for 3 days, then surface as due">💤 Snooze 3d</button>
+      {% endif %}
+    </form>
+    <button type="button" class="text-sm nav-link" @click="selected = []">Clear</button>
+  </div>
+
+  <!-- list area: swapped in place after each sync / search -->
+  <div id="list-area">
+    {% include "_contact_list.html" %}
+  </div>
+
+  <p class="text-xs mt-3" style="color: var(--tx3);">
+    Keyboard: <b>j</b>/<b>k</b> move · <b>Enter</b> open · <b>e</b> archive · <b>x</b> select · <b>/</b> search
+  </p>
+</div>
+
+<script>
+  // Sync poller for the nav widget (no page reloads — the list area refreshes
+  // itself via /partial/contacts when a sync completes).
+  function syncNav() {
+    return {
+      running: false, auto: false, phase: '', fetched: 0, total: 0,
+      watch() {
+        const tick = () => {
+          fetch('/sync/status').then(r => r.json()).then(s => {
+            this.running = s.running; this.auto = s.auto;
+            this.phase = s.phase; this.fetched = s.fetched; this.total = s.total;
+            setTimeout(tick, s.running ? 1000 : 15000);
+          }).catch(() => setTimeout(tick, 15000));
+        };
+        tick();
+      }
+    }
+  }
+
+  function dashboard() {
+    return {
+      selected: [],
+      q: {{ q | tojson }},
+      tab: {{ tab | tojson }},
+      running: false, auto: false, phase: '', fetched: 0, total: 0,
+      baseline: {{ last_synced or 'null' }},
+      focusIdx: -1,
+
+      init() {
+        this.poll();
+        this.keyboard();
+      },
+
+      // ── live refresh ────────────────────────────────────────────────
+      refresh() {
+        // don't yank rows out from under an in-progress selection
+        if (this.selected.length && !this.q) return;
+        fetch(`/partial/contacts?tab=${encodeURIComponent(this.tab)}&q=${encodeURIComponent(this.q)}`)
+          .then(r => r.json())
+          .then(d => {
+            document.getElementById('list-area').innerHTML = d.html;
+            for (const [k, v] of Object.entries(d.counts)) {
+              const el = document.querySelector(`[data-count="${k}"]`);
+              if (el) el.textContent = v;
+            }
+            this.focusIdx = -1;
+          });
+      },
+
+      poll() {
+        fetch('/sync/status')
+          .then(r => r.json())
+          .then(s => {
+            const wasRunning = this.running;
+            this.running = s.running;
+            // a sync (manual or background) finished → refresh the list in place
+            if ((wasRunning && !s.running) ||
+                (s.last_synced && this.baseline && s.last_synced > this.baseline)) {
+              this.baseline = s.last_synced;
+              this.refresh();
+              toast('✓ Synced — list updated');
+            }
+            if (s.last_synced && !this.baseline) this.baseline = s.last_synced;
+            setTimeout(() => this.poll(), s.running ? 1000 : 15000);
+          })
+          .catch(() => setTimeout(() => this.poll(), 15000));
+      },
+
+      // ── selection ───────────────────────────────────────────────────
+      toggleAll(on) {
+        const rows = [...document.querySelectorAll('#list-area .row')];
+        this.selected = on ? rows.map(r => r.dataset.email) : [];
+      },
+
+      // ── keyboard navigation ─────────────────────────────────────────
+      rows() { return [...document.querySelectorAll('#list-area .row')]; },
+      setFocus(i) {
+        const rows = this.rows();
+        rows.forEach(r => r.classList.remove('kbd-focus'));
+        if (!rows.length) return;
+        this.focusIdx = Math.max(0, Math.min(i, rows.length - 1));
+        const row = rows[this.focusIdx];
+        row.classList.add('kbd-focus');
+        row.scrollIntoView({ block: 'nearest' });
+      },
+      keyboard() {
+        document.addEventListener('keydown', (e) => {
+          const typing = ['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName)
+                         || document.activeElement.isContentEditable;
+          if (e.key === '/' && !typing) {
+            e.preventDefault(); document.getElementById('search-box').focus(); return;
+          }
+          if (typing) {
+            if (e.key === 'Escape') document.activeElement.blur();
+            return;
+          }
+          const rows = this.rows();
+          if (e.key === 'j') this.setFocus(this.focusIdx + 1);
+          else if (e.key === 'k') this.setFocus(this.focusIdx - 1);
+          else if (e.key === 'Enter' && this.focusIdx >= 0) {
+            rows[this.focusIdx].querySelector('.row-link').click();
+          } else if (e.key === 'x' && this.focusIdx >= 0) {
+            const em = rows[this.focusIdx].dataset.email;
+            this.selected = this.selected.includes(em)
+              ? this.selected.filter(s => s !== em) : [...this.selected, em];
+          } else if (e.key === 'e' && this.focusIdx >= 0) {
+            const em = rows[this.focusIdx].dataset.email;
+            const fd = new FormData();
+            fd.append('csrf_token', CSRF); fd.append('action', 'archive');
+            fetch(`/client/${encodeURIComponent(em)}/status`, { method: 'POST', body: fd })
+              .then(() => { toast(`Archived ${em}`); this.refresh(); });
+          }
+        });
+      }
+    }
+  }
+</script>
+{% endblock %}
