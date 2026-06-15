@@ -1,0 +1,741 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Career Pilot Design System - Aviation Theme
+All colors MUST be HSL.
+*/
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 223 39% 12%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 223 39% 12%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 223 39% 12%;
+
+    /* Aviation Blue Primary */
+    --primary: 223 83% 27%;
+    --primary-foreground: 0 0% 100%;
+    --primary-light: 223 83% 35%;
+    --primary-dark: 223 83% 20%;
+
+    /* Sky Blue Secondary */
+    --secondary: 215 100% 60%;
+    --secondary-foreground: 0 0% 100%;
+
+    /* Professional Grays */
+    --muted: 214 13% 95%;
+    --muted-foreground: 215 16% 47%;
+
+    --accent: 215 100% 60%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    /* Success */
+    --success: 142 72% 35%;
+    --success-foreground: 0 0% 100%;
+
+    --border: 214 13% 91%;
+    --input: 214 13% 91%;
+    --ring: 223 83% 27%;
+
+    /* Aviation Theme Colors */
+    --aviation-blue: 223 83% 27%;
+    --sky-blue: 215 100% 60%;
+    --cloud-white: 0 0% 98%;
+    --steel-gray: 215 16% 47%;
+    --runway-gray: 215 13% 95%;
+
+    /* Gradients */
+    --gradient-sky: linear-gradient(135deg, hsl(215 100% 60%), hsl(223 83% 27%));
+    --gradient-hero: linear-gradient(135deg, hsl(223 83% 27% / 0.9), hsl(215 100% 60% / 0.8));
+    --gradient-card: linear-gradient(145deg, hsl(0 0% 100%), hsl(214 13% 98%));
+
+    /* Shadows */
+    --shadow-aviation: 0 10px 30px -10px hsl(223 83% 27% / 0.3);
+    --shadow-card: 0 4px 20px -4px hsl(223 83% 27% / 0.1);
+    --shadow-hover: 0 8px 30px -8px hsl(215 100% 60% / 0.4);
+
+    --radius: 0.5rem;
+
+    --sidebar-background: 0 0% 98%;
+
+    --sidebar-foreground: 240 5.3% 26.1%;
+
+    --sidebar-primary: 240 5.9% 10%;
+
+    --sidebar-primary-foreground: 0 0% 98%;
+
+    --sidebar-accent: 240 4.8% 95.9%;
+
+    --sidebar-accent-foreground: 240 5.9% 10%;
+
+    --sidebar-border: 220 13% 91%;
+
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 210 40% 98%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+
+    /* Success */
+    --success: 142 60% 34%;
+    --success-foreground: 210 40% 98%;
+
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 212.7 26.8% 83.9%;
+    --sidebar-background: 240 5.9% 10%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+
+  /* Hide Lovable badge */
+  #lovable-badge {
+    display: none !important;
+  }
+
+  /* Hide scrollbar for auto-scroll carousel */
+  .overflow-x-hidden::-webkit-scrollbar {
+    display: none;
+  }
+  .overflow-x-hidden {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  /* Infinite scroll carousel animation */
+  @keyframes scroll-carousel {
+    0% {
+      transform: translateX(0);
+    }
+    100% {
+      transform: translateX(-33.333%);
+    }
+  }
+
+  .animate-scroll-carousel {
+    animation: scroll-carousel linear infinite;
+  }
+
+  /* Vertical infinite scroll carousel */
+  @keyframes scroll-carousel-vertical {
+    0% {
+      transform: translateY(0);
+    }
+    100% {
+      transform: translateY(-33.333%);
+    }
+  }
+
+  .animate-scroll-carousel-vertical {
+    animation: scroll-carousel-vertical linear infinite;
+  }
+  
+  /* Flowing line animation for hero background */
+  @keyframes scroll-line {
+    0% {
+      transform: translateX(-100%);
+    }
+    100% {
+      transform: translateX(100%);
+    }
+  }
+  
+  /* Particle floating animation */
+  @keyframes float-particle {
+    0%, 100% {
+      transform: translate(0, 0);
+      opacity: 0.3;
+    }
+    25% {
+      transform: translate(20px, -30px);
+      opacity: 0.8;
+    }
+    50% {
+      transform: translate(-15px, -50px);
+      opacity: 0.5;
+    }
+    75% {
+      transform: translate(30px, -25px);
+      opacity: 0.7;
+    }
+  }
+  
+  /* Dash line animation */
+  @keyframes dash-line {
+    0% {
+      stroke-dasharray: 0 1000;
+    }
+    50% {
+      stroke-dasharray: 500 500;
+    }
+    100% {
+      stroke-dasharray: 1000 0;
+    }
+  }
+  
+  /* Orbit animations */
+  @keyframes orbit-slow {
+    0%, 100% {
+      transform: translate(0, 0) scale(1);
+    }
+    25% {
+      transform: translate(50px, -30px) scale(1.1);
+    }
+    50% {
+      transform: translate(30px, 40px) scale(0.95);
+    }
+    75% {
+      transform: translate(-40px, 20px) scale(1.05);
+    }
+  }
+  
+  @keyframes orbit-reverse {
+    0%, 100% {
+      transform: translate(0, 0) scale(1);
+    }
+    25% {
+      transform: translate(-40px, 30px) scale(0.95);
+    }
+    50% {
+      transform: translate(-20px, -40px) scale(1.1);
+    }
+    75% {
+      transform: translate(50px, -20px) scale(1.05);
+    }
+  }
+  
+  @keyframes pulse-glow {
+    0%, 100% {
+      opacity: 0.8;
+      transform: translate(-50%, -50%) scale(1);
+    }
+    50% {
+      opacity: 1;
+      transform: translate(-50%, -50%) scale(1.2);
+    }
+  }
+  
+  /* CTA Button pulse animation */
+  @keyframes pulse-cta {
+    0%, 100% {
+      box-shadow: 0 0 20px hsla(223, 83%, 27%, 0.4), 0 0 40px hsla(223, 83%, 27%, 0.2), 0 4px 20px rgba(0,0,0,0.15);
+      transform: scale(1);
+    }
+    50% {
+      box-shadow: 0 0 30px hsla(223, 83%, 27%, 0.6), 0 0 60px hsla(223, 83%, 27%, 0.3), 0 4px 25px rgba(0,0,0,0.2);
+      transform: scale(1.02);
+    }
+  }
+  
+  /* Mobile-specific optimizations (max-width: 768px) */
+  @media (max-width: 768px) {
+    /* Typography - Readable but compact */
+    h1 {
+      @apply text-[28px] leading-[1.2] tracking-tight;
+    }
+    
+    h2 {
+      @apply text-[22px] leading-[1.25] tracking-tight;
+    }
+    
+    h3 {
+      @apply text-[18px] leading-[1.3];
+    }
+    
+    p, .body-text {
+      @apply text-[16px] leading-[1.6];
+    }
+    
+    .text-xs {
+      @apply text-[14px];
+    }
+    
+    .text-sm {
+      @apply text-[15px];
+    }
+    
+    /* Container and layout */
+    .container {
+      @apply max-w-[640px] px-4;
+    }
+    
+    /* Buttons - Accessible touch targets (exclude minimal carousel dot indicators) */
+    button:not([aria-label^="Slide"]):not([aria-label^="Go to"]):not([aria-label^="Vai"]):not(.carousel-dot-btn), .btn {
+      @apply min-h-[44px];
+    }
+    
+    /* Carousel dot buttons remain tiny pallini */
+    button[aria-label^="Slide"],
+    button[aria-label^="Go to"],
+    button[aria-label^="Vai"],
+    .carousel-dot-btn {
+      min-height: 0 !important;
+    }
+    
+    /* Forms - Prevent iOS zoom */
+    input, textarea, select {
+      @apply text-[16px] min-h-[44px];
+    }
+    
+    /* Cards - Compact padding */
+    .card-mobile {
+      @apply p-4;
+    }
+    
+    /* Section spacing */
+    section {
+      @apply py-8;
+    }
+    
+    /* Icons - Proportional sizing */
+    .icon-small {
+      @apply w-7 h-7;
+    }
+    
+    .icon-medium {
+      @apply w-10 h-10;
+    }
+    
+    .icon-large {
+      @apply w-14 h-14;
+    }
+    
+    /* Prevent horizontal overflow */
+    body {
+      overflow-x: hidden;
+    }
+  }
+  
+  /* Micro-tuning for very small screens (360-400px) */
+  @media (max-width: 400px) {
+    h1 {
+      @apply text-[26px];
+    }
+    
+    h2 {
+      @apply text-[20px];
+    }
+    
+    .container {
+      @apply px-3;
+    }
+  }
+  
+  /* Animation Utilities */
+  .animation-delay-100 {
+    animation-delay: 100ms;
+  }
+  
+  .animation-delay-200 {
+    animation-delay: 200ms;
+  }
+  
+  .animation-delay-300 {
+    animation-delay: 300ms;
+  }
+  
+  .animation-delay-400 {
+    animation-delay: 400ms;
+  }
+  
+  .animation-delay-500 {
+    animation-delay: 500ms;
+  }
+
+  /* Hide scrollbar for services carousel on mobile */
+  .services-carousel,
+  .flight-plans-examples-carousel {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  
+  .services-carousel::-webkit-scrollbar,
+  .flight-plans-examples-carousel::-webkit-scrollbar {
+    display: none;
+    width: 0;
+    height: 0;
+  }
+  
+  /* Hide scrollbar for why choose us carousel on mobile */
+  .why-choose-carousel {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  
+  .why-choose-carousel::-webkit-scrollbar {
+    display: none;
+  }
+  
+  /* Animation delay for hint chevrons */
+  .animation-delay-150 {
+    animation-delay: 150ms;
+  }
+  
+  /* Carousel dots - mobile optimization */
+  @media (max-width: 768px) {
+    /* Generic carousel dot styles - perfect circles */
+    .carousel-dot {
+      width: 4px !important;
+      height: 4px !important;
+      border-radius: 50% !important;
+      transition: all 0.3s ease;
+    }
+    
+    .carousel-dot-active {
+      width: 7px !important;
+      height: 7px !important;
+      border-radius: 50% !important;
+    }
+  }
+  
+  /* Hide scrollbar for founders carousel on mobile */
+  .founders-carousel {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  
+  .founders-carousel::-webkit-scrollbar {
+    display: none;
+  }
+  
+  /* Hide scrollbar for partners carousel on mobile */
+  .partners-carousel {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  
+  .partners-carousel::-webkit-scrollbar {
+    display: none;
+  }
+  
+  /* Hide scrollbar for value drivers carousel on mobile */
+  .value-drivers-carousel {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  
+  .value-drivers-carousel::-webkit-scrollbar {
+    display: none;
+  }
+  
+  /* Hide scrollbar for contact carousel on mobile */
+  .contact-carousel {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  
+  .contact-carousel::-webkit-scrollbar {
+    display: none;
+  }
+  
+  /* Hide scrollbar for testimonials carousel on mobile */
+  .testimonials-carousel {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  
+  .testimonials-carousel::-webkit-scrollbar {
+    display: none;
+  }
+  
+  /* Force visibility on mobile for cards in carousels */
+  @media (max-width: 768px) {
+    /* Ensure cards are always visible */
+    .value-drivers-carousel *,
+    .contact-carousel *,
+    .testimonials-carousel *,
+    .services-carousel *,
+    .why-choose-carousel *,
+    .founders-carousel *,
+    .partners-carousel * {
+      visibility: visible !important;
+      opacity: 1 !important;
+    }
+    
+    /* Ensure carousel containers have proper overflow */
+    .value-drivers-carousel,
+    .contact-carousel,
+    .testimonials-carousel,
+    .services-carousel,
+    .why-choose-carousel,
+    .founders-carousel,
+    .partners-carousel {
+      overflow-x: auto !important;
+      -webkit-overflow-scrolling: touch !important;
+    }
+    
+    /* Ensure snap behavior works */
+    .snap-x {
+      scroll-snap-type: x mandatory !important;
+    }
+    
+    .snap-center {
+      scroll-snap-align: center !important;
+    }
+    
+    /* Ensure cards have proper dimensions */
+    .flex-none {
+      flex: none !important;
+    }
+    
+    /* Prevent animations from hiding content */
+    [class*="animate-"] {
+      animation-fill-mode: both !important;
+    }
+  }
+}
+
+/* Flight Plans Carousel */
+.flight-plans-carousel-container {
+  display: flex;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scroll-behavior: smooth;
+  gap: 12px;
+  padding: 0 4%;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  position: relative;
+}
+
+.flight-plans-carousel-container::-webkit-scrollbar {
+  display: none;
+}
+
+.flight-plans-carousel-card {
+  flex: 0 0 92%;
+  scroll-snap-align: center;
+  border-radius: 16px;
+  height: auto;
+  min-height: 100%;
+}
+
+.flight-plans-carousel-hint {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  padding: 8px 16px;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  z-index: 10;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  animation: fade-in 0.3s ease-out;
+}
+
+.flight-plans-carousel-chevron {
+  animation: slide-right 2s ease-in-out infinite;
+  color: hsl(var(--primary));
+  font-weight: bold;
+}
+
+.flight-plans-carousel-chevron-delay {
+  animation-delay: 0.3s;
+}
+
+@keyframes slide-right {
+  0%, 100% {
+    transform: translateX(0);
+    opacity: 0.4;
+  }
+  50% {
+    transform: translateX(4px);
+    opacity: 1;
+  }
+}
+
+/* Page Transition Animation */
+@keyframes page-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes page-fade-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+body {
+  animation: page-fade-in 0.5s ease-in-out;
+}
+
+/* Smooth page transition on navigation */
+.page-transition-trigger {
+  cursor: pointer;
+}
+
+.page-transition-trigger:active {
+  animation: page-fade-out 0.3s ease-in-out;
+}
+/* Animated blue glow border for the AI Service Advisor card */
+@keyframes advisor-glow {
+  0%, 100% {
+    box-shadow:
+      0 0 0 1px hsl(var(--secondary) / 0.6),
+      0 0 18px 2px hsl(var(--secondary) / 0.35),
+      0 0 0 0 hsl(var(--secondary) / 0);
+  }
+  50% {
+    box-shadow:
+      0 0 0 2px hsl(var(--secondary) / 0.9),
+      0 0 32px 6px hsl(var(--secondary) / 0.55),
+      0 0 0 6px hsl(var(--secondary) / 0.12);
+  }
+}
+
+@keyframes advisor-border-sweep {
+  0%   { background-position:   0% 50%; }
+  100% { background-position: 200% 50%; }
+}
+
+.advisor-glow-card {
+  position: relative;
+  animation: advisor-glow 2.4s ease-in-out infinite;
+  border-color: hsl(var(--secondary) / 0.7) !important;
+}
+
+.advisor-glow-card::before {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  border-radius: inherit;
+  padding: 2px;
+  background: linear-gradient(
+    90deg,
+    hsl(var(--secondary)) 0%,
+    hsl(215 100% 75%) 25%,
+    hsl(var(--primary)) 50%,
+    hsl(215 100% 75%) 75%,
+    hsl(var(--secondary)) 100%
+  );
+  background-size: 200% 200%;
+  animation: advisor-border-sweep 3s linear infinite;
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+          mask-composite: exclude;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.advisor-glow-card > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* Pilot Advisor CTA — flying plane button */
+@keyframes pilot-fly {
+  0%, 100% { transform: translate(0, 0) rotate(-12deg); }
+  50%      { transform: translate(2px, -3px) rotate(-8deg); }
+}
+@keyframes pilot-trail {
+  0%   { transform: translateX(-120%); opacity: 0; }
+  40%  { opacity: 1; }
+  100% { transform: translateX(220%); opacity: 0; }
+}
+@keyframes pilot-pulse {
+  0%, 100% {
+    box-shadow:
+      0 10px 30px -6px hsl(var(--primary) / 0.45),
+      0 0 0 0 hsl(var(--secondary) / 0.5);
+  }
+  50% {
+    box-shadow:
+      0 14px 40px -6px hsl(var(--primary) / 0.7),
+      0 0 0 10px hsl(var(--secondary) / 0);
+  }
+}
+.pilot-cta {
+  position: relative;
+  overflow: hidden;
+  animation: pilot-pulse 2.6s ease-in-out infinite;
+}
+.pilot-cta .pilot-icon {
+  display: inline-flex;
+  animation: pilot-fly 2.4s ease-in-out infinite;
+}
+.pilot-cta::after {
+  content: "";
+  position: absolute;
+  top: 0; left: 0;
+  width: 35%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    hsl(0 0% 100% / 0.28),
+    transparent
+  );
+  animation: pilot-trail 3.2s linear infinite;
+  pointer-events: none;
+}
+

@@ -1,0 +1,1 @@
+UPDATE client_services SET price = 150.00 WHERE id = '0130a238-e3d1-4cc5-83ed-b758a983668b';

@@ -1,0 +1,263 @@
+project_id = "gqmmgyoviwhgqvzqbbja"
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public", "graphql_public"]
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
+
+[db]
+port = 54322
+shadow_port = 54320
+major_version = 15
+
+[db.pooler]
+enabled = false
+port = 54329
+pool_mode = "transaction"
+default_pool_size = 20
+max_client_conn = 100
+
+[realtime]
+enabled = true
+ip_version = "ipv6"
+port = 54323
+
+[studio]
+enabled = true
+port = 54324
+api_url = "http://127.0.0.1"
+
+[storage]
+enabled = true
+file_size_limit = "50MiB"
+
+[auth]
+enabled = true
+site_url = "http://127.0.0.1:3000"
+additional_redirect_urls = ["https://localhost:3000"]
+jwt_expiry = 3600
+enable_signup = true
+enable_anonymous_sign_ins = false
+
+[auth.email]
+enable_signup = true
+double_confirm_changes = true
+enable_confirmations = false
+
+[edge_runtime]
+enabled = true
+port = 54325
+inspector_port = 5000
+
+[functions.send-pathways-password-reset]
+verify_jwt = false
+
+[functions.pathways-validate-reset]
+verify_jwt = false
+
+[functions.pathways-complete-reset]
+verify_jwt = false
+
+[functions.send-associate-registration]
+verify_jwt = false
+
+[functions.send-pathways-activation]
+verify_jwt = false
+
+[functions.send-pathways-receipt-upload]
+verify_jwt = false
+
+[functions.send-pathways-access-decision]
+verify_jwt = false
+
+[functions.send-booking-email]
+verify_jwt = false
+
+[functions.send-student-registration]
+verify_jwt = false
+
+[functions.send-pathways-application]
+verify_jwt = false
+
+[functions.send-announcement-email]
+verify_jwt = false
+
+[functions.send-student-selection]
+verify_jwt = false
+
+[functions.send-talent-pool-leave]
+verify_jwt = false
+
+[functions.upload-company-logo]
+verify_jwt = false
+
+[functions.get-company-selected-students]
+verify_jwt = false
+
+[functions.deselect-student]
+verify_jwt = false
+
+[functions.send-admin-company-message]
+verify_jwt = false
+
+[functions.send-company-approval-email]
+verify_jwt = false
+
+[functions.send-admin-student-message]
+verify_jwt = false
+
+[functions.get-student-selections]
+verify_jwt = false
+
+[functions.send-password-reset]
+verify_jwt = false
+
+[functions.pathways-send-message]
+verify_jwt = false
+
+[functions.pathways-get-messages]
+verify_jwt = false
+
+[functions.pathways-get-threads]
+verify_jwt = false
+
+[functions.send-pathways-signup-notification]
+verify_jwt = false
+
+[functions.send-admin-associate-message]
+verify_jwt = false
+
+[functions.send-admin-message-notification]
+verify_jwt = false
+
+[functions.send-company-message-notification]
+verify_jwt = false
+
+[functions.send-approval-email]
+verify_jwt = false
+
+[functions.send-admin-partner-message]
+verify_jwt = false
+
+[functions.send-partner-message-notification]
+verify_jwt = false
+
+[functions.auth-reset-password]
+verify_jwt = false
+
+[functions.send-group-message-notification]
+verify_jwt = false
+
+[functions.send-client-registration]
+verify_jwt = false
+
+[functions.send-client-message-notification]
+verify_jwt = false
+
+[functions.send-client-order-notification]
+verify_jwt = false
+
+[functions.send-payment-approval]
+verify_jwt = false
+
+[functions.send-associate-project-notification]
+verify_jwt = false
+
+[functions.send-client-approval]
+verify_jwt = false
+
+[functions.get-associate-overview-url]
+verify_jwt = false
+
+[functions.send-associate-expulsion]
+verify_jwt = false
+
+[functions.send-client-payment-confirmation]
+verify_jwt = false
+
+[functions.send-document-notification]
+verify_jwt = false
+
+[functions.send-client-feedback-confirmation]
+verify_jwt = false
+
+[functions.send-client-password-reset]
+verify_jwt = false
+
+[functions.complete-client-password-reset]
+verify_jwt = false
+
+[functions.send-associate-request-notification]
+verify_jwt = false
+
+[functions.send-availability-notifications]
+verify_jwt = false
+
+[functions.generate-google-meet-link]
+verify_jwt = false
+
+[functions.send-status-change-email]
+verify_jwt = false
+
+[functions.send-company-registration]
+verify_jwt = false
+
+[functions.send-job-hub-request]
+verify_jwt = false
+
+[functions.send-pathways-message]
+verify_jwt = false
+
+[functions.send-associate-slot-confirmation]
+verify_jwt = false
+
+[functions.send-project-completion]
+verify_jwt = false
+
+[functions.send-recruiting-chat-notification]
+verify_jwt = false
+
+[functions.send-recruiting-next-step]
+verify_jwt = false
+
+[functions.send-talent-pool-receipt-upload]
+verify_jwt = false
+
+[functions.send-application-status]
+verify_jwt = false
+
+[functions.kb-admin-login]
+verify_jwt = false
+
+[functions.send-kb-order-notification]
+verify_jwt = false
+
+[functions.kb-seed-admin]
+verify_jwt = false
+
+[functions.kb-admin-audit]
+verify_jwt = false
+
+[functions.kb-admin-get-audit-logs]
+verify_jwt = false
+
+[functions.create-payment]
+verify_jwt = false
+
+[functions.create-subscription]
+verify_jwt = false
+
+[functions.verify-payment]
+verify_jwt = false
+
+[functions.handle-primary-response]
+verify_jwt = false
+
+[functions.handle-client-counter-response]
+verify_jwt = false
+
+
+[functions.service-advisor-chat]
+verify_jwt = false

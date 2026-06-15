@@ -1,0 +1,1 @@
+ALTER TABLE public.kb_products ADD COLUMN overview_images text[] DEFAULT '{}'::text[];

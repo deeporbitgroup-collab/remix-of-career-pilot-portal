@@ -1,0 +1,1 @@
+UPDATE public.client_services SET price = 250 WHERE category = 'Altitude' AND name = 'Outreach Power Pack — Pay Per Interview';

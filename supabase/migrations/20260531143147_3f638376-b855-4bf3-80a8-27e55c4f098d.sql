@@ -1,0 +1,3 @@
+UPDATE public.client_services
+SET description = 'Choose an Associate working in your target sector who will rewrite your CV or your Cover Letter (your choice) to make it stand out. The Associate uses their first-hand industry experience to optimize wording, structure, keywords, and impact, tailored to the roles you are targeting. If you wish, you can also schedule a meeting with the Associate before the rewrite: during the call they will take notes on your background, experiences and goals to better understand how to structure your CV or Cover Letter.'
+WHERE category = 'Altitude' AND name = 'CV / Cover Letter Rewrite';

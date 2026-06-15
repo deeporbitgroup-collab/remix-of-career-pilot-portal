@@ -1,0 +1,464 @@
+{
+  "landing": {
+    "nav": {
+      "title": "Talent Pool By Career Pilot",
+      "subtitle": "EXCLUSIVE NETWORK",
+      "back": "Torna"
+    },
+    "hero": {
+      "badge": "INTERMEDIAZIONE SICURA E VERIFICATA",
+      "title": "Connetti Talento ed Opportunità",
+      "subtitle": "La piattaforma dove sono le aziende a scegliere te.",
+      "limited": "⭐ Accesso limitato a soli 20 studenti selezionati"
+    },
+    "values": {
+      "companies": {
+        "title": "Per le Aziende",
+        "description": "Accesso esclusivo ai talenti più qualificati",
+        "badge": "GRATUITO"
+      },
+      "students": {
+        "title": "Per gli Studenti",
+        "description": "Rete esclusiva di opportunità selezionate",
+        "pricing": "€30/mese + €120 success fee"
+      }
+    },
+    "roleSelection": {
+      "title": "Seleziona il Tuo Profilo",
+      "admin": {
+        "title": "Admin",
+        "description": "Gestione e supervisione della piattaforma",
+        "button": "ACCEDI"
+      },
+      "student": {
+        "title": "Studente",
+        "description": "Accedi ad opportunità professionali esclusive",
+        "button": "REGISTRATI"
+      },
+      "company": {
+        "title": "Azienda",
+        "description": "Accesso gratuito ai migliori talenti selezionati",
+        "button": "REGISTRATI"
+      }
+    },
+    "footer": {
+      "terms": "Termini",
+      "privacy": "Privacy",
+      "copyright": "© 2025 Career Pilot"
+    }
+  },
+  "studentAuth": {
+    "title": "Area Studenti",
+    "back": "Torna indietro",
+    "tabs": {
+      "login": "Accedi",
+      "register": "Registrati"
+    },
+    "login": {
+      "email": "Email",
+      "password": "Password",
+      "button": "Accedi",
+      "loading": "Accesso..."
+    },
+    "register": {
+      "firstName": "Nome",
+      "lastName": "Cognome",
+      "email": "Email",
+      "phone": "Telefono (WhatsApp)",
+      "linkedin": "LinkedIn (opzionale)",
+      "linkedinPlaceholder": "https://linkedin.com/in/...",
+      "password": "Password",
+      "confirmPassword": "Conferma Password",
+      "passwordHint": "Min 8 caratteri, 1 maiuscola, 1 numero",
+      "cv": "Curriculum Vitae (PDF, max 10MB)",
+      "coverLetter": "Lettera di Presentazione (PDF, max 10MB)",
+      "terms": "Accetto i",
+      "termsLink": "Termini & Condizioni",
+      "and": "e la",
+      "privacyLink": "Privacy/GDPR",
+      "studentPlan": "Piano Studente: €5/mese per accesso alla piattaforma. Fee di successo di €80 se trovi stage/colloquio tramite la Talent Pool.",
+      "noFile": "Nessun file selezionato",
+      "button": "Procedi con i documenti →",
+      "loading": "Registrazione...",
+      "required": "*"
+    },
+    "errors": {
+      "validation": "Errore validazione",
+      "validationDesc": "Controlla i campi del form",
+      "documentsRequired": "Documenti richiesti",
+      "documentsRequiredDesc": "Carica sia il CV che la lettera di presentazione",
+      "emailExists": "Email già registrata",
+      "emailExistsDesc": "Questa email è già stata utilizzata per una registrazione",
+      "registrationError": "Errore registrazione",
+      "registrationErrorDesc": "Si è verificato un errore durante la registrazione. Riprova.",
+      "unexpectedError": "Errore imprevisto",
+      "unexpectedErrorDesc": "Si è verificato un errore imprevisto. Riprova più tardi.",
+      "invalidCredentials": "Credenziali non valide",
+      "loginError": "Errore accesso"
+    },
+    "success": {
+      "registrationComplete": "Registrazione completata!",
+      "registrationCompleteDesc": "La tua registrazione è stata inviata. Ti avviseremo dopo la revisione di Career Pilot.",
+      "loginSuccess": "Accesso riuscito",
+      "loginSuccessDesc": "Benvenuto!"
+    },
+    "status": {
+      "pending": "Account in revisione",
+      "pendingDesc": "Il tuo account è ancora in revisione da parte di Career Pilot",
+      "rejected": "Account rifiutato",
+      "rejectedDesc": "La tua registrazione è stata rifiutata"
+    }
+  },
+  "companyAuth": {
+    "title": "Area Aziende",
+    "subtitle": "Registrazione gratuita per le aziende",
+    "back": "Torna indietro",
+    "tabs": {
+      "login": "Accedi",
+      "register": "Registrati"
+    },
+    "login": {
+      "email": "Email",
+      "password": "Password",
+      "button": "Accedi",
+      "loading": "Accesso..."
+    },
+    "register": {
+      "companyName": "Nome Azienda",
+      "sector": "Settore",
+      "sectorPlaceholder": "Seleziona settore",
+      "size": "Dimensione",
+      "sizePlaceholder": "Seleziona dimensione",
+      "sizes": {
+        "startup": "Startup",
+        "boutique": "Boutique",
+        "medium": "Medium size",
+        "large": "Large company"
+      },
+      "email": "Email di riferimento",
+      "linkedin": "LinkedIn (opzionale)",
+      "linkedinPlaceholder": "https://linkedin.com/company/...",
+      "password": "Password",
+      "confirmPassword": "Conferma Password",
+      "passwordHint": "Min 8 caratteri, 1 maiuscola, 1 numero",
+      "terms": "Accetto i",
+      "termsLink": "Termini & Condizioni",
+      "and": "e la",
+      "privacyLink": "Privacy/GDPR",
+      "freeNote": "Registrazione GRATUITA per le aziende. Accedi al nostro pool di talenti selezionati senza costi.",
+      "button": "Registrati",
+      "loading": "Registrazione...",
+      "required": "*"
+    },
+    "errors": {
+      "validation": "Errore validazione",
+      "validationDesc": "Controlla i campi del form",
+      "emailExists": "Email già registrata",
+      "emailExistsDesc": "Questa email è già stata utilizzata per una registrazione",
+      "registrationError": "Errore registrazione",
+      "registrationErrorDesc": "Si è verificato un errore durante la registrazione. Riprova.",
+      "profileError": "Errore creazione profilo",
+      "profileErrorDesc": "Si è verificato un errore durante la creazione del profilo aziendale",
+      "unexpectedError": "Errore imprevisto",
+      "unexpectedErrorDesc": "Si è verificato un errore imprevisto. Riprova più tardi.",
+      "invalidCredentials": "Credenziali non valide",
+      "loginError": "Errore accesso"
+    },
+    "success": {
+      "registrationComplete": "Registrazione completata!",
+      "registrationCompleteDesc": "La tua richiesta è in attesa di approvazione da parte di Career Pilot.",
+      "loginSuccess": "Accesso riuscito",
+      "loginSuccessDesc": "Benvenuto nella Talent Pool"
+    },
+    "status": {
+      "pending": "Account in revisione",
+      "pendingDesc": "Il tuo account è ancora in revisione",
+      "rejected": "Account rifiutato",
+      "rejectedDesc": "La tua registrazione è stata rifiutata"
+    }
+  },
+  "adminLogin": {
+    "title": "Accesso Admin",
+    "subtitle": "Area riservata Career Pilot",
+    "back": "Torna indietro",
+    "email": "Email",
+    "emailPlaceholder": "admin@careerpilot.com",
+    "password": "Password",
+    "passwordPlaceholder": "••••••••",
+    "button": "Accedi",
+    "loading": "Accesso in corso...",
+    "errors": {
+      "invalid": "Credenziali errate",
+      "invalidDesc": "Email o password non corretti"
+    },
+    "success": {
+      "title": "Accesso riuscito",
+      "desc": "Benvenuto nell'area amministrativa"
+    }
+  },
+  "studentDashboard": {
+    "title": "Dashboard Studente",
+    "welcome": "Benvenuto",
+    "buttons": {
+      "backToSite": "Torna al Sito",
+      "logout": "Logout"
+    },
+    "status": {
+      "registration": "Stato Registrazione",
+      "payment": "Stato Pagamento",
+      "access": "Accesso Aziende",
+      "unlocked": "Sbloccato",
+      "locked": "Bloccato"
+    },
+    "paymentSection": {
+      "title": "Accesso alla Talent Pool",
+      "monthlyFee": "Per accedere alla Talent Pool è necessario attivare un abbonamento di",
+      "perMonth": "5 € al mese",
+      "stageFee": "Se un'azienda seleziona il tuo profilo tramite la Talent Pool, pagherai solo",
+      "stageTotal": "85 € in totale",
+      "stageNote": "(indipendentemente dai mesi trascorsi).",
+      "button": "Procedi al Pagamento"
+    },
+    "tabs": {
+      "profile": "Profilo",
+      "documents": "Documenti",
+      "companies": "Aziende"
+    },
+    "profile": {
+      "title": "I tuoi dati",
+      "firstName": "Nome",
+      "lastName": "Cognome",
+      "email": "Email",
+      "phone": "Telefono",
+      "linkedin": "LinkedIn",
+      "linkedinView": "Visualizza Profilo",
+      "linkedinNotProvided": "Non fornito",
+      "internshipDuration": "Durata Stage",
+      "months": "mesi",
+      "preferredSectors": "Settori Preferiti",
+      "noSectors": "Nessun settore selezionato"
+    },
+    "documents": {
+      "title": "I tuoi documenti",
+      "cv": "Curriculum Vitae",
+      "coverLetter": "Lettera di Presentazione",
+      "uploaded": "Caricato con successo",
+      "view": "Visualizza",
+      "download": "Scarica",
+      "noDocuments": "Nessun documento caricato"
+    },
+    "companies": {
+      "title": "Aziende Partner",
+      "sector": "Settore",
+      "email": "Email",
+      "linkedin": "LinkedIn",
+      "linkedinVisit": "Visita Profilo",
+      "noCompanies": "Nessuna azienda registrata al momento",
+      "accessRequired": "Completa il pagamento per vedere le aziende partner"
+    },
+    "errors": {
+      "loadError": "Errore",
+      "loadErrorDesc": "Impossibile caricare i dati"
+    }
+  },
+  "studentPayment": {
+    "title": "Benvenuto",
+    "subtitle": "Completa il pagamento per accedere alla Talent Pool",
+    "subtitleAlt": "Area Pagamenti",
+    "logout": "Logout",
+    "accessSection": {
+      "title": "Accesso alla Talent Pool",
+      "monthlyFee": "Per accedere alla Talent Pool è necessario attivare un abbonamento di",
+      "perMonth": "5 € al mese",
+      "stageFee": "Se un'azienda seleziona il tuo profilo tramite la Talent Pool, pagherai solo",
+      "stageTotal": "85 € in totale",
+      "stageNote": "(indipendentemente dai mesi trascorsi)."
+    },
+    "bankDetails": {
+      "title": "Dati per il Bonifico",
+      "beneficiary": "Beneficiario:",
+      "iban": "IBAN:",
+      "note": "Nota:",
+      "noteText": "Carica il documento che attesta l'avvenuto bonifico per velocizzare la verifica e l'attivazione dell'accesso completo alla Talent Pool. Se non carichi alcun documento, l'accesso resterà in attesa fino alla conferma manuale del pagamento sul conto."
+    },
+    "upload": {
+      "title": "Carica Ricevuta di Pagamento",
+      "paymentType": "Tipo di Pagamento",
+      "monthly": "Mensile (5€)",
+      "stage": "Stage (85€)",
+      "document": "Documento Bonifico (PDF o Immagine)",
+      "documentDesc": "Carica lo screenshot o il PDF che attesta l'avvenuto bonifico",
+      "button": "Carica Ricevuta",
+      "loading": "Caricamento..."
+    },
+    "history": {
+      "title": "Storico Pagamenti",
+      "monthly": "Pagamento Mensile",
+      "stage": "Pagamento Stage",
+      "verified": "Verificato",
+      "pending": "In Attesa",
+      "rejected": "Rifiutato",
+      "noPayments": "Nessun pagamento registrato"
+    },
+    "errors": {
+      "noFile": "File mancante",
+      "noFileDesc": "Seleziona la ricevuta di pagamento",
+      "uploadError": "Errore caricamento",
+      "uploadErrorDesc": "Impossibile caricare la ricevuta"
+    },
+    "success": {
+      "uploaded": "Ricevuta caricata!",
+      "uploadedDesc": "La tua ricevuta è in attesa di verifica da parte di Career Pilot"
+    }
+  },
+  "studentTalentPool": {
+    "header": {
+      "title": "Talent Pool - Career Pilot",
+      "logout": "Esci"
+    },
+    "profile": {
+      "title": "Il Tuo Profilo",
+      "uploadPhoto": "Carica foto profilo",
+      "uploadPhotoButton": "Carica foto profilo",
+      "documents": "Documenti",
+      "cv": "CV",
+      "coverLetter": "Lettera",
+      "upload": "Carica",
+      "download": "Scarica",
+      "preferences": "Preferenze Stage",
+      "companyTypes": "Tipo Azienda",
+      "sectors": "Settori Preferiti",
+      "locations": "Località Preferite",
+      "period": "Periodo Stage",
+      "startDate": "Data Inizio",
+      "endDate": "Data Fine",
+      "compensation": "Retribuzione",
+      "saveButton": "Salva Preferenze"
+    },
+    "companies": {
+      "title": "Aziende Partner",
+      "search": "Cerca aziende...",
+      "filters": "Filtri",
+      "companyTypes": "Tipo Azienda",
+      "sectors": "Settori",
+      "clearFilters": "Cancella Filtri",
+      "sector": "Settore",
+      "email": "Email",
+      "linkedin": "LinkedIn",
+      "visit": "Visita",
+      "noCompanies": "Nessuna azienda trovata",
+      "noCompaniesDesc": "Prova a modificare i filtri di ricerca"
+    },
+    "compensation": {
+      "paid": "Solo retribuiti",
+      "unpaid": "Solo non retribuiti",
+      "both": "Entrambi"
+    },
+    "errors": {
+      "loadError": "Errore",
+      "loadErrorDesc": "Impossibile caricare i dati",
+      "photoError": "Errore",
+      "photoTypeError": "Puoi caricare solo immagini (JPG, PNG, etc.)",
+      "photoSizeError": "La foto non può superare 5MB",
+      "photoUploadError": "Impossibile caricare la foto. Riprova.",
+      "documentError": "Errore",
+      "documentTypeError": "Puoi caricare solo file PDF, DOC o DOCX",
+      "documentSizeError": "Il file non può superare 10MB",
+      "documentUploadError": "Impossibile caricare il documento. Riprova.",
+      "downloadError": "Errore",
+      "downloadErrorDesc": "Impossibile scaricare il file",
+      "preferencesError": "Errore",
+      "preferencesErrorDesc": "Impossibile salvare le preferenze",
+      "userIdError": "User ID non trovato"
+    },
+    "success": {
+      "photoUploaded": "Successo",
+      "photoUploadedDesc": "Foto profilo aggiornata con successo",
+      "documentUploaded": "Successo",
+      "cvUploaded": "CV aggiornato con successo",
+      "coverUploaded": "Lettera di presentazione aggiornata con successo",
+      "preferencesSaved": "Successo",
+      "preferencesSavedDesc": "Preferenze salvate con successo"
+    }
+  },
+  "studentTalentPool": {
+    "header": {
+      "title": "Talent Pool - Career Pilot",
+      "logout": "Esci"
+    },
+    "profile": {
+      "title": "Il Tuo Profilo",
+      "uploadPhoto": "Carica foto profilo",
+      "documents": "Documenti",
+      "cv": "Curriculum Vitae",
+      "coverLetter": "Lettera di Presentazione",
+      "download": "Download",
+      "preferences": "Preferenze Professionali",
+      "companyTypes": "Tipologia Azienda",
+      "sectors": "Settori di Interesse",
+      "locations": "Location Stage",
+      "period": "Periodo Stage",
+      "selectPeriod": "Seleziona il periodo",
+      "compensation": "Remunerazione",
+      "saveButton": "Salva Preferenze"
+    },
+    "companies": {
+      "title": "Aziende Convenzionate",
+      "search": "Cerca per nome o settore...",
+      "filters": "Filtra Aziende",
+      "companySize": "Dimensione Azienda",
+      "sector": "Settore",
+      "noCompanies": "Nessuna azienda trovata con i filtri selezionati",
+      "linkedinProfile": "Profilo LinkedIn"
+    },
+    "compensation": {
+      "paid": "Solo retribuiti",
+      "unpaid": "Solo non retribuiti",
+      "both": "Entrambi"
+    },
+    "errors": {
+      "loadError": "Errore",
+      "loadErrorDesc": "Impossibile caricare i dati",
+      "photoError": "Errore",
+      "photoTypeError": "Puoi caricare solo immagini (JPG, PNG, etc.)",
+      "photoSizeError": "La foto non può superare 5MB",
+      "photoUploadError": "Impossibile caricare la foto. Riprova.",
+      "documentError": "Errore",
+      "documentTypeError": "Puoi caricare solo file PDF, DOC o DOCX",
+      "documentSizeError": "Il file non può superare 10MB",
+      "documentUploadError": "Impossibile caricare il documento. Riprova.",
+      "downloadError": "Errore",
+      "downloadErrorDesc": "Impossibile scaricare il file",
+      "preferencesError": "Errore",
+      "preferencesErrorDesc": "Impossibile salvare le preferenze",
+      "userIdError": "User ID non trovato"
+    },
+    "success": {
+      "photoUploaded": "Successo",
+      "photoUploadedDesc": "Foto profilo aggiornata con successo",
+      "documentUploaded": "Successo",
+      "cvUploaded": "CV aggiornato con successo",
+      "coverUploaded": "Lettera di presentazione aggiornata con successo",
+      "preferencesSaved": "Successo",
+      "preferencesSavedDesc": "Preferenze salvate con successo"
+    }
+  },
+  "common": {
+    "loading": "Caricamento...",
+    "back": "Indietro",
+    "save": "Salva",
+    "cancel": "Annulla",
+    "yes": "Sì",
+    "no": "No",
+    "confirm": "Conferma",
+    "error": "Errore",
+    "success": "Successo"
+  },
+  "legal": {
+    "termsTitle": "Termini e Condizioni",
+    "privacyTitle": "Privacy e GDPR",
+    "close": "Chiudi",
+    "termsContent": "TERMINI E CONDIZIONI D'USO\n\n1. ACCETTAZIONE DEI TERMINI\nAccedendo e utilizzando la piattaforma Talent Pool gestita da Career Pilot, accetti e ti impegni a rispettare questi Termini e Condizioni.\n\n2. DESCRIZIONE DEL SERVIZIO\nTalent Pool è una piattaforma di intermediazione che collega studenti con aziende per opportunità di stage e professionali.\n\n3. PIANO STUDENTE\n- Quota mensile: €5 per l'accesso alla piattaforma\n- Fee di successo: €80 se ottieni uno stage/colloquio tramite la Talent Pool\n- La fee di successo è dovuta una sola volta, indipendentemente dal numero di mesi di abbonamento\n\n4. OBBLIGHI DELL'UTENTE\n- Fornire informazioni accurate e veritiere\n- Mantenere riservate le credenziali di accesso\n- Non utilizzare la piattaforma per scopi illegali\n- Rispettare i diritti di proprietà intellettuale di Career Pilot e degli altri utenti\n\n5. PROPRIETÀ INTELLETTUALE\nTutti i contenuti della piattaforma, inclusi ma non limitati a testo, grafica, loghi e software, sono di proprietà di Career Pilot.\n\n6. LIMITAZIONE DI RESPONSABILITÀ\nCareer Pilot agisce come intermediario e non è responsabile degli accordi tra studenti e aziende.\n\n7. MODIFICA DEI TERMINI\nCareer Pilot si riserva il diritto di modificare questi termini in qualsiasi momento. Gli utenti saranno notificati di modifiche significative.\n\n8. LEGGE APPLICABILE\nQuesti termini sono regolati dalla legge italiana.",
+    "privacyContent": "INFORMATIVA PRIVACY E CONFORMITÀ GDPR\n\n1. TITOLARE DEL TRATTAMENTO\nCareer Pilot è il titolare del trattamento dei dati personali raccolti tramite la piattaforma Talent Pool.\n\n2. DATI RACCOLTI\nRaccogliamo:\n- Informazioni personali (nome, cognome, email, telefono)\n- Informazioni professionali (CV, lettera di presentazione, LinkedIn)\n- Informazioni di pagamento (ricevute bonifico)\n\n3. FINALITÀ DEL TRATTAMENTO\n- Registrazione e gestione dell'accesso alla piattaforma\n- Intermediazione tra studenti e aziende\n- Gestione dei pagamenti\n- Comunicazione di opportunità\n\n4. BASE GIURIDICA\n- Consenso dell'interessato\n- Esecuzione del contratto\n- Obblighi di legge\n\n5. CONSERVAZIONE DEI DATI\nI dati saranno conservati per la durata del servizio e successivamente per i periodi previsti dalla legge.\n\n6. DIRITTI DELL'INTERESSATO (GDPR)\nHai il diritto di:\n- Accedere ai tuoi dati personali\n- Rettificare dati inesatti\n- Richiedere la cancellazione dei dati\n- Limitare il trattamento\n- Portabilità dei dati\n- Opporti al trattamento\n- Revocare il consenso\n\n7. SICUREZZA DEI DATI\nImplementiamo misure tecniche e organizzative adeguate per proteggere i tuoi dati.\n\n8. CONDIVISIONE DEI DATI\n- Le aziende approvate hanno accesso ai profili degli studenti\n- I dati non vengono venduti a terze parti\n- I dati possono essere condivisi con fornitori di servizi (hosting, pagamenti)\n\n9. CONTATTI\nPer richieste relative ai tuoi dati, contatta: privacy@careerpilot.com\n\n10. RECLAMI\nHai il diritto di presentare un reclamo al Garante per la Protezione dei Dati Personali."
+  }
+}

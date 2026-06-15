@@ -1,0 +1,1 @@
+UPDATE public.client_projects SET scheduling_status = 'awaiting_primary' WHERE id = 'f6559208-53e2-476f-99ff-a43c40cd4580';

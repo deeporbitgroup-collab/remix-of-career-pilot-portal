@@ -1,0 +1,879 @@
+import { useState, useEffect } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useNavigate } from "react-router-dom";
+import { useToast } from "@/hooks/use-toast";
+import { 
+  Building2, 
+  LogOut, 
+  User, 
+  FileText,
+  Download,
+  Edit,
+  Save,
+  Upload,
+  DoorOpen
+} from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { TalentPoolLanguageProvider, useTalentPoolLanguage } from "@/contexts/TalentPoolLanguageContext";
+import { cn } from "@/lib/utils";
+
+const SECTORS = [
+  "Consulting", "Finance", "Technology", "Healthcare", "Manufacturing",
+  "Retail", "Education", "Energy", "Real Estate", "Telecommunications",
+  "Transportation", "Fashion", "Media & Entertainment", "Legal", "Altro"
+];
+
+const SIZES = [
+  { value: "STARTUP", label: "Startup" },
+  { value: "BOUTIQUE", label: "Boutique" },
+  { value: "MEDIUM_SIZE", label: "Medium size" },
+  { value: "LARGE_COMPANY", label: "Large company" }
+];
+
+const CompanyDashboardContent = () => {
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const { t } = useTalentPoolLanguage();
+  const [loading, setLoading] = useState(true);
+  const [company, setCompany] = useState<any>(null);
+  const [students, setStudents] = useState<any[]>([]);
+  const [editMode, setEditMode] = useState(false);
+  const [editData, setEditData] = useState({
+    company_name: '',
+    sector: '',
+    size: '',
+    reference_email: '',
+    linkedin_url: '',
+    description: ''
+  });
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [selectedStudents, setSelectedStudents] = useState<Set<string>>(new Set());
+  const [selecting, setSelecting] = useState<string | null>(null);
+
+  useEffect(() => {
+    checkAuthAndLoadData();
+  }, []);
+
+  const checkAuthAndLoadData = async () => {
+    try {
+      const role = localStorage.getItem('talentPoolRole');
+      const userStr = localStorage.getItem('talentPoolUser');
+      
+      if (role !== 'COMPANY' || !userStr) {
+        navigate('/talent-pool/company');
+        return;
+      }
+
+      const stored = JSON.parse(userStr);
+
+      // Always refresh user + profile from DB so registration_status is current
+      let userData: any = stored;
+      try {
+        const { data: fresh, error: freshErr } = await (supabase.rpc as any)(
+          'talent_pool_get_user_with_profile',
+          { _user_id: stored.id }
+        );
+        if (!freshErr && fresh) {
+          userData = fresh;
+          localStorage.setItem('talentPoolUser', JSON.stringify(fresh));
+        }
+      } catch (e) {
+        console.warn('Could not refresh user data, using cached:', e);
+      }
+
+      setCompany(userData);
+      if (userData.company_profiles && userData.company_profiles.length > 0) {
+        const profile = userData.company_profiles[0];
+        setEditData({
+          company_name: profile.company_name || '',
+          sector: profile.sector || '',
+          size: profile.size || '',
+          reference_email: profile.reference_email || '',
+          linkedin_url: profile.linkedin_url || '',
+          description: profile.description || ''
+        });
+      }
+      
+      if (userData.registration_status !== 'APPROVED') {
+        toast({
+          title: "Access Denied",
+          description: "Your company account must be approved to access this area",
+          variant: "destructive"
+        });
+        navigate('/talent-pool/company');
+        return;
+      }
+
+      await loadStudents();
+      await loadSelectedStudents(userData.id);
+    } catch (error) {
+      console.error('Auth check error:', error);
+      navigate('/talent-pool/company');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadCompanyData = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('talent_pool_users')
+        .select(`
+          *,
+          company_profiles (*)
+        `)
+        .eq('id', userId)
+        .single();
+
+      if (error) throw error;
+
+      setCompany(data);
+      localStorage.setItem('talentPoolUser', JSON.stringify(data));
+
+      if (data.company_profiles && data.company_profiles.length > 0) {
+        const profile = data.company_profiles[0];
+        setEditData({
+          company_name: profile.company_name || '',
+          sector: profile.sector || '',
+          size: profile.size || '',
+          reference_email: profile.reference_email || '',
+          linkedin_url: profile.linkedin_url || '',
+          description: profile.description || ''
+        });
+      }
+    } catch (error) {
+      console.error('Error loading company data:', error);
+    }
+  };
+
+  const loadStudents = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('student_profiles')
+        .select(`
+          id,
+          user_id,
+          first_name,
+          last_name,
+          photo_url,
+          cv_url,
+          cover_letter_url,
+          linkedin_url,
+          presentation_video_url,
+          payment_status,
+          access_status,
+          profile_visible_to_companies
+        `)
+        .eq('profile_visible_to_companies', true)
+        .eq('access_status', 'UNLOCKED')
+        .not('user_id', 'is', null);
+
+
+      if (error) {
+        console.error('Error loading students:', error);
+        return;
+      }
+
+      setStudents(data || []);
+    } catch (error) {
+      console.error('Error loading students:', error);
+    }
+  };
+
+  const loadSelectedStudents = async (companyId: string) => {
+    try {
+      const { data, error } = await supabase.functions.invoke('get-company-selected-students', {
+        body: { companyId }
+      });
+
+      if (error) {
+        console.error('Error loading selected students:', error);
+        return [];
+      }
+
+      const selections = Array.isArray(data) ? data : [];
+      const ids = selections.map((s: any) => s.student_id as string);
+      setSelectedStudents(new Set(ids));
+      return ids;
+    } catch (error) {
+      console.error('Error loading selected students:', error);
+      return [];
+    }
+  };
+
+  const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        title: "File too large",
+        description: "Please select an image under 5MB",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setLogoFile(file);
+  };
+
+  const handleSaveCompanyInfo = async () => {
+    try {
+      if (!company?.id) {
+        console.error("No company ID found");
+        return;
+      }
+
+      if (!editData.company_name || !editData.sector || !editData.size || !editData.reference_email) {
+        toast({
+          title: "Missing required fields",
+          description: "Company name, sector, size, and reference email are required.",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      setUploading(true);
+      let logoUrl = company.company_profiles?.[0]?.logo_url;
+
+      if (logoFile) {
+        const arrayBuffer = await logoFile.arrayBuffer();
+        const bytes = new Uint8Array(arrayBuffer);
+        let binary = '';
+        for (let i = 0; i < bytes.byteLength; i++) {
+          binary += String.fromCharCode(bytes[i]);
+        }
+        const fileBase64 = btoa(binary);
+
+        const { data: uploadData, error: uploadError } = await supabase.functions.invoke('upload-company-logo', {
+          body: {
+            companyId: company.id,
+            fileName: logoFile.name,
+            contentType: logoFile.type,
+            fileBase64
+          }
+        });
+
+        if (uploadError || !uploadData?.publicUrl) {
+          throw uploadError || new Error('Failed to upload logo');
+        }
+
+        logoUrl = uploadData.publicUrl;
+      }
+
+      const { data, error } = await supabase.rpc('update_company_profile', {
+        p_user_id: company.id,
+        p_company_name: editData.company_name,
+        p_sector: editData.sector,
+        p_size: editData.size as any,
+        p_reference_email: editData.reference_email,
+        p_linkedin_url: editData.linkedin_url || null,
+        p_logo_url: logoUrl || null,
+        p_description: editData.description || null
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Company information updated successfully"
+      });
+
+      setEditMode(false);
+      setLogoFile(null);
+      await loadCompanyData(company.id);
+    } catch (error: any) {
+      console.error('Save error:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to save company information",
+        variant: "destructive"
+      });
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleSelectStudent = async (student: any) => {
+    if (!company?.id || !student.user_id) {
+      toast({
+        title: "Error",
+        description: "Missing required information. Please refresh and try again.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setSelecting(student.id);
+    
+    try {
+      const { error } = await supabase.functions.invoke('send-student-selection', {
+        body: {
+          companyId: company.id,
+          studentId: student.user_id,
+          companyName: company.company_profiles?.[0]?.company_name || 'Company',
+          companyEmail: company.email,
+          studentName: `${student.first_name} ${student.last_name}`,
+          studentEmail: student.email || ''
+        }
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "✓ Student Selected Successfully",
+        description: `You have selected ${student.first_name} ${student.last_name}. We will contact you soon.`,
+        duration: 4000
+      });
+
+      setSelectedStudents(prev => new Set([...prev, student.user_id]));
+      await loadSelectedStudents(company.id);
+    } catch (error: any) {
+      console.error('Selection error:', error);
+      const ids = await loadSelectedStudents(company.id);
+      if (ids.includes(student.user_id)) {
+        toast({
+          title: "Already Selected",
+          description: `${student.first_name} ${student.last_name} was already selected by your company.`,
+          duration: 4000
+        });
+      } else {
+        toast({
+          title: "Selection Error",
+          description: error.message || "Something went wrong. Please try again.",
+          variant: "destructive",
+          duration: 5000
+        });
+      }
+    } finally {
+      setSelecting(null);
+    }
+  };
+
+  const handleLeaveTalentPool = async () => {
+    if (!company?.id) return;
+
+    try {
+      const companyName = company.company_profiles?.[0]?.company_name || 'Company';
+      
+      const { error } = await supabase.functions.invoke('send-talent-pool-leave', {
+        body: {
+          userId: company.id,
+          name: companyName,
+          email: company.email,
+          role: 'COMPANY'
+        }
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Left Talent Pool",
+        description: "You have successfully left the Talent Pool. You can no longer access this area."
+      });
+
+      localStorage.removeItem('talentPoolRole');
+      localStorage.removeItem('talentPoolUser');
+      navigate('/talent-pool');
+    } catch (error: any) {
+      console.error('Leave error:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to leave Talent Pool",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('talentPoolRole');
+    localStorage.removeItem('talentPoolUser');
+    navigate('/talent-pool');
+  };
+
+  const downloadFile = async (url: string, filename: string) => {
+    try {
+      const response = await fetch(url);
+      if (!response.ok) throw new Error('Failed to fetch file');
+
+      const blob = await response.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+      
+      const a = document.createElement('a');
+      a.href = blobUrl;
+      a.download = filename;
+      a.style.display = 'none';
+      
+      document.body.appendChild(a);
+      a.click();
+      
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(blobUrl);
+      
+      toast({
+        title: "Success",
+        description: `${filename} downloaded successfully`
+      });
+    } catch (error) {
+      console.error('Download error:', error);
+      toast({
+        title: "Download Error",
+        description: "Unable to download file",
+        variant: "destructive"
+      });
+    }
+  };
+
+  
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-background via-cloud-white to-runway-gray p-4 md:p-8">
+      <div className="max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="flex justify-between items-center mb-8">
+          <div className="flex items-center gap-3">
+            <Building2 className="h-8 w-8 text-green-600" />
+            <div>
+              <h1 className="text-3xl font-bold text-green-600">
+                {company?.company_profiles?.[0]?.company_name || 'Company Dashboard'}
+              </h1>
+              <p className="text-steel-gray">Talent Pool - Company Area</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              onClick={() => navigate('/talent-pool/company/selected-students')}
+              className="flex items-center gap-2"
+            >
+              <User className="h-4 w-4" />
+              Selected Students ({selectedStudents.size})
+            </Button>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button
+                  variant="destructive"
+                  className="flex items-center gap-2"
+                >
+                  <DoorOpen className="h-4 w-4" />
+                  Leave Talent Pool
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Are you sure you want to leave the Talent Pool?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This action will permanently remove your company from the Talent Pool. 
+                    You will no longer have access to student profiles and all your selections will be lost.
+                    This action cannot be undone.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleLeaveTalentPool} className="bg-destructive text-destructive-foreground">
+                    Yes, Leave Talent Pool
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+            <Button
+              variant="outline"
+              onClick={handleLogout}
+              className="flex items-center gap-2"
+            >
+              <LogOut className="h-4 w-4" />
+              Logout
+            </Button>
+          </div>
+        </div>
+
+        <Tabs defaultValue="students" className="space-y-6">
+          <TabsList>
+            <TabsTrigger value="students">Students</TabsTrigger>
+            <TabsTrigger value="profile">Company Profile</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="profile">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <CardTitle className="flex items-center gap-2">
+                  <Building2 className="h-5 w-5" />
+                  Company Information
+                </CardTitle>
+                <Dialog open={editMode} onOpenChange={setEditMode}>
+                  <DialogTrigger asChild>
+                    <Button size="sm" variant="outline" className="flex items-center gap-2">
+                      <Edit className="h-4 w-4" />
+                      Edit
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-2xl">
+                    <DialogHeader>
+                      <DialogTitle>Edit Company Information</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4 mt-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="company_name">Company Name *</Label>
+                        <Input
+                          id="company_name"
+                          value={editData.company_name}
+                          onChange={(e) => setEditData({...editData, company_name: e.target.value})}
+                        />
+                      </div>
+                      
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="sector">Sector *</Label>
+                          <Select
+                            value={editData.sector}
+                            onValueChange={(value) => setEditData({...editData, sector: value})}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select sector" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {SECTORS.map(sector => (
+                                <SelectItem key={sector} value={sector}>{sector}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        
+                        <div className="space-y-2">
+                          <Label htmlFor="size">Size *</Label>
+                          <Select
+                            value={editData.size}
+                            onValueChange={(value) => setEditData({...editData, size: value})}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select size" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {SIZES.map(size => (
+                                <SelectItem key={size.value} value={size.value}>{size.label}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label htmlFor="reference_email">Reference Email *</Label>
+                        <Input
+                          id="reference_email"
+                          type="email"
+                          value={editData.reference_email}
+                          onChange={(e) => setEditData({...editData, reference_email: e.target.value})}
+                        />
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label htmlFor="linkedin_url">LinkedIn (optional)</Label>
+                        <Input
+                          id="linkedin_url"
+                          type="url"
+                          placeholder="https://linkedin.com/company/..."
+                          value={editData.linkedin_url}
+                          onChange={(e) => setEditData({...editData, linkedin_url: e.target.value})}
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="description">Description (optional)</Label>
+                        <Textarea
+                          id="description"
+                          rows={3}
+                          value={editData.description}
+                          onChange={(e) => setEditData({ ...editData, description: e.target.value })}
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="company_logo">Company Logo (optional)</Label>
+                        <div className="space-y-2">
+                          {(logoFile || company?.company_profiles?.[0]?.logo_url) && (
+                            <div className="flex items-center gap-4">
+                              <img 
+                                src={logoFile ? URL.createObjectURL(logoFile) : company?.company_profiles?.[0]?.logo_url} 
+                                alt="Company logo preview" 
+                                className="h-20 w-20 object-cover rounded border"
+                              />
+                              {logoFile && (
+                                <Button 
+                                  size="sm" 
+                                  variant="outline"
+                                  onClick={() => setLogoFile(null)}
+                                >
+                                  Remove
+                                </Button>
+                              )}
+                            </div>
+                          )}
+                          <Input
+                            id="company_logo"
+                            type="file"
+                            accept="image/png,image/jpeg,image/jpg,image/webp"
+                            onChange={handleLogoChange}
+                          />
+                          <p className="text-xs text-steel-gray">
+                            PNG, JPG, or WebP. Max 5MB.
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex justify-end gap-2 pt-4">
+                        <Button variant="outline" onClick={() => { setEditMode(false); setLogoFile(null); }}>
+                          Cancel
+                        </Button>
+                        <Button 
+                          onClick={handleSaveCompanyInfo} 
+                          className="flex items-center gap-2"
+                          disabled={uploading}
+                        >
+                          {uploading ? (
+                            <>
+                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                              Saving...
+                            </>
+                          ) : (
+                            <>
+                              <Save className="h-4 w-4" />
+                              Save Changes
+                            </>
+                          )}
+                        </Button>
+                      </div>
+                    </div>
+                  </DialogContent>
+                </Dialog>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {company?.company_profiles?.[0]?.logo_url && (
+                    <div className="md:col-span-3 flex justify-center mb-4">
+                      <img 
+                        src={company.company_profiles[0].logo_url} 
+                        alt="Company logo" 
+                        className="h-24 w-24 object-cover rounded border"
+                      />
+                    </div>
+                  )}
+                  <div>
+                    <p className="text-sm text-steel-gray">Company Name</p>
+                    <p className="font-semibold">{company?.company_profiles?.[0]?.company_name || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-steel-gray">Sector</p>
+                    <p className="font-semibold">{company?.company_profiles?.[0]?.sector || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-steel-gray">Size</p>
+                    <p className="font-semibold">
+                      {SIZES.find(s => s.value === company?.company_profiles?.[0]?.size)?.label || 'N/A'}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-steel-gray">Email</p>
+                    <p className="font-semibold">{company?.company_profiles?.[0]?.reference_email || 'N/A'}</p>
+                  </div>
+                  {company?.company_profiles?.[0]?.linkedin_url && (
+                    <div>
+                      <p className="text-sm text-steel-gray">LinkedIn</p>
+                      <a 
+                        href={company.company_profiles[0].linkedin_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-primary hover:underline"
+                      >
+                        View Profile
+                      </a>
+                    </div>
+                  )}
+                  <div>
+                    <p className="text-sm text-steel-gray">Status</p>
+                    <Badge className="bg-success text-white">Approved</Badge>
+                  </div>
+                  {company?.company_profiles?.[0]?.description && (
+                    <div className="md:col-span-3">
+                      <p className="text-sm text-steel-gray mb-1">Description</p>
+                      <p className="font-medium whitespace-pre-wrap">{company.company_profiles[0].description}</p>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+
+          <TabsContent value="students">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <User className="h-5 w-5" />
+                  Available Students ({students.length})
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {students.length === 0 ? (
+                  <div className="text-center py-12">
+                    <User className="h-12 w-12 text-steel-gray mx-auto mb-4 opacity-50" />
+                    <p className="text-steel-gray">No students available at the moment</p>
+                    <p className="text-sm text-steel-gray mt-2">
+                      Students who have completed their payment and made their profiles visible will appear here
+                    </p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {students.map((student) => (
+                      <Card key={student.id} className="p-4 hover:shadow-lg transition-shadow">
+                        <div className="space-y-3">
+                          <div className="flex flex-col items-center text-center">
+                            {student.photo_url ? (
+                              <img 
+                                src={student.photo_url} 
+                                alt={`${student.first_name} ${student.last_name}`}
+                                className="h-24 w-24 rounded-full object-cover mb-3"
+                              />
+                            ) : (
+                              <div className="h-24 w-24 rounded-full bg-primary/10 flex items-center justify-center mb-3">
+                                <User className="h-12 w-12 text-primary" />
+                              </div>
+                            )}
+                            <h3 className="text-lg font-semibold">
+                              {student.first_name} {student.last_name}
+                            </h3>
+                          </div>
+
+                          <div className="flex flex-col gap-2 pt-2">
+                            {student.cv_url && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => downloadFile(
+                                  student.cv_url,
+                                  `${student.first_name}_${student.last_name}_CV.pdf`
+                                )}
+                                className="w-full flex items-center justify-center gap-2"
+                              >
+                                <FileText className="h-4 w-4" />
+                                Curriculum Vitae
+                                <Download className="h-3 w-3" />
+                              </Button>
+                            )}
+                            {student.cover_letter_url && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => downloadFile(
+                                  student.cover_letter_url,
+                                  `${student.first_name}_${student.last_name}_CoverLetter.pdf`
+                                )}
+                                className="w-full flex items-center justify-center gap-2"
+                              >
+                                <FileText className="h-4 w-4" />
+                                Cover Letter
+                                <Download className="h-3 w-3" />
+                              </Button>
+                            )}
+                            {student.presentation_video_url && (
+                              <>
+                                <video
+                                  src={student.presentation_video_url}
+                                  controls
+                                  className="w-full rounded-md border bg-black"
+                                />
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => downloadFile(
+                                    student.presentation_video_url,
+                                    `${student.first_name}_${student.last_name}_Presentation.mp4`
+                                  )}
+                                  className="w-full flex items-center justify-center gap-2"
+                                >
+                                  <FileText className="h-4 w-4" />
+                                  Presentation Video
+                                  <Download className="h-3 w-3" />
+                                </Button>
+                              </>
+                            )}
+                            
+
+                            
+                            {!student.user_id ? (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                disabled
+                                className="w-full"
+                              >
+                                Unavailable
+                              </Button>
+                            ) : selectedStudents.has(student.user_id) ? (
+                              <Button
+                                size="sm"
+                                variant="secondary"
+                                disabled
+                                className="w-full bg-muted text-muted-foreground cursor-not-allowed"
+                              >
+                                Selected
+                              </Button>
+                            ) : (
+                              <Button
+                                size="sm"
+                                onClick={() => handleSelectStudent(student)}
+                                disabled={selecting === student.id}
+                                className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
+                              >
+                                {selecting === student.id ? (
+                                  <>
+                                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                                    <span className="ml-2">Selecting...</span>
+                                  </>
+                                ) : (
+                                  'Select Student'
+                                )}
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+      </div>
+    </div>
+  );
+};
+
+const CompanyDashboard = () => {
+  return (
+    <TalentPoolLanguageProvider>
+      <CompanyDashboardContent />
+    </TalentPoolLanguageProvider>
+  );
+};
+
+export default CompanyDashboard;
