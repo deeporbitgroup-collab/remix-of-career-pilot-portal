@@ -261,3 +261,14 @@ verify_jwt = false
 
 [functions.service-advisor-chat]
 verify_jwt = false
+
+# CRM — Google OAuth callback is hit by Google (no user JWT); sync is hit by
+# pg_cron with a shared secret. Both guard themselves internally.
+[functions.crm-google-auth-callback]
+verify_jwt = false
+
+[functions.crm-sync]
+verify_jwt = false
+
+[functions.crm-ai]
+verify_jwt = true
