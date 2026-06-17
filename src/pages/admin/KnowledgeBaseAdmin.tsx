@@ -18,7 +18,21 @@ import { useToast } from "@/hooks/use-toast";
 
 const sb = supabase as any;
 
-const KnowledgeBaseAdmin = () => {
+// The four KB tiers an admin assigns. They drive where a product is shown:
+//   Internship Placement -> students in the Talent Pool ("Prep Material")
+//   the other three       -> clients in their personal area (Knowledge Base)
+const KB_TIERS = ["High School / Uni", "Uni / Master", "Transfer / Layover", "Internship Placement"] as const;
+
+// The legacy `category` column is kept valid by deriving it from the tier.
+const tierToCategory = (tier: string): string =>
+  tier === "Internship Placement" ? "Altitude" : tier === "Uni / Master" ? "Summit" : "Take Off & Layover";
+
+// For legacy rows created before tiers existed, derive a sensible tier from category.
+const categoryToTier = (category: string, existingTier?: string | null): string =>
+  existingTier ||
+  (category === "Altitude" ? "Internship Placement" : category === "Summit" ? "Uni / Master" : "High School / Uni");
+
+const KnowledgeBaseAdmin = ({ embedded = false }: { embedded?: boolean } = {}) => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -31,7 +45,7 @@ const KnowledgeBaseAdmin = () => {
   // Products state
   const [products, setProducts] = useState<any[]>([]);
   const [editingProduct, setEditingProduct] = useState<any>(null);
-  const [productForm, setProductForm] = useState({ title: "", description: "", category: "Take Off & Layover", price: "", is_bundle: false, bundle_product_ids: [] as string[] });
+  const [productForm, setProductForm] = useState({ title: "", description: "", tier: "High School / Uni", price: "", is_bundle: false, bundle_product_ids: [] as string[] });
   const [productFile, setProductFile] = useState<File | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -39,7 +53,7 @@ const KnowledgeBaseAdmin = () => {
   // Bundle dialog state
   const [bundleDialogOpen, setBundleDialogOpen] = useState(false);
   const [editingBundle, setEditingBundle] = useState<any>(null);
-  const [bundleForm, setBundleForm] = useState({ title: "", description: "", category: "Take Off & Layover", price: "", bundle_product_ids: [] as string[] });
+  const [bundleForm, setBundleForm] = useState({ title: "", description: "", tier: "High School / Uni", price: "", bundle_product_ids: [] as string[] });
 
   // Orders state
   const [orders, setOrders] = useState<any[]>([]);
@@ -74,6 +88,13 @@ const KnowledgeBaseAdmin = () => {
   const [overviewPreviewImages, setOverviewPreviewImages] = useState<string[]>([]);
 
   useEffect(() => {
+    // When embedded inside the Talent Pool admin dashboard, that dashboard already
+    // gates access (talentPoolRole=ADMIN), so we skip the separate KB login.
+    if (embedded) {
+      setIsLoggedIn(true);
+      setAdminUsername("Talent Pool Admin");
+      return;
+    }
     const session = localStorage.getItem("kb_admin_session");
     if (session) {
       const parsed = JSON.parse(session);
@@ -185,7 +206,8 @@ const KnowledgeBaseAdmin = () => {
       const payload: any = {
         title: productForm.title,
         description: productForm.description,
-        category: productForm.category,
+        tier: productForm.tier,
+        category: tierToCategory(productForm.tier),
         price: parseFloat(productForm.price),
         asset_storage_path: assetPath,
         asset_filename: assetFilename,
@@ -216,7 +238,7 @@ const KnowledgeBaseAdmin = () => {
       toast({ title: editingProduct ? "Product updated" : "Product created" });
       setDialogOpen(false);
       setEditingProduct(null);
-      setProductForm({ title: "", description: "", category: "Take Off & Layover", price: "", is_bundle: false, bundle_product_ids: [] });
+      setProductForm({ title: "", description: "", tier: "High School / Uni", price: "", is_bundle: false, bundle_product_ids: [] });
       setProductFile(null);
       setOverviewFiles([]);
       fetchProducts();
@@ -358,7 +380,7 @@ const KnowledgeBaseAdmin = () => {
       setBundleForm({
         title: product.title,
         description: product.description || "",
-        category: product.category,
+        tier: categoryToTier(product.category, product.tier),
         price: String(product.price),
         bundle_product_ids: product.bundle_product_ids || [],
       });
@@ -369,7 +391,7 @@ const KnowledgeBaseAdmin = () => {
     setProductForm({
       title: product.title,
       description: product.description || "",
-      category: product.category,
+      tier: categoryToTier(product.category, product.tier),
       price: String(product.price),
       is_bundle: false,
       bundle_product_ids: [],
@@ -380,7 +402,7 @@ const KnowledgeBaseAdmin = () => {
 
   const openCreateDialog = () => {
     setEditingProduct(null);
-    setProductForm({ title: "", description: "", category: "Take Off & Layover", price: "", is_bundle: false, bundle_product_ids: [] });
+    setProductForm({ title: "", description: "", tier: "High School / Uni", price: "", is_bundle: false, bundle_product_ids: [] });
     setProductFile(null);
     setOverviewFiles([]);
     setDialogOpen(true);
@@ -388,7 +410,7 @@ const KnowledgeBaseAdmin = () => {
 
   const openCreateBundleDialog = () => {
     setEditingBundle(null);
-    setBundleForm({ title: "", description: "", category: "Take Off & Layover", price: "", bundle_product_ids: [] });
+    setBundleForm({ title: "", description: "", tier: "High School / Uni", price: "", bundle_product_ids: [] });
     setOverviewFiles([]);
     setBundleDialogOpen(true);
   };
@@ -408,7 +430,8 @@ const KnowledgeBaseAdmin = () => {
       const payload: any = {
         title: bundleForm.title,
         description: bundleForm.description,
-        category: bundleForm.category,
+        tier: bundleForm.tier,
+        category: tierToCategory(bundleForm.tier),
         price: parseFloat(bundleForm.price),
         is_bundle: true,
         bundle_product_ids: bundleForm.bundle_product_ids,
@@ -481,8 +504,8 @@ const KnowledgeBaseAdmin = () => {
     );
   }, [clientAccess, clientSearch]);
 
-  // Login screen
-  if (!isLoggedIn) {
+  // Login screen (skipped when embedded — the Talent Pool admin already authed)
+  if (!isLoggedIn && !embedded) {
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
         <Card className="w-full max-w-md">
@@ -519,25 +542,27 @@ const KnowledgeBaseAdmin = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background p-4 md:p-8">
-      <div className="max-w-7xl mx-auto space-y-6">
-        {/* Header */}
-        <div className="flex justify-between items-center">
-          <h1 className="text-2xl md:text-3xl font-bold flex items-center gap-2">
-            <Package className="h-7 w-7 text-primary" /> Knowledge Base Admin
-          </h1>
-          <div className="flex items-center gap-2 md:gap-3">
-            <Button variant="outline" size="sm" onClick={() => navigate("/")}>
-              <Home className="mr-2 h-4 w-4" /> Main Site
-            </Button>
-            <span className="text-sm text-muted-foreground hidden md:inline">
-              Logged in as <strong>{adminUsername}</strong>
-            </span>
-            <Button variant="outline" onClick={handleLogout}>
-              <LogOut className="mr-2 h-4 w-4" /> Logout
-            </Button>
+    <div className={embedded ? "" : "min-h-screen bg-background p-4 md:p-8"}>
+      <div className={embedded ? "space-y-6" : "max-w-7xl mx-auto space-y-6"}>
+        {/* Header — hidden when embedded inside the Talent Pool admin dashboard */}
+        {!embedded && (
+          <div className="flex justify-between items-center">
+            <h1 className="text-2xl md:text-3xl font-bold flex items-center gap-2">
+              <Package className="h-7 w-7 text-primary" /> Knowledge Base Admin
+            </h1>
+            <div className="flex items-center gap-2 md:gap-3">
+              <Button variant="outline" size="sm" onClick={() => navigate("/")}>
+                <Home className="mr-2 h-4 w-4" /> Main Site
+              </Button>
+              <span className="text-sm text-muted-foreground hidden md:inline">
+                Logged in as <strong>{adminUsername}</strong>
+              </span>
+              <Button variant="outline" onClick={handleLogout}>
+                <LogOut className="mr-2 h-4 w-4" /> Logout
+              </Button>
+            </div>
           </div>
-        </div>
+        )}
 
         <Tabs defaultValue="products">
           <TabsList className="grid w-full grid-cols-4">
@@ -581,15 +606,18 @@ const KnowledgeBaseAdmin = () => {
                       <Textarea value={productForm.description} onChange={(e) => setProductForm({ ...productForm, description: e.target.value })} />
                     </div>
                     <div>
-                      <Label>Category</Label>
-                      <Select value={productForm.category} onValueChange={(v) => setProductForm({ ...productForm, category: v })}>
+                      <Label>Tier</Label>
+                      <Select value={productForm.tier} onValueChange={(v) => setProductForm({ ...productForm, tier: v })}>
                         <SelectTrigger><SelectValue /></SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="Take Off & Layover">Take Off & Layover</SelectItem>
-                          <SelectItem value="Summit">Summit</SelectItem>
-                          <SelectItem value="Altitude">Altitude</SelectItem>
+                          {KB_TIERS.map((t) => (
+                            <SelectItem key={t} value={t}>{t}</SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        "Internship Placement" is shown to students in the Talent Pool. The others are shown to clients in their personal area.
+                      </p>
                     </div>
                     <div>
                       <Label>Price (€)</Label>
@@ -664,13 +692,13 @@ const KnowledgeBaseAdmin = () => {
                     />
                   </div>
                   <div>
-                    <Label>Category</Label>
-                    <Select value={bundleForm.category} onValueChange={(v) => setBundleForm({ ...bundleForm, category: v })}>
+                    <Label>Tier</Label>
+                    <Select value={bundleForm.tier} onValueChange={(v) => setBundleForm({ ...bundleForm, tier: v })}>
                       <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="Take Off & Layover">Take Off & Layover</SelectItem>
-                        <SelectItem value="Summit">Summit</SelectItem>
-                        <SelectItem value="Altitude">Altitude</SelectItem>
+                        {KB_TIERS.map((t) => (
+                          <SelectItem key={t} value={t}>{t}</SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </div>
@@ -770,7 +798,7 @@ const KnowledgeBaseAdmin = () => {
               <TableHeader>
                 <TableRow>
                   <TableHead>Title</TableHead>
-                  <TableHead>Category</TableHead>
+                  <TableHead>Tier</TableHead>
                   <TableHead>Price</TableHead>
                   <TableHead>File</TableHead>
                   <TableHead>Active</TableHead>
@@ -784,7 +812,7 @@ const KnowledgeBaseAdmin = () => {
                       {p.title}
                       {p.is_bundle && <Badge className="ml-2 text-xs bg-primary/20 text-primary">Bundle</Badge>}
                     </TableCell>
-                    <TableCell><Badge variant="outline">{p.category}</Badge></TableCell>
+                    <TableCell><Badge variant="outline">{p.tier || categoryToTier(p.category)}</Badge></TableCell>
                     <TableCell>€{Number(p.price).toFixed(2)}</TableCell>
                     <TableCell>
                       <div className="flex items-center gap-1">

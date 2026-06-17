@@ -90,14 +90,14 @@ const handler = async (req: Request): Promise<Response> => {
         </div>
       </div>
       
-      <h2 style="margin: 0 0 20px 0; color: #1e3a8a; font-size: 24px; font-weight: 600; text-align: center;">Welcome to the Talent Pool!</h2>
-      
+      <h2 style="margin: 0 0 20px 0; color: #1e3a8a; font-size: 24px; font-weight: 600; text-align: center;">Application Received</h2>
+
       <p style="margin: 0 0 20px 0; color: #334155; font-size: 16px; line-height: 1.6;">
         Dear ${data.firstName},
       </p>
-      
+
       <p style="margin: 0 0 20px 0; color: #334155; font-size: 16px; line-height: 1.6;">
-        Thank you for joining the <strong>Career Pilot Talent Pool</strong>. Your account is now active and you can immediately access your personal area.
+        Thank you for applying to the <strong>Career Pilot Talent Pool</strong>. We've received your application and our team will review it shortly. You'll get an email as soon as you're approved and made visible to partner companies. In the meantime you can log in to set up your profile and browse partner companies.
       </p>
       
       <div style="background-color: #f0f9ff; border-left: 4px solid #3b82f6; padding: 20px; margin: 25px 0; border-radius: 0 12px 12px 0;">

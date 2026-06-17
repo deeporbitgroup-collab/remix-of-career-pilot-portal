@@ -5,6 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
@@ -26,11 +29,20 @@ import {
   Lock,
   Trash2,
   Bell,
-  Briefcase
+  Briefcase,
+  BookOpen
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { PDFDocument } from 'pdf-lib';
 import AdminActiveRecruiting from "@/components/talent-pool/AdminActiveRecruiting";
+import KnowledgeBaseAdmin from "@/pages/admin/KnowledgeBaseAdmin";
+
+const COMPANY_SIZES = [
+  { value: "STARTUP", label: "Startup (1-10)" },
+  { value: "BOUTIQUE", label: "Boutique (11-50)" },
+  { value: "MEDIUM_SIZE", label: "Medium (51-200)" },
+  { value: "LARGE_COMPANY", label: "Large (200+)" },
+];
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -50,10 +62,17 @@ const AdminDashboard = () => {
   const [students, setStudents] = useState<any[]>([]);
   const [companies, setCompanies] = useState<any[]>([]);
   const [paymentReceipts, setPaymentReceipts] = useState<any[]>([]);
-  const [activeTab, setActiveTab] = useState<'students' | 'companies' | 'payments' | 'notifications' | 'recruiting'>('students');
+  const [activeTab, setActiveTab] = useState<'students' | 'companies' | 'payments' | 'notifications' | 'recruiting' | 'knowledge-base'>('students');
   const [actionLoading, setActionLoading] = useState<{ [key: string]: boolean }>({});
   const [notifications, setNotifications] = useState<any[]>([]);
   const [selections, setSelections] = useState<any[]>([]);
+  // Admin company-profile editing (writes the SAME company_profiles row the company edits)
+  const [editingCompany, setEditingCompany] = useState<any>(null);
+  const [companyEditData, setCompanyEditData] = useState({
+    company_name: '', sector: '', size: '', reference_email: '', linkedin_url: '', description: ''
+  });
+  const [companyLogoFile, setCompanyLogoFile] = useState<File | null>(null);
+  const [savingCompany, setSavingCompany] = useState(false);
 
   useEffect(() => {
     loadDashboardData();
@@ -143,7 +162,8 @@ const AdminDashboard = () => {
           size: c.size,
           reference_email: c.reference_email,
           linkedin_url: c.linkedin_url,
-          logo_url: c.logo_url
+          logo_url: c.logo_url,
+          description: c.description
         }] : []
       }));
 
@@ -249,17 +269,20 @@ const AdminDashboard = () => {
 
       let newStatus: 'rejected' | 'accepted_pending_payment' | 'active_member';
       let actionText: string;
-      let emailAction: 'REJECTED' | 'PAYMENT_REQUIRED' | 'PAYMENT_VERIFIED' | null = null;
+      let emailAction: 'REJECTED' | 'PAYMENT_REQUIRED' | 'PAYMENT_VERIFIED' | 'TALENT_POOL_ACCESS' | null = null;
 
       if (action === 'REJECT') {
         newStatus = 'rejected';
         actionText = 'rifiutato';
         emailAction = 'REJECTED';
       } else if (action === 'ADMIT') {
-        newStatus = 'accepted_pending_payment';
-        actionText = 'ammesso - lo studente deve caricare la ricevuta';
-        emailAction = 'PAYMENT_REQUIRED';
-      } else { // CONFIRM_PAYMENT
+        // Free access: admitting approves the student directly — makes them visible
+        // to companies (via tp_set_student_status) and sends the access email.
+        // No payment step.
+        newStatus = 'active_member';
+        actionText = 'approvato e reso visibile alle aziende';
+        emailAction = 'TALENT_POOL_ACCESS';
+      } else { // CONFIRM_PAYMENT (legacy path, kept for manually-staged students)
         newStatus = 'active_member';
         actionText = 'approvato con accesso completo';
         emailAction = 'PAYMENT_VERIFIED';
@@ -288,6 +311,19 @@ const AdminDashboard = () => {
         } catch (emailError) {
           console.error('Error sending email:', emailError);
           // Continue even if email fails
+        }
+      }
+
+      // On ADMIT (the Block 1 approval — student becomes active_member + visible),
+      // notify all approved companies that a new candidate is available.
+      // Non-fatal: a failure here must NOT block the approval (already committed by the RPC).
+      if (action === 'ADMIT' && studentProfile) {
+        try {
+          await supabase.functions.invoke('notify-companies-new-student', {
+            body: { studentName: `${studentProfile.first_name} ${studentProfile.last_name}`.trim() }
+          });
+        } catch (notifyError) {
+          console.error('Company notification failed (non-fatal):', notifyError);
         }
       }
 
@@ -379,6 +415,80 @@ const AdminDashboard = () => {
         description: "Impossibile aggiornare lo stato dell'azienda",
         variant: "destructive"
       });
+    }
+  };
+
+  // ---- Admin edit of a company profile (same row + same RPC the company uses) ----
+  const openCompanyEdit = (company: any) => {
+    const p = company.company_profiles?.[0] || {};
+    setEditingCompany(company);
+    setCompanyEditData({
+      company_name: p.company_name || '',
+      sector: p.sector || '',
+      size: p.size || '',
+      reference_email: p.reference_email || company.email || '',
+      linkedin_url: p.linkedin_url || '',
+      description: p.description || '',
+    });
+    setCompanyLogoFile(null);
+  };
+
+  const fileToBase64 = async (file: File): Promise<string> => {
+    const buf = new Uint8Array(await file.arrayBuffer());
+    let binary = '';
+    for (let i = 0; i < buf.byteLength; i++) binary += String.fromCharCode(buf[i]);
+    return btoa(binary);
+  };
+
+  const handleSaveCompanyProfile = async () => {
+    if (!editingCompany) return;
+    if (!companyEditData.company_name || !companyEditData.sector || !companyEditData.size || !companyEditData.reference_email) {
+      toast({ title: "Missing required fields", description: "Company name, sector, size and reference email are required.", variant: "destructive" });
+      return;
+    }
+    setSavingCompany(true);
+    try {
+      // Keep the current logo by default; only replace it if a new file uploads OK.
+      let logoUrl = editingCompany.company_profiles?.[0]?.logo_url || null;
+
+      if (companyLogoFile) {
+        try {
+          const fileBase64 = await fileToBase64(companyLogoFile);
+          const { data: up, error: upErr } = await supabase.functions.invoke('upload-company-logo', {
+            body: { companyId: editingCompany.id, fileName: companyLogoFile.name, contentType: companyLogoFile.type, fileBase64 }
+          });
+          if (upErr || !up?.publicUrl) throw upErr || new Error('Logo upload failed');
+          logoUrl = up.publicUrl;
+        } catch (logoErr) {
+          // Non-blocking: keep the existing logo and warn, but still save the rest.
+          console.error('Logo upload failed (non-fatal):', logoErr);
+          toast({ title: "Logo not updated", description: "The other fields were saved; the logo upload failed.", variant: "destructive" });
+        }
+      }
+
+      // update_company_profile OVERWRITES every field — pass ALL pre-filled values so
+      // editing one field never blanks the others (logo/LinkedIn/description/etc.).
+      const { error } = await supabase.rpc('update_company_profile', {
+        p_user_id: editingCompany.id,
+        p_company_name: companyEditData.company_name,
+        p_sector: companyEditData.sector,
+        p_size: companyEditData.size as any,
+        p_reference_email: companyEditData.reference_email,
+        p_linkedin_url: companyEditData.linkedin_url || null,
+        p_logo_url: logoUrl || null,
+        p_description: companyEditData.description || null,
+      });
+      if (error) throw error;
+
+      toast({ title: "Saved", description: "Company profile updated." });
+      setEditingCompany(null);
+      setCompanyLogoFile(null);
+      await loadDashboardData();
+    } catch (e: any) {
+      console.error('Error saving company profile:', e);
+      toast({ title: "Error", description: e.message || "Unable to save company profile", variant: "destructive" });
+    } finally {
+      setSavingCompany(false);
     }
   };
 
@@ -998,8 +1108,8 @@ const AdminDashboard = () => {
         </div>
 
         {/* Main Content */}
-        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'students' | 'companies' | 'payments' | 'notifications' | 'recruiting')} className="space-y-4">
-          <TabsList className="grid w-full grid-cols-5">
+        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'students' | 'companies' | 'payments' | 'notifications' | 'recruiting' | 'knowledge-base')} className="space-y-4">
+          <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="students" className="flex items-center gap-2">
               <Users className="h-4 w-4" />
               Studenti
@@ -1022,6 +1132,10 @@ const AdminDashboard = () => {
             <TabsTrigger value="recruiting" className="flex items-center gap-2">
               <Briefcase className="h-4 w-4" />
               Active Recruiting
+            </TabsTrigger>
+            <TabsTrigger value="knowledge-base" className="flex items-center gap-2">
+              <BookOpen className="h-4 w-4" />
+              Knowledge Base
             </TabsTrigger>
           </TabsList>
 
@@ -1383,6 +1497,14 @@ const AdminDashboard = () => {
                               {getCompanyRegistrationBadge(company.registration_status, company.status)}
                             </div>
                           </div>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => openCompanyEdit(company)}
+                          >
+                            <FileText className="h-4 w-4 mr-1" />
+                            Edit profile
+                          </Button>
                         </div>
 
                         {/* Dati dell'azienda */}
@@ -1660,7 +1782,99 @@ const AdminDashboard = () => {
           <TabsContent value="recruiting">
             <AdminActiveRecruiting />
           </TabsContent>
+
+          {/* Knowledge Base Tab — reuses the full KB admin management (products,
+              bundles, orders, clients, audit) embedded, with tier selector. */}
+          <TabsContent value="knowledge-base">
+            <KnowledgeBaseAdmin embedded />
+          </TabsContent>
         </Tabs>
+
+        {/* Admin: edit a company's profile — writes the SAME company_profiles row /
+            RPC the company uses. ALL fields are pre-filled so editing one never
+            blanks the others (update_company_profile overwrites every column). */}
+        <Dialog open={!!editingCompany} onOpenChange={(o) => { if (!o) setEditingCompany(null); }}>
+          <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Edit company profile</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label>Logo</Label>
+                <div className="flex items-center gap-3">
+                  {(companyLogoFile || editingCompany?.company_profiles?.[0]?.logo_url) ? (
+                    <img
+                      src={companyLogoFile ? URL.createObjectURL(companyLogoFile) : editingCompany?.company_profiles?.[0]?.logo_url}
+                      alt="logo"
+                      className="h-16 w-16 object-cover rounded border"
+                    />
+                  ) : (
+                    <div className="h-16 w-16 rounded border bg-runway-gray flex items-center justify-center">
+                      <Building2 className="h-8 w-8 text-steel-gray" />
+                    </div>
+                  )}
+                  <div className="flex-1">
+                    <Input
+                      type="file"
+                      accept="image/png,image/jpeg"
+                      onChange={(e) => {
+                        const f = e.target.files?.[0] || null;
+                        if (f && f.size > 5 * 1024 * 1024) {
+                          toast({ title: "Logo too large", description: "Please select an image under 5MB.", variant: "destructive" });
+                          return;
+                        }
+                        setCompanyLogoFile(f);
+                      }}
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">Add your logo to stand out — PNG/JPG, max 5MB.</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Company name</Label>
+                <Input value={companyEditData.company_name} onChange={(e) => setCompanyEditData({ ...companyEditData, company_name: e.target.value })} />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <Label>Sector</Label>
+                  <Input value={companyEditData.sector} onChange={(e) => setCompanyEditData({ ...companyEditData, sector: e.target.value })} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Size</Label>
+                  <Select value={companyEditData.size} onValueChange={(v) => setCompanyEditData({ ...companyEditData, size: v })}>
+                    <SelectTrigger><SelectValue placeholder="Select size" /></SelectTrigger>
+                    <SelectContent>
+                      {COMPANY_SIZES.map((s) => (
+                        <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Reference email</Label>
+                <Input type="email" value={companyEditData.reference_email} onChange={(e) => setCompanyEditData({ ...companyEditData, reference_email: e.target.value })} />
+              </div>
+
+              <div className="space-y-2">
+                <Label>LinkedIn (optional)</Label>
+                <Input value={companyEditData.linkedin_url} placeholder="https://linkedin.com/company/..." onChange={(e) => setCompanyEditData({ ...companyEditData, linkedin_url: e.target.value })} />
+              </div>
+
+              <div className="space-y-2">
+                <Label>Description (optional)</Label>
+                <Textarea value={companyEditData.description} onChange={(e) => setCompanyEditData({ ...companyEditData, description: e.target.value })} />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setEditingCompany(null)} disabled={savingCompany}>Cancel</Button>
+              <Button onClick={handleSaveCompanyProfile} disabled={savingCompany}>{savingCompany ? "Saving..." : "Save"}</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );

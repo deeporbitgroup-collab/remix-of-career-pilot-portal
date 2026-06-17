@@ -54,6 +54,14 @@ const KnowledgeBase = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const fromEcosystem = searchParams.get("from") === "ecosystem";
+  // Tier mode: when launched from the Talent Pool as "Prep Material", the store is
+  // locked to a single tier (Internship Placement) instead of letting the user pick
+  // a category. The paid cart/checkout flow stays identical, so purchases land in the
+  // same shared registry (kb_orders / kb_client_access).
+  const tierParam = searchParams.get("tier");
+  const tierMode = !!tierParam;
+  const tierToCategory = (t: string) =>
+    t === "Internship Placement" ? "Altitude" : t === "Uni / Master" ? "Summit" : "Take Off & Layover";
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [productFilter, setProductFilter] = useState<"bundles" | "singles">("bundles");
   const [products, setProducts] = useState<any[]>([]);
@@ -69,6 +77,16 @@ const [overviewOpen, setOverviewOpen] = useState(false);
 
   // Sync category from URL (?category=Summit, Altitude, Take Off, takeoff, etc.)
   useEffect(() => {
+    // Tier mode locks the view to the tier's underlying category and skips the
+    // category-selection screen entirely.
+    if (tierParam) {
+      const cat = tierToCategory(tierParam);
+      if (cat !== selectedCategory) {
+        setSelectedCategory(cat);
+        setShowOutreach(false);
+      }
+      return;
+    }
     const raw = searchParams.get("category");
     if (!raw) return;
     const norm = raw.toLowerCase().trim();
@@ -92,12 +110,10 @@ const [overviewOpen, setOverviewOpen] = useState(false);
 
   const fetchProducts = async (category: string) => {
     setLoading(true);
-    const { data } = await sb.
-    from("kb_products").
-    select("*").
-    eq("category", category).
-    eq("is_active", true).
-    order("created_at", { ascending: false });
+    let query = sb.from("kb_products").select("*").eq("is_active", true);
+    // In tier mode filter by tier (across categories); otherwise by the picked category.
+    query = tierParam ? query.eq("tier", tierParam) : query.eq("category", category);
+    const { data } = await query.order("created_at", { ascending: false });
     setProducts(data || []);
     setLoading(false);
   };
@@ -137,12 +153,16 @@ const [overviewOpen, setOverviewOpen] = useState(false);
           <div className="text-center mb-6">
             <div className="flex items-center justify-center gap-3 mb-2">
               <BookOpen className="h-7 w-7 text-primary" />
-              <h1 className="text-2xl md:text-4xl font-bold text-foreground">Knowledge Base</h1>
+              <h1 className="text-2xl md:text-4xl font-bold text-foreground">{tierMode ? "Prep Material" : "Knowledge Base"}</h1>
               <Badge className="bg-primary text-primary-foreground text-xs font-bold uppercase tracking-wider px-3 py-1 animate-pulse">New</Badge>
             </div>
-            <p className="text-muted-foreground text-base max-w-2xl mx-auto">Exclusive digital resources & Prep Material to accelerate your academic and career journey.</p>
+            <p className="text-muted-foreground text-base max-w-2xl mx-auto">{tierMode ? "Internship Placement prep material — PDF guides, Excel models and ready-made packages." : "Exclusive digital resources & Prep Material to accelerate your academic and career journey."}</p>
             <div className="flex items-center justify-center gap-3 mt-3">
-              {fromEcosystem ? (
+              {tierMode ? (
+                <Button variant="outline" size="sm" onClick={() => navigate("/talent-pool/student/dashboard")}>
+                  <ArrowLeft className="mr-2 h-4 w-4" /> Back to Talent Pool
+                </Button>
+              ) : fromEcosystem ? (
                 <>
                   <Button
                     variant="outline"
@@ -169,7 +189,7 @@ const [overviewOpen, setOverviewOpen] = useState(false);
           </div>
 
           {/* Back button when viewing products or outreach (hidden when launched from ecosystem with category locked) */}
-          {(selectedCategory || showOutreach) && !fromEcosystem &&
+          {(selectedCategory || showOutreach) && !fromEcosystem && !tierMode &&
             <Button variant="ghost" onClick={() => {setSelectedCategory(null);setCart([]);setShowOutreach(false);setProductFilter("bundles");setSearchQuery("");}} className="mb-4">
               <ArrowLeft className="mr-2 h-4 w-4" /> Back to Categories
             </Button>
@@ -281,7 +301,7 @@ const [overviewOpen, setOverviewOpen] = useState(false);
           {/* Products List */}
           {selectedCategory &&
           <>
-              <h2 className="text-2xl font-bold mb-4">{selectedCategory}</h2>
+              <h2 className="text-2xl font-bold mb-4">{tierMode ? "Prep Material" : selectedCategory}</h2>
 
               {/* Format indicators for Altitude */}
               {selectedCategory === "Altitude" && !loading && products.length > 0 && (

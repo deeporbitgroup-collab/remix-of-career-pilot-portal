@@ -4,11 +4,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Download, Linkedin, ShoppingCart, Building2, FileText } from "lucide-react";
+import { Download, Linkedin, ShoppingCart, FileText } from "lucide-react";
+import AssociateChoiceCarousel from "./AssociateChoiceCarousel";
 import {
   Command,
   CommandEmpty,
@@ -633,21 +631,25 @@ const GuestAssociateSelector = ({ service, onClose, onAddToCart }: GuestAssociat
 
   return (
     <Dialog open={true} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+      <DialogContent className="max-w-4xl max-h-[85vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>
-            {isComparativeService 
-              ? `Select 2 Associates for Comparison (${selectedAssociates.length}/2 selected)`
-              : `Select Associates (${selectedAssociates.length} selected)`
-            }
+          <DialogTitle className="text-2xl">
+            {isComparativeService ? "Choose 2 Associates to Compare" : "Choose your Associate"}
           </DialogTitle>
-          {isComparativeService && (
+          {isComparativeService ? (
             <p className="text-sm text-muted-foreground">
-              This service includes 2 associates in the price of €{service.price.toFixed(2)}
+              This service includes 2 associates in the price of €{service.price.toFixed(2)} ·{" "}
+              {selectedAssociates.length}/2 selected
+            </p>
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              {selectedAssociates.length > 0
+                ? `${selectedAssociates.length} selected · tap a card to add or remove`
+                : "Meet the people who can guide you — tap a card to choose."}
             </p>
           )}
         </DialogHeader>
-        
+
         {associates.length === 0 ? (
           <div className="text-center py-8">
             <p className="text-muted-foreground">No associates found matching your criteria.</p>
@@ -660,144 +662,52 @@ const GuestAssociateSelector = ({ service, onClose, onAddToCart }: GuestAssociat
           </div>
         ) : (
           <>
-            <div className="grid gap-4">
-              {associates.map((associate) => {
-                const isSelected = selectedAssociates.find(a => a.id === associate.id);
-                const hasTransferExperience = !!associate.university_2;
+            <AssociateChoiceCarousel
+              associates={associates}
+              isSelected={(a) => !!selectedAssociates.find((s) => s.id === a.id)}
+              onToggle={(a) => toggleAssociateSelection(a as Associate)}
+              getSectors={(a) => getAssociateSectors(a as Associate)}
+              highlightCard={(a) => isLayoverService && !!a.university_2}
+              renderActions={(a) => {
+                const associate = a as Associate;
                 return (
-                  <Card 
-                    key={associate.id}
-                    className={`cursor-pointer transition-all ${
-                      isSelected ? 'border-primary border-2 bg-primary/5' : ''
-                    } ${isLayoverService && hasTransferExperience ? 'bg-emerald-50/50 dark:bg-emerald-950/20 border-emerald-200/50 dark:border-emerald-800/30' : ''}`}
-                    onClick={() => toggleAssociateSelection(associate)}
-                  >
-                    <CardHeader>
-                      <div className="flex items-start gap-4">
-                        <Avatar className="h-20 w-20">
-                          <AvatarImage src={associate.photo_url} alt={`${associate.first_name} ${associate.last_name}`} />
-                          <AvatarFallback className="text-lg">{associate.first_name[0]}{associate.last_name[0]}</AvatarFallback>
-                        </Avatar>
-                        <div className="flex-1">
-                          <CardTitle className="text-xl">{associate.first_name} {associate.last_name}</CardTitle>
-                          <div className="flex flex-wrap gap-3 mt-3">
-                            {(() => {
-                              const companies = Array.from(new Set([
-                                associate.company_name,
-                                associate.company_2,
-                                ...(associate.professional_experiences || []).map((e: any) => e?.company),
-                              ].filter((c): c is string => !!c && c.trim() !== '')));
-                              if (companies.length === 0) return null;
-                              return (
-                                <div className="flex flex-col">
-                                  <span className="text-[10px] text-muted-foreground uppercase tracking-wide mb-0.5">Company</span>
-                                  <div className="flex flex-wrap gap-1">
-                                    {companies.map((c) => (
-                                      <Badge key={c} variant="default" className="flex items-center gap-1">
-                                        <Building2 className="h-3 w-3" />
-                                        {c}
-                                      </Badge>
-                                    ))}
-                                  </div>
-                                </div>
-                              );
-                            })()}
-                            {(associate.university || associate.university_2) && (
-                              <div className="flex flex-col">
-                                <span className="text-[10px] text-muted-foreground uppercase tracking-wide mb-0.5">University</span>
-                                <div className="flex flex-col gap-1.5">
-                                  {associate.university && (
-                                    <Badge variant="secondary">
-                                      {associate.university}
-                                    </Badge>
-                                  )}
-                                  {associate.university_2 && (
-                                    <div className="flex flex-col">
-                                      <span className="text-[9px] text-muted-foreground italic mb-0.5">Transfer from</span>
-                                      <Badge variant="outline" className="border-dashed">
-                                        {associate.university_2}
-                                      </Badge>
-                                    </div>
-                                  )}
-                                </div>
-                              </div>
-                            )}
-                            {associate.master_program && (
-                              <div className="flex flex-col">
-                                <span className="text-[10px] text-muted-foreground uppercase tracking-wide mb-0.5">Master</span>
-                                <Badge variant="secondary">
-                                  {associate.master_program}
-                                </Badge>
-                              </div>
-                            )}
-                            {(() => {
-                              const sectors = getAssociateSectors(associate);
-                              if (sectors.length === 0) return null;
-                              return (
-                                <div className="flex flex-col">
-                                  <span className="text-[10px] text-muted-foreground uppercase tracking-wide mb-0.5">Field of Work</span>
-                                  <div className="flex flex-wrap gap-1">
-                                    {sectors.map((s) => (
-                                      <Badge key={s} variant="outline">{s}</Badge>
-                                    ))}
-                                  </div>
-                                </div>
-                              );
-                            })()}
-                          </div>
-                        </div>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="space-y-3">
-                      <div className="flex gap-2">
-                        {/* Overview PDF (priority) or CV (fallback) */}
-                        {(associate.overview_url || associate.cv_storage_path) && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="flex-1"
-                            onClick={(e) => handleDownloadDocument(e, associate)}
-                          >
-                            {associate.overview_url ? (
-                              <>
-                                <FileText className="h-4 w-4 mr-2" />
-                                Download Overview
-                              </>
-                            ) : (
-                              <>
-                                <Download className="h-4 w-4 mr-2" />
-                                Download CV
-                              </>
-                            )}
-                          </Button>
+                  <>
+                    {(associate.overview_url || associate.cv_storage_path) && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="flex-1"
+                        onClick={(e) => handleDownloadDocument(e, associate)}
+                      >
+                        {associate.overview_url ? (
+                          <>
+                            <FileText className="h-4 w-4 mr-2" />
+                            Overview
+                          </>
+                        ) : (
+                          <>
+                            <Download className="h-4 w-4 mr-2" />
+                            CV
+                          </>
                         )}
-                        {associate.linkedin_url && (
-                          <Button
-                            asChild
-                            variant="outline"
-                            size="sm"
-                            className="flex-1"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            <a
-                              href={associate.linkedin_url.startsWith('http') ? associate.linkedin_url : `https://${associate.linkedin_url}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                            >
-                              <Linkedin className="h-4 w-4 mr-2" />
-                              LinkedIn
-                            </a>
-                          </Button>
-                        )}
-                      </div>
-                      <div className="text-sm text-muted-foreground text-center">
-                        {isSelected ? '✓ Selected' : 'Click to select'}
-                      </div>
-                    </CardContent>
-                  </Card>
+                      </Button>
+                    )}
+                    {associate.linkedin_url && (
+                      <Button asChild variant="outline" size="sm" className="flex-1">
+                        <a
+                          href={associate.linkedin_url.startsWith("http") ? associate.linkedin_url : `https://${associate.linkedin_url}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          <Linkedin className="h-4 w-4 mr-2" />
+                          LinkedIn
+                        </a>
+                      </Button>
+                    )}
+                  </>
                 );
-              })}
-            </div>
+              }}
+            />
             <div className="flex gap-3 pt-4 sticky bottom-0 bg-background border-t mt-4 pt-4">
               <Button variant="outline" onClick={onClose} className="flex-1">
                 Cancel

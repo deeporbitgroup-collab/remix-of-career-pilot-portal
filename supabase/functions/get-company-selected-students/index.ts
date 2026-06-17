@@ -32,7 +32,7 @@ serve(async (req: Request) => {
     // Fetch selections for the company
     const { data: selections, error: selError } = await supabase
       .from('company_selected_students')
-      .select('id, company_id, student_id, selected_at, created_at')
+      .select('id, company_id, student_id, selected_at, created_at, stage, stage_updated_at')
       .eq('company_id', companyId)
       .order('selected_at', { ascending: false });
 

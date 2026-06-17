@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -28,7 +28,8 @@ import {
   MapPin,
   Linkedin,
   DoorOpen,
-  Bell
+  Bell,
+  Info
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import ActiveRecruitingSection from "@/components/talent-pool/ActiveRecruitingSection";
@@ -100,39 +101,60 @@ const StudentDashboard = () => {
     filterCompanies();
   }, [companies, selectedCompanyTypes, selectedSectors, searchQuery]);
 
-  // Realtime updates: refresh selections when a company selects this student
+  // Refetch the companies that currently have this student selected.
+  const refreshSelections = useCallback(async () => {
+    if (!userInfo?.id) return;
+    try {
+      const { data, error } = await supabase.functions.invoke('get-student-selections', {
+        body: { studentId: userInfo.id }
+      });
+      if (error) {
+        console.error('Error fetching selections:', error);
+        return;
+      }
+      const mapped = (data || []).map((s: any) => ({
+        ...s,
+        talent_pool_users: { company_profiles: s.company_profile ? [s.company_profile] : [] }
+      }));
+      setSelectedCompanies(mapped);
+    } catch (e) {
+      console.error('Refresh selections error:', e);
+    }
+  }, [userInfo?.id]);
+
+  // Realtime updates: refresh when a company SELECTS or DESELECTS this student.
+  // company_selected_students has REPLICA IDENTITY FULL, so the DELETE event still
+  // carries the old row and the student_id filter matches on removal too.
   useEffect(() => {
     if (!userInfo?.id) return;
     const channel = supabase
       .channel('student-selections')
       .on(
         'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'company_selected_students', filter: `student_id=eq.${userInfo.id}` },
-        async () => {
-          try {
-            const { data, error } = await supabase.functions.invoke('get-student-selections', {
-              body: { studentId: userInfo.id }
-            });
-            if (error) {
-              console.error('Error fetching selections (realtime):', error);
-              return;
-            }
-            const mapped = (data || []).map((s: any) => ({
-              ...s,
-              talent_pool_users: { company_profiles: s.company_profile ? [s.company_profile] : [] }
-            }));
-            setSelectedCompanies(mapped);
-          } catch (e) {
-            console.error('Realtime fetch error:', e);
-          }
-        }
+        { event: '*', schema: 'public', table: 'company_selected_students', filter: `student_id=eq.${userInfo.id}` },
+        () => { refreshSelections(); }
       )
       .subscribe();
 
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [userInfo?.id]);
+  }, [userInfo?.id, refreshSelections]);
+
+  // Safety net: also refresh when the tab regains focus, so a withdrawn company
+  // never lingers in "Interested Companies" even if a realtime event is missed.
+  useEffect(() => {
+    if (!userInfo?.id) return;
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') refreshSelections();
+    };
+    document.addEventListener('visibilitychange', onVisible);
+    window.addEventListener('focus', onVisible);
+    return () => {
+      document.removeEventListener('visibilitychange', onVisible);
+      window.removeEventListener('focus', onVisible);
+    };
+  }, [userInfo?.id, refreshSelections]);
   const filterCompanies = () => {
     let filtered = companies;
 
@@ -375,29 +397,41 @@ const StudentDashboard = () => {
     }
   };
 
-  const handleVideoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  // Max video size = 50 MB (the free-plan global Supabase Storage limit).
+  const VIDEO_MAX_BYTES = 50 * 1024 * 1024;
 
-    if (!file.type.startsWith('video/')) {
-      toast({ title: "Invalid file", description: "Please upload a video file.", variant: "destructive" });
+  // Shared by both the file input and drag & drop. Independent of the rest of the
+  // profile save, so a video failure never blocks CV / photo / LinkedIn.
+  const processVideoFile = async (file: File) => {
+    const ext = (file.name.split('.').pop() || '').toLowerCase();
+    const isMp4 = file.type === 'video/mp4' || ext === 'mp4';
+    const isMov = file.type === 'video/quicktime' || ext === 'mov';
+
+    if (!isMp4 && !isMov) {
+      toast({ title: "Unsupported format", description: "Use MP4 or MOV.", variant: "destructive" });
       return;
     }
-
-    const maxSize = 200 * 1024 * 1024; // 200MB
-    if (file.size > maxSize) {
-      toast({ title: "File too large", description: "Maximum video size is 200MB.", variant: "destructive" });
+    if (file.size > VIDEO_MAX_BYTES) {
+      toast({
+        title: "Video too large",
+        description: "Max 50MB — try recording at lower quality or shorter.",
+        variant: "destructive"
+      });
       return;
     }
 
     setUploadingVideo(true);
     try {
-      const ext = file.name.split('.').pop() || 'mp4';
-      const fileName = `${userInfo.id}/presentation-${Date.now()}.${ext}`;
+      // Force the content type by extension so the bucket's MIME restriction
+      // (video/mp4, video/quicktime) always matches, even if the browser reports
+      // an empty/odd file.type for a phone-recorded .mov.
+      const contentType = isMov ? 'video/quicktime' : 'video/mp4';
+      const fileExt = isMov ? 'mov' : 'mp4';
+      const fileName = `${userInfo.id}/presentation-${Date.now()}.${fileExt}`;
 
       const { error: uploadError } = await supabase.storage
         .from('talent-pool-videos')
-        .upload(fileName, file, { upsert: true, contentType: file.type });
+        .upload(fileName, file, { upsert: true, contentType });
 
       if (uploadError) throw uploadError;
 
@@ -419,6 +453,19 @@ const StudentDashboard = () => {
     } finally {
       setUploadingVideo(false);
     }
+  };
+
+  const handleVideoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) processVideoFile(file);
+    e.target.value = ''; // allow re-selecting the same file
+  };
+
+  const handleVideoDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    if (uploadingVideo) return;
+    const file = e.dataTransfer.files?.[0];
+    if (file) processVideoFile(file);
   };
 
   const handleVideoRemove = async () => {
@@ -489,6 +536,24 @@ const StudentDashboard = () => {
         description: t('studentTalentPool.errors.preferencesErrorDesc'),
         variant: "destructive"
       });
+    }
+  };
+
+  // Save the student's LinkedIn URL via the dedicated SECURITY DEFINER RPC.
+  // Optional: an empty value clears it. Independent of the other profile saves.
+  const handleSaveLinkedIn = async () => {
+    try {
+      const url = (studentProfile?.linkedin_url || '').trim();
+      const { error } = await supabase.rpc('talent_pool_update_student_linkedin' as any, {
+        _user_id: userInfo.id,
+        _linkedin_url: url || null,
+      });
+      if (error) throw error;
+      setStudentProfile((prev: any) => prev ? { ...prev, linkedin_url: url || null } : prev);
+      toast({ title: "LinkedIn saved", description: url ? "Your LinkedIn link has been updated." : "Your LinkedIn link has been removed." });
+    } catch (e: any) {
+      console.error('Error saving LinkedIn:', e);
+      toast({ title: "Error", description: e.message || "Unable to save LinkedIn", variant: "destructive" });
     }
   };
 
@@ -746,9 +811,16 @@ const StudentDashboard = () => {
               </CardContent>
             </Card>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              {/* Colonna Profilo */}
-              <div className="lg:col-span-1 space-y-4">
+            {/* Three sections as tabs (overview above stays outside) */}
+            <Tabs defaultValue="companies" className="w-full">
+              <TabsList className="grid w-full grid-cols-3 mb-4">
+                <TabsTrigger value="companies">Partner Companies</TabsTrigger>
+                <TabsTrigger value="prep">Prep Material</TabsTrigger>
+                <TabsTrigger value="profile">Personal Profile</TabsTrigger>
+              </TabsList>
+
+              {/* SECTION 3 — Personal Profile */}
+              <TabsContent value="profile" className="space-y-4">
               <Card>
                 <CardHeader>
                   <CardTitle>{t('studentTalentPool.profile.title')}</CardTitle>
@@ -793,6 +865,23 @@ const StudentDashboard = () => {
                         </a>
                       </div>
                     )}
+                  </div>
+
+                  {/* LinkedIn — editable (optional) */}
+                  <div className="space-y-2">
+                    <Label className="flex items-center gap-2 text-sm">
+                      <Linkedin className="h-4 w-4" />
+                      LinkedIn (optional)
+                    </Label>
+                    <Input
+                      type="url"
+                      placeholder="https://www.linkedin.com/in/your-profile"
+                      value={studentProfile.linkedin_url || ''}
+                      onChange={(e) => setStudentProfile((prev: any) => prev ? { ...prev, linkedin_url: e.target.value } : prev)}
+                    />
+                    <Button size="sm" variant="outline" className="w-full" onClick={handleSaveLinkedIn}>
+                      Save LinkedIn
+                    </Button>
                   </div>
                 </CardContent>
               </Card>
@@ -1017,7 +1106,31 @@ const StudentDashboard = () => {
 
               <Card>
                 <CardHeader>
-                  <CardTitle>Presentation Video (optional)</CardTitle>
+                  <CardTitle className="flex items-center gap-2">
+                    Presentation Video (optional)
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <button
+                          type="button"
+                          aria-label="What to say in your video"
+                          className="inline-flex h-5 w-5 items-center justify-center rounded-full text-muted-foreground hover:text-primary hover:bg-accent transition-colors"
+                        >
+                          <Info className="h-4 w-4" />
+                        </button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-80 text-sm leading-relaxed">
+                        <p className="font-medium mb-1">What to record</p>
+                        <p className="text-muted-foreground">
+                          Record a 2-minute video introducing yourself: who you are, what you've studied,
+                          what you enjoy doing, and why you'd be a great fit. Keep it under 2 minutes, and
+                          record it in English.
+                        </p>
+                        <p className="text-muted-foreground mt-2">
+                          Keep the file under 50MB — record at standard quality (not 4K) or keep it short.
+                        </p>
+                      </PopoverContent>
+                    </Popover>
+                  </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <p className="text-sm text-muted-foreground">
@@ -1062,7 +1175,9 @@ const StudentDashboard = () => {
                   ) : (
                     <div
                       onClick={() => !uploadingVideo && videoInputRef.current?.click()}
-                      className="flex h-24 w-full items-center justify-center rounded-md border-2 border-dashed border-input bg-background px-3 text-sm hover:bg-accent cursor-pointer"
+                      onDrop={handleVideoDrop}
+                      onDragOver={(e) => e.preventDefault()}
+                      className="flex h-28 w-full flex-col items-center justify-center gap-1 rounded-md border-2 border-dashed border-input bg-background px-3 text-sm text-center hover:bg-accent cursor-pointer"
                     >
                       {uploadingVideo ? (
                         <div className="flex items-center gap-2">
@@ -1070,17 +1185,20 @@ const StudentDashboard = () => {
                           Uploading...
                         </div>
                       ) : (
-                        <div className="flex items-center gap-2">
-                          <Upload className="h-4 w-4" />
-                          Choose a video (max 200MB)
-                        </div>
+                        <>
+                          <div className="flex items-center gap-2 font-medium">
+                            <Upload className="h-4 w-4" />
+                            Drag &amp; drop a video here, or click to choose
+                          </div>
+                          <span className="text-xs text-muted-foreground">MP4 or MOV · max 50MB</span>
+                        </>
                       )}
                     </div>
                   )}
                   <Input
                     ref={videoInputRef}
                     type="file"
-                    accept="video/*"
+                    accept=".mp4,.mov,video/mp4,video/quicktime"
                     onChange={handleVideoUpload}
                     className="hidden"
                   />
@@ -1135,10 +1253,36 @@ const StudentDashboard = () => {
                 </CardContent>
               </Card>
 
-            </div>
+              </TabsContent>
 
-            {/* Colonna Aziende */}
-            <div className="lg:col-span-2 space-y-4">
+              {/* SECTION 2 — Prep Material */}
+              <TabsContent value="prep" className="space-y-4">
+                <Card className="border-2 border-primary/30 bg-gradient-to-br from-primary/5 to-transparent">
+                  <CardHeader>
+                    <CardTitle className="text-lg font-bold flex items-center gap-2">
+                      <FileText className="h-5 w-5 text-primary" />
+                      {language === 'it' ? 'Materiale di Preparazione' : 'Prep Material'}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <p className="text-sm text-steel-gray">
+                      {language === 'it'
+                        ? 'Accedi al materiale Knowledge Base dedicato all\'Internship Placement: guide PDF, modelli Excel e pacchetti pronti per le selezioni. Acquista e scarica tutto ciò che ti serve.'
+                        : 'Access the Knowledge Base material dedicated to Internship Placement: PDF guides, Excel models and ready-made packages for your selections. Buy and download everything you need.'}
+                    </p>
+                    <Button
+                      onClick={() => navigate('/knowledge-base?tier=Internship+Placement')}
+                      className="gap-2"
+                    >
+                      <FileText className="h-4 w-4" />
+                      {language === 'it' ? 'Apri Prep Material' : 'Open Prep Material'}
+                    </Button>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              {/* SECTION 1 — Partner Companies (kept as-is, no redesign) */}
+              <TabsContent value="companies" className="space-y-4">
               <Card>
                 <CardHeader>
                   <CardTitle>{t('studentTalentPool.companies.filters')}</CardTitle>
@@ -1242,8 +1386,8 @@ const StudentDashboard = () => {
                   ))
                 )}
               </div>
-            </div>
-          </div>
+              </TabsContent>
+            </Tabs>
           </>
         )}
       </div>

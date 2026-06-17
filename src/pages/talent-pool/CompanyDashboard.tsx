@@ -6,21 +6,26 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
-import { 
-  Building2, 
-  LogOut, 
-  User, 
+import {
+  Building2,
+  LogOut,
+  User,
   FileText,
   Download,
   Edit,
   Save,
   Upload,
-  DoorOpen
+  DoorOpen,
+  CalendarClock,
+  ClipboardCheck,
+  Handshake,
+  XCircle,
+  X
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { TalentPoolLanguageProvider, useTalentPoolLanguage } from "@/contexts/TalentPoolLanguageContext";
@@ -59,6 +64,13 @@ const CompanyDashboardContent = () => {
   const [uploading, setUploading] = useState(false);
   const [selectedStudents, setSelectedStudents] = useState<Set<string>>(new Set());
   const [selecting, setSelecting] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<'students' | 'selected' | 'profile'>('students');
+  const [selectedList, setSelectedList] = useState<any[]>([]);
+  const [deselecting, setDeselecting] = useState<string | null>(null);
+  const [companyMeetings, setCompanyMeetings] = useState<any[]>([]);
+  const [meetingDialogFor, setMeetingDialogFor] = useState<any>(null);
+  const [meetingForm, setMeetingForm] = useState({ title: '', slot1: '', slot2: '', timezone: '' });
+  const [submittingMeeting, setSubmittingMeeting] = useState(false);
 
   useEffect(() => {
     checkAuthAndLoadData();
@@ -116,6 +128,7 @@ const CompanyDashboardContent = () => {
 
       await loadStudents();
       await loadSelectedStudents(userData.id);
+      await loadMeetings(userData.id);
     } catch (error) {
       console.error('Auth check error:', error);
       navigate('/talent-pool/company');
@@ -204,10 +217,79 @@ const CompanyDashboardContent = () => {
       const selections = Array.isArray(data) ? data : [];
       const ids = selections.map((s: any) => s.student_id as string);
       setSelectedStudents(new Set(ids));
+      setSelectedList(selections);
       return ids;
     } catch (error) {
       console.error('Error loading selected students:', error);
       return [];
+    }
+  };
+
+  const handleDeselect = async (studentId: string, studentName: string) => {
+    if (!company?.id) return;
+    setDeselecting(studentId);
+    try {
+      const { error } = await supabase.functions.invoke('deselect-student', {
+        body: { companyId: company.id, studentId }
+      });
+      if (error) throw error;
+      toast({ title: "Student deselected", description: `${studentName} removed from your selections. Their recruiting history is kept.` });
+      await loadSelectedStudents(company.id);
+    } catch (e: any) {
+      console.error('Deselect error:', e);
+      toast({ title: "Error", description: e.message || "Failed to deselect", variant: "destructive" });
+    } finally {
+      setDeselecting(null);
+    }
+  };
+
+  const loadMeetings = async (companyId: string) => {
+    try {
+      const { data, error } = await supabase.functions.invoke('get-recruiting-meetings', { body: { companyId } });
+      if (error) { console.error('Error loading meetings:', error); return; }
+      setCompanyMeetings(Array.isArray(data) ? data : []);
+    } catch (e) {
+      console.error('Error loading meetings:', e);
+    }
+  };
+
+  const openMeetingDialog = (selection: any) => {
+    setMeetingDialogFor(selection);
+    setMeetingForm({ title: '', slot1: '', slot2: '', timezone: '' });
+  };
+
+  const handleProposeMeeting = async () => {
+    if (!meetingDialogFor || !company?.id) return;
+    if (!meetingForm.slot1 || !meetingForm.slot2) {
+      toast({ title: "Two slots required", description: "Please propose two date + time options.", variant: "destructive" });
+      return;
+    }
+    if (!meetingForm.timezone.trim()) {
+      toast({ title: "Timezone required", description: "Add the timezone label shown next to the times.", variant: "destructive" });
+      return;
+    }
+    setSubmittingMeeting(true);
+    try {
+      const { error } = await supabase.functions.invoke('recruiting-meeting-action', {
+        body: {
+          action: 'propose',
+          by: 'COMPANY',
+          companyId: company.id,
+          studentId: meetingDialogFor.student_id,
+          title: meetingForm.title || null,
+          proposedSlots: [{ datetime: meetingForm.slot1 }, { datetime: meetingForm.slot2 }],
+          timezone: meetingForm.timezone.trim(),
+        }
+      });
+      if (error) throw error;
+      toast({ title: "Meeting proposed", description: "The candidate and Career Pilot have been notified." });
+      setMeetingDialogFor(null);
+      await loadMeetings(company.id);
+    } catch (e: any) {
+      console.error('Propose meeting error:', e);
+      toast({ title: "Error", description: e.message || "Failed to propose meeting", variant: "destructive" });
+    } finally {
+      setSubmittingMeeting(false);
     }
   };
 
@@ -265,10 +347,16 @@ const CompanyDashboardContent = () => {
         });
 
         if (uploadError || !uploadData?.publicUrl) {
-          throw uploadError || new Error('Failed to upload logo');
+          // Non-blocking: keep the existing logo and warn, but still save the rest.
+          console.error('Logo upload failed (non-fatal):', uploadError);
+          toast({
+            title: "Logo not updated",
+            description: "The other fields will be saved; the logo upload failed. Try again later.",
+            variant: "destructive"
+          });
+        } else {
+          logoUrl = uploadData.publicUrl;
         }
-
-        logoUrl = uploadData.publicUrl;
       }
 
       const { data, error } = await supabase.rpc('update_company_profile', {
@@ -461,11 +549,11 @@ const CompanyDashboardContent = () => {
           <div className="flex items-center gap-2">
             <Button
               variant="outline"
-              onClick={() => navigate('/talent-pool/company/selected-students')}
+              onClick={() => setActiveTab('selected')}
               className="flex items-center gap-2"
             >
               <User className="h-4 w-4" />
-              Selected Students ({selectedStudents.size})
+              Selected Students ({selectedList.length})
             </Button>
             <AlertDialog>
               <AlertDialogTrigger asChild>
@@ -505,9 +593,10 @@ const CompanyDashboardContent = () => {
           </div>
         </div>
 
-        <Tabs defaultValue="students" className="space-y-6">
+        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'students' | 'selected' | 'profile')} className="space-y-6">
           <TabsList>
-            <TabsTrigger value="students">Students</TabsTrigger>
+            <TabsTrigger value="students">Available Students</TabsTrigger>
+            <TabsTrigger value="selected">Selected Students ({selectedList.length})</TabsTrigger>
             <TabsTrigger value="profile">Company Profile</TabsTrigger>
           </TabsList>
 
@@ -862,7 +951,208 @@ const CompanyDashboardContent = () => {
               </CardContent>
             </Card>
           </TabsContent>
+
+          {/* SECTION 2 — Selected Students (recruiting hub). Actions wired in C2–C4. */}
+          <TabsContent value="selected">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <User className="h-5 w-5" />
+                  Selected Students ({selectedList.length})
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {selectedList.length === 0 ? (
+                  <div className="text-center py-12">
+                    <User className="h-12 w-12 text-steel-gray mx-auto mb-4 opacity-50" />
+                    <p className="text-steel-gray">No students selected yet</p>
+                    <p className="text-sm text-steel-gray mt-2">
+                      Select candidates from "Available Students" to start a recruiting process.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {selectedList.map((selection) => {
+                      const student = selection.profile;
+                      if (!student) return null;
+                      const stage = selection.stage || 'IN_PROGRESS';
+                      const stageMeta: Record<string, { label: string; cls: string }> = {
+                        IN_PROGRESS: { label: 'In progress', cls: 'bg-amber-100 text-amber-800' },
+                        OFFER: { label: 'Offer', cls: 'bg-blue-100 text-blue-800' },
+                        REJECTED: { label: 'Rejected', cls: 'bg-red-100 text-red-800' },
+                        HIRED: { label: 'Hired', cls: 'bg-green-100 text-green-800' },
+                      };
+                      const sm = stageMeta[stage] || stageMeta.IN_PROGRESS;
+                      const myMeetings = companyMeetings.filter((m: any) => m.student_id === selection.student_id);
+                      return (
+                        <Card key={selection.id} className="p-4">
+                          <div className="space-y-3">
+                            <div className="flex items-center gap-3">
+                              {student.photo_url ? (
+                                <img src={student.photo_url} alt="" className="h-14 w-14 rounded-full object-cover" />
+                              ) : (
+                                <div className="h-14 w-14 rounded-full bg-primary/10 flex items-center justify-center">
+                                  <User className="h-7 w-7 text-primary" />
+                                </div>
+                              )}
+                              <div className="flex-1">
+                                <h3 className="text-lg font-semibold">{student.first_name} {student.last_name}</h3>
+                                <p className="text-xs text-steel-gray">
+                                  Selected: {new Date(selection.selected_at).toLocaleDateString()}
+                                </p>
+                              </div>
+                              <Badge className={sm.cls}>{sm.label}</Badge>
+                            </div>
+
+                            {/* Documents */}
+                            <div className="flex flex-wrap gap-2">
+                              {student.cv_url && (
+                                <Button size="sm" variant="outline" onClick={() => downloadFile(student.cv_url, `${student.first_name}_${student.last_name}_CV.pdf`)}>
+                                  <FileText className="h-4 w-4 mr-1" /> CV <Download className="h-3 w-3 ml-1" />
+                                </Button>
+                              )}
+                              {student.cover_letter_url && (
+                                <Button size="sm" variant="outline" onClick={() => downloadFile(student.cover_letter_url, `${student.first_name}_${student.last_name}_CoverLetter.pdf`)}>
+                                  <FileText className="h-4 w-4 mr-1" /> Cover <Download className="h-3 w-3 ml-1" />
+                                </Button>
+                              )}
+                            </div>
+
+                            {/* Next step — Schedule meeting is live (C2); the rest arrive in C3/C4 */}
+                            <div className="border-t pt-3">
+                              <p className="text-xs font-medium text-muted-foreground mb-2">Next step</p>
+                              <div className="grid grid-cols-2 gap-2">
+                                <Button size="sm" variant="outline" onClick={() => openMeetingDialog(selection)}><CalendarClock className="h-4 w-4 mr-1" /> Schedule meeting</Button>
+                                <Button size="sm" variant="outline" disabled title="Coming soon"><ClipboardCheck className="h-4 w-4 mr-1" /> Test</Button>
+                                <Button size="sm" variant="outline" disabled title="Coming soon"><Handshake className="h-4 w-4 mr-1" /> Offer</Button>
+                                <Button size="sm" variant="outline" disabled title="Coming soon"><XCircle className="h-4 w-4 mr-1" /> Reject</Button>
+                              </div>
+                            </div>
+
+                            {/* Meetings timeline (Tests list arrives in C3) */}
+                            <div className="grid grid-cols-1 gap-3">
+                              <div className="rounded-md border p-2 space-y-2">
+                                <p className="text-xs font-medium">Meetings ({myMeetings.length})</p>
+                                {myMeetings.length === 0 ? (
+                                  <p className="text-xs text-muted-foreground">No meetings yet</p>
+                                ) : (
+                                  myMeetings.map((m: any) => (
+                                    <div key={m.id} className="rounded border bg-muted/30 p-2 text-xs space-y-1">
+                                      <div className="flex items-center justify-between gap-2">
+                                        <span className="font-medium">{m.title || 'Meeting'}</span>
+                                        <Badge variant="outline" className="text-[10px]">{m.status}</Badge>
+                                      </div>
+                                      {m.status === 'CONFIRMED' && m.confirmed_slot ? (
+                                        <p>Confirmed: <strong>{m.confirmed_slot.datetime}</strong>{m.timezone ? ` (${m.timezone})` : ''}</p>
+                                      ) : (
+                                        <div>
+                                          <p className="text-muted-foreground">
+                                            {m.proposed_by === 'STUDENT' ? 'Candidate proposed:' : 'You proposed:'}
+                                          </p>
+                                          <ul className="list-disc list-inside">
+                                            {(m.proposed_slots || []).map((s: any, i: number) => (
+                                              <li key={i}>{s.datetime}{m.timezone ? ` (${m.timezone})` : ''}</li>
+                                            ))}
+                                          </ul>
+                                        </div>
+                                      )}
+                                    </div>
+                                  ))
+                                )}
+                              </div>
+                              <div className="rounded-md border p-2">
+                                <p className="text-xs font-medium">Tests (0)</p>
+                                <p className="text-xs text-muted-foreground">No tests yet</p>
+                              </div>
+                            </div>
+
+                            {/* Deselect (history preserved) */}
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button size="sm" variant="destructive" disabled={deselecting === selection.student_id} className="w-full">
+                                  {deselecting === selection.student_id ? 'Removing...' : (<><X className="h-4 w-4 mr-1" /> Deselect</>)}
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Remove this selection?</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    Deselect {student.first_name} {student.last_name}? Their recruiting history (meetings/tests) is kept.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                  <AlertDialogAction
+                                    onClick={() => handleDeselect(selection.student_id, `${student.first_name} ${student.last_name}`)}
+                                    className="bg-destructive text-destructive-foreground"
+                                  >
+                                    Yes, remove
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          </div>
+                        </Card>
+                      );
+                    })}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
         </Tabs>
+
+        {/* Schedule meeting — propose 2 date+time options (C2.1) */}
+        <Dialog open={!!meetingDialogFor} onOpenChange={(o) => { if (!o) setMeetingDialogFor(null); }}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Schedule meeting</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label>Title</Label>
+                <Input
+                  placeholder="e.g. First interview"
+                  value={meetingForm.title}
+                  onChange={(e) => setMeetingForm({ ...meetingForm, title: e.target.value })}
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <Label>Option 1 (date &amp; time)</Label>
+                  <Input
+                    type="datetime-local"
+                    value={meetingForm.slot1}
+                    onChange={(e) => setMeetingForm({ ...meetingForm, slot1: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Option 2 (date &amp; time)</Label>
+                  <Input
+                    type="datetime-local"
+                    value={meetingForm.slot2}
+                    onChange={(e) => setMeetingForm({ ...meetingForm, slot2: e.target.value })}
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>Timezone</Label>
+                <Input
+                  placeholder="e.g. CET, GMT, EST"
+                  value={meetingForm.timezone}
+                  onChange={(e) => setMeetingForm({ ...meetingForm, timezone: e.target.value })}
+                />
+                <p className="text-xs text-muted-foreground">Shown next to the times as a label — no automatic conversion.</p>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setMeetingDialogFor(null)} disabled={submittingMeeting}>Cancel</Button>
+              <Button onClick={handleProposeMeeting} disabled={submittingMeeting}>
+                {submittingMeeting ? 'Sending...' : 'Propose meeting'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );

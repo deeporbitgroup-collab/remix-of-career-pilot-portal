@@ -103,7 +103,6 @@ const HeroSection = () => {
   const [isEcosystemOpen, setIsEcosystemOpen] = useState(
     typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('openEcosystem') === '1'
   );
-  const [isPanelOpen, setIsPanelOpen] = useState(false);
 
   // Clean ?openEcosystem=1 from URL after consumption
   useEffect(() => {
@@ -115,19 +114,6 @@ const HeroSection = () => {
     }
   }, []);
   const [isHeroVisible, setIsHeroVisible] = useState(true);
-  const [platformsTyped, setPlatformsTyped] = useState("");
-  useEffect(() => {
-    if (!isPanelOpen) { setPlatformsTyped(""); return; }
-    const full = "Platforms";
-    setPlatformsTyped("");
-    let i = 0;
-    const id = window.setInterval(() => {
-      i++;
-      setPlatformsTyped(full.slice(0, i));
-      if (i >= full.length) window.clearInterval(id);
-    }, 80);
-    return () => window.clearInterval(id);
-  }, [isPanelOpen]);
   const [associatePhotos, setAssociatePhotos] = useState<Array<{ first_name: string; last_name: string; photo_url: string }>>([]);
   const heroRef = useRef<HTMLElement>(null);
   const { language } = useLanguage();
@@ -228,270 +214,10 @@ const HeroSection = () => {
 
   return (
     <section ref={heroRef} className="relative mt-[56px] h-[calc(100svh-56px)] md:mt-16 md:h-[calc(100vh-4rem)] flex flex-col md:flex-row overflow-hidden">
-      {/* Vertical PLATFORMS label - only visible when hero is in view */}
-      {!isPanelOpen && isHeroVisible && (
-        <button
-          onClick={() => setIsPanelOpen(true)}
-          className="hidden md:flex fixed left-0 top-1/2 -translate-y-1/2 z-40 items-center justify-center bg-gradient-to-b from-secondary to-primary shadow-[0_0_20px_rgba(30,64,175,0.3)] cursor-pointer hover:shadow-[0_0_30px_rgba(30,64,175,0.5)] transition-all duration-300 group rounded-r-xl w-12 h-[280px]"
-          aria-label="Open platforms panel"
-        >
-          <div className="flex flex-col items-center gap-3">
-            <span 
-              className="text-white font-bold tracking-[0.25em] text-sm group-hover:tracking-[0.3em] transition-all duration-300 drop-shadow-[0_0_8px_rgba(255,255,255,0.4)]"
-              style={{
-                writingMode: 'vertical-rl',
-                textOrientation: 'mixed',
-                transform: 'rotate(180deg)',
-              }}
-            >
-              PLATFORMS
-            </span>
-            <div className="w-5 h-[2px] bg-gradient-to-r from-white to-white/50 rounded-full group-hover:w-6 group-hover:from-white group-hover:to-white/70 transition-all duration-300" />
-            <ChevronRight className="h-4 w-4 text-white group-hover:translate-x-0.5 transition-all animate-[pulse_2s_ease-in-out_infinite]" />
-          </div>
-        </button>
-      )}
 
-      {/* Toggle Tab - visible only when panel is open and hero is visible */}
-      {isPanelOpen && isHeroVisible && (
-        <>
-          {/* Mobile close button - top right */}
-          <button
-            onClick={() => setIsPanelOpen(false)}
-            className="md:hidden fixed top-4 right-4 z-50 bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg transition-all duration-300 flex items-center justify-center rounded-full w-10 h-10"
-            aria-label="Close platforms panel"
-          >
-            <ChevronLeft className="h-5 w-5" />
-          </button>
-          {/* Desktop close button - edge of panel */}
-          <button
-            onClick={() => setIsPanelOpen(false)}
-            className="hidden md:flex fixed top-1/2 -translate-y-1/2 z-50 bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg transition-all duration-300 items-center justify-center rounded-r-lg"
-            style={{
-              left: 'calc(35% - 1px)',
-              width: '32px',
-              height: '80px',
-            }}
-            aria-label="Close platforms panel"
-          >
-            <ChevronLeft className="h-5 w-5" />
-          </button>
-        </>
-      )}
-
-      {/* Left Section - Collapsible platforms panel */}
-      <div 
-        className={`fixed md:relative inset-0 md:inset-auto bg-background flex flex-col transition-all duration-500 ease-in-out z-40 ${
-          isPanelOpen 
-            ? 'w-full md:w-[35%] opacity-100 translate-x-0' 
-            : 'w-full md:w-0 opacity-0 -translate-x-full md:translate-x-0 pointer-events-none'
-        }`}
-        style={{
-          minWidth: isPanelOpen ? undefined : '0',
-          overflow: 'hidden',
-        }}
-      >
-        {/* Dynamic animated background */}
-        <div className="absolute inset-0 pointer-events-none">
-          {/* Animated gradient mesh */}
-          <div className="absolute inset-0 opacity-20">
-            <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-primary/30 via-transparent to-accent/30 animate-pulse" style={{ animationDuration: '8s' }} />
-            <div className="absolute top-0 right-0 w-full h-full bg-gradient-to-bl from-secondary/25 via-transparent to-primary/25 animate-pulse" style={{ animationDuration: '10s', animationDelay: '2s' }} />
-          </div>
-          
-          {/* Flowing particles */}
-          <div className="absolute inset-0">
-            {[...Array(20)].map((_, i) => (
-              <div
-                key={`particle-${i}`}
-                className="absolute w-1 h-1 bg-primary/40 rounded-full"
-                style={{
-                  left: `${Math.random() * 100}%`,
-                  top: `${Math.random() * 100}%`,
-                  animation: `float-particle ${8 + Math.random() * 8}s ease-in-out infinite`,
-                  animationDelay: `${Math.random() * 5}s`,
-                }}
-              />
-            ))}
-          </div>
-          
-          {/* Diagonal flowing lines */}
-          <svg className="absolute inset-0 w-full h-full opacity-25">
-            <defs>
-              <linearGradient id="lineGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                <stop offset="0%" stopColor="hsl(223, 83%, 27%)" stopOpacity="0" />
-                <stop offset="50%" stopColor="hsl(215, 100%, 60%)" stopOpacity="0.8" />
-                <stop offset="100%" stopColor="hsl(223, 83%, 27%)" stopOpacity="0" />
-              </linearGradient>
-            </defs>
-            {[...Array(6)].map((_, i) => (
-              <line
-                key={`line-${i}`}
-                x1="0"
-                y1={`${i * 20}%`}
-                x2="100%"
-                y2={`${i * 20 + 30}%`}
-                stroke="url(#lineGradient)"
-                strokeWidth="1.5"
-                style={{
-                  animation: `dash-line ${3 + i * 0.5}s linear infinite`,
-                  animationDelay: `${i * 0.7}s`,
-                }}
-              />
-            ))}
-          </svg>
-          
-          {/* Glowing orbs with more movement */}
-          <div className="absolute inset-0">
-            <div 
-              className="absolute w-96 h-96 rounded-full blur-3xl"
-              style={{
-                top: '10%',
-                left: '20%',
-                background: 'radial-gradient(circle, hsl(223, 83%, 27%, 0.15) 0%, transparent 70%)',
-                animation: 'orbit-slow 15s ease-in-out infinite',
-              }}
-            />
-            <div 
-              className="absolute w-80 h-80 rounded-full blur-3xl"
-              style={{
-                bottom: '15%',
-                right: '10%',
-                background: 'radial-gradient(circle, hsl(215, 100%, 60%, 0.15) 0%, transparent 70%)',
-                animation: 'orbit-reverse 12s ease-in-out infinite',
-                animationDelay: '2s',
-              }}
-            />
-            <div 
-              className="absolute w-64 h-64 rounded-full blur-2xl"
-              style={{
-                top: '50%',
-                left: '50%',
-                transform: 'translate(-50%, -50%)',
-                background: 'radial-gradient(circle, hsl(223, 83%, 35%, 0.12) 0%, transparent 70%)',
-                animation: 'pulse-glow 8s ease-in-out infinite',
-                animationDelay: '4s',
-              }}
-            />
-          </div>
-          
-          {/* Network effect - connecting dots */}
-          <svg className="absolute inset-0 w-full h-full opacity-15">
-            {[...Array(8)].map((_, i) => {
-              const cx = (i % 4) * 25 + 12.5;
-              const cy = Math.floor(i / 4) * 40 + 20;
-              return (
-                <g key={`node-${i}`}>
-                  <circle
-                    cx={`${cx}%`}
-                    cy={`${cy}%`}
-                    r="3"
-                    fill="hsl(215, 100%, 60%)"
-                    className="animate-pulse"
-                    style={{ animationDuration: `${2 + Math.random() * 2}s`, animationDelay: `${Math.random() * 2}s` }}
-                  />
-                  {i < 7 && (
-                    <line
-                      x1={`${cx}%`}
-                      y1={`${cy}%`}
-                      x2={`${((i + 1) % 4) * 25 + 12.5}%`}
-                      y2={`${Math.floor((i + 1) / 4) * 40 + 20}%`}
-                      stroke="hsl(223, 83%, 27%)"
-                      strokeWidth="0.5"
-                      opacity="0.4"
-                    />
-                  )}
-                </g>
-              );
-            })}
-          </svg>
-        </div>
-
-        <div className="relative z-10 px-4 md:px-6 pt-6 md:pt-8 2xl:pt-10 pb-3 md:pb-4 h-full overflow-hidden flex flex-col gap-2 md:gap-3">
-          {/* Top block: Title + Links + Buttons */}
-          <div className="flex flex-col mt-4 md:mt-6">
-            {/* Platforms Title - aligned with hero "Career Pilot" */}
-            <div className="flex flex-col items-center">
-              <h2 className="text-2xl md:text-4xl lg:text-5xl 2xl:text-6xl font-bold text-foreground leading-none mb-0 md:mb-2 2xl:mb-3 inline-flex items-center justify-center min-h-[1em]">
-                <span>{platformsTyped}</span>
-                {platformsTyped.length < "Platforms".length && (
-                  <span className="ml-1 inline-block w-[3px] h-[0.9em] bg-primary animate-pulse" />
-                )}
-              </h2>
-              <div className="h-0.5 md:h-1 2xl:h-1.5 w-16 md:w-20 2xl:w-28 bg-gradient-sky rounded-full mb-2 md:mb-3 2xl:mb-4" />
-            </div>
-
-            {/* Primary action buttons - stacked */}
-            <div className="space-y-2 md:space-y-2.5 2xl:space-y-3">
-              <Button
-                size="default"
-                className="w-full rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 shadow-md hover:shadow-lg transition-all duration-300 text-sm md:text-base 2xl:text-lg py-2.5 md:py-3 2xl:py-4 justify-start px-4"
-                onClick={() => window.location.href = '/client-portal/services'}
-              >
-                {language === 'it' ? 'Book Flight Plan' : 'Book Flight Plan'}
-                <ArrowRight className="ml-auto h-4 w-4 2xl:h-5 2xl:w-5" />
-              </Button>
-              <Button
-                size="default"
-                className="w-full rounded-lg bg-accent text-accent-foreground hover:bg-accent/90 shadow-md hover:shadow-lg transition-all duration-300 text-sm md:text-base 2xl:text-lg py-2.5 md:py-3 2xl:py-4 justify-start px-4"
-                onClick={() => window.location.href = '/auth'}
-              >
-                {language === 'it' ? 'Crew Portal' : 'Crew Portal'}
-                <ArrowRight className="ml-auto h-4 w-4 2xl:h-5 2xl:w-5" />
-              </Button>
-              <Button
-                size="default"
-                className="w-full rounded-lg bg-gradient-to-r from-secondary to-primary text-primary-foreground hover:opacity-95 shadow-md hover:shadow-lg transition-all duration-300 text-sm md:text-base 2xl:text-lg py-2.5 md:py-3 2xl:py-4 justify-start px-4 border border-secondary/30"
-                onClick={() => setIsEcosystemOpen(true)}
-              >
-                {language === 'it' ? 'Softwares & Preparation' : 'Softwares & Preparation'}
-                <ArrowRight className="ml-auto h-4 w-4 2xl:h-5 2xl:w-5" />
-              </Button>
-            </div>
-
-            {/* Bullet list under Softwares & Preparation */}
-            <ul className="mt-2 md:mt-2.5 2xl:mt-3 pl-4 md:pl-5 space-y-1 md:space-y-1.5">
-              {['Knowledge Base', 'Talent Pool', 'Pathways'].map((label) => (
-                <li key={label} className="list-disc marker:text-secondary text-sm md:text-base 2xl:text-lg">
-                  <span className="text-foreground/80 font-medium">{label}</span>
-                </li>
-              ))}
-            </ul>
-
-            {/* Learn more */}
-            <div className="flex flex-col mt-2 md:mt-3">
-              <button
-                onClick={handleLearnMore}
-                className="text-sm md:text-base 2xl:text-lg text-primary hover:text-primary/80 underline-offset-4 hover:underline transition-colors duration-300 font-medium text-left px-3 md:px-4 py-1.5 md:py-2"
-              >
-                {language === 'it' ? 'Scopri di più' : 'Learn more'}
-              </button>
-            </div>
-          </div>
-
-          {/* Bottom block: Carousels - aligned with hero bottom */}
-          <div className="flex flex-col gap-1 md:gap-1.5 shrink-0 mt-auto">
-            <div className="space-y-0.5 md:space-y-1">
-              <h3 className="text-xs md:text-sm 2xl:text-base font-semibold text-muted-foreground text-center">
-                {language === 'it' ? 'Università' : 'Universities'}
-              </h3>
-              <AutoScrollCarousel items={universities} speed={25} />
-            </div>
-            <div className="space-y-0.5 md:space-y-1 pb-1 md:pb-2">
-              <h3 className="text-xs md:text-sm 2xl:text-base font-semibold text-muted-foreground text-center">
-                {language === 'it' ? 'Aziende' : 'Companies'}
-              </h3>
-              <AutoScrollCarousel items={companies} speed={20} />
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Right Section - Expands when panel is closed */}
+      {/* Right Section - full width (platforms panel removed) */}
       <div className={`relative flex items-center min-h-full md:min-h-0 transition-all duration-500 ease-in-out ${
-        isPanelOpen 
-          ? 'w-full md:w-[65%]'
-          : 'w-full md:flex-1'
+        'w-full md:flex-1'
       }`}>
         {/* White background */}
         <div className="absolute inset-0 bg-white" />
@@ -643,11 +369,7 @@ const HeroSection = () => {
         </div>
 
         {/* ============== DESKTOP LAYOUT ============== */}
-        <div className={`hidden md:flex relative z-10 pt-3 2xl:pt-5 pb-3 w-full transition-all duration-500 flex-col justify-between items-center gap-2 2xl:gap-3 h-full ${
-          isPanelOpen 
-            ? 'px-8 lg:px-12' 
-            : 'px-10 lg:px-14'
-        }`}>
+        <div className="hidden md:flex relative z-10 pt-3 2xl:pt-5 pb-3 w-full transition-all duration-500 flex-col justify-between items-center gap-2 2xl:gap-3 h-full px-10 lg:px-14">
           {/* Hero core: Logo + tagline + short description */}
           <div className="text-center w-full flex flex-col items-center">
             <img
@@ -758,10 +480,10 @@ const HeroSection = () => {
               </button>
               <span className="text-muted-foreground/40 text-xs">•</span>
               <button
-                onClick={() => setIsEcosystemOpen(true)}
+                onClick={() => window.location.href = '/talent-pool'}
                 className="text-sm 2xl:text-base text-primary hover:text-primary/80 underline underline-offset-4 transition-colors duration-300 font-medium"
               >
-                {language === 'it' ? 'Career Pilot Ecosystem' : 'Career Pilot Ecosystem'}
+                {language === 'it' ? 'Talent Pool' : 'Talent Pool'}
               </button>
             </div>
           </div>

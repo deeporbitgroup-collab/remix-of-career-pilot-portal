@@ -17,7 +17,6 @@ import UserManagement from "@/components/admin/UserManagement";
 import KPIManagement from "@/components/admin/KPIManagement";
 import ActivityLogs from "@/components/admin/ActivityLogs";
 import AnnouncementManagement from "@/components/admin/AnnouncementManagement";
-import AdminPartnerMessaging from "@/components/admin/AdminPartnerMessaging";
 import ClientManagement from "@/components/admin/ClientManagement";
 import AdminClientFeedback from "@/components/admin/AdminClientFeedback";
 import AdminClientProjects from "@/components/admin/AdminClientProjects";

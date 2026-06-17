@@ -111,11 +111,11 @@ const KnowledgeBaseSection = ({ clientId }: KnowledgeBaseSectionProps) => {
               </div>
               <h3 className="text-lg font-semibold mb-2">No materials yet</h3>
               <p className="text-sm text-muted-foreground mb-6">
-                Browse our Knowledge Base to discover guides, templates, and bundles to accelerate your journey.
+                Browse the full Knowledge Base store — guides, templates and bundles across every tier — to accelerate your journey.
               </p>
               <Button onClick={() => window.location.href = "/knowledge-base"}>
                 <BookOpen className="mr-2 h-4 w-4" />
-                Browse Knowledge Base
+                Browse full store
               </Button>
             </div>
           </CardContent>
@@ -126,19 +126,25 @@ const KnowledgeBaseSection = ({ clientId }: KnowledgeBaseSectionProps) => {
 
   return (
     <div className="space-y-6">
-      {/* Section Header */}
+      {/* Section Header — full store entry (all tiers) + purchased library below */}
       <Card className="backdrop-blur-sm bg-background/90 shadow-lg overflow-hidden">
         <div className="bg-gradient-to-r from-primary/10 via-primary/5 to-transparent p-6">
-          <div className="flex items-center gap-3">
-            <div className="p-3 rounded-xl bg-primary/10">
-              <BookOpen className="h-6 w-6 text-primary" />
+          <div className="flex items-center justify-between gap-3 flex-wrap">
+            <div className="flex items-center gap-3">
+              <div className="p-3 rounded-xl bg-primary/10">
+                <BookOpen className="h-6 w-6 text-primary" />
+              </div>
+              <div>
+                <h2 className="text-2xl md:text-3xl font-bold">Knowledge Base</h2>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Browse the full store and access your purchased materials
+                </p>
+              </div>
             </div>
-            <div>
-              <h2 className="text-2xl md:text-3xl font-bold">Knowledge Base</h2>
-              <p className="text-sm text-muted-foreground mt-1">
-                Your purchased guides, templates, and resources
-              </p>
-            </div>
+            <Button onClick={() => window.location.href = "/knowledge-base"}>
+              <BookOpen className="mr-2 h-4 w-4" />
+              Browse full store
+            </Button>
           </div>
         </div>
       </Card>

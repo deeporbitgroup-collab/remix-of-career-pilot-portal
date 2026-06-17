@@ -34,10 +34,8 @@ import NotFound from "./pages/NotFound";
 import Auth from "./pages/Auth";
 import PathwaysLayout from "./components/PathwaysLayout";
 import AssociateDashboard from "./pages/associate/Dashboard";
-import AssociateAvailability from "./pages/associate/Availability";
 import AssociateDocuments from "./pages/associate/Documents";
 import AssociateProfile from "./pages/associate/Profile";
-import AssociateMessages from "./pages/associate/Messages";
 import PartnerDashboard from "./pages/partner/Dashboard";
 import PartnerDocuments from "./pages/partner/Documents";
 import PartnerProfile from "./pages/partner/Profile";
@@ -127,11 +125,6 @@ const App = () => (
                   <AssociateDashboard />
                 </ProtectedRoute>
               } />
-              <Route path="/app/associate/availability" element={
-                <ProtectedRoute role="ASSOCIATE">
-                  <AssociateAvailability />
-                </ProtectedRoute>
-              } />
               <Route path="/app/associate/documents" element={
                 <ProtectedRoute role="ASSOCIATE">
                   <AssociateDocuments />
@@ -142,12 +135,7 @@ const App = () => (
                   <AssociateProfile />
                 </ProtectedRoute>
               } />
-              <Route path="/app/associate/messages" element={
-                <ProtectedRoute role="ASSOCIATE">
-                  <AssociateMessages />
-                </ProtectedRoute>
-              } />
-              
+
               {/* Protected Routes - Partner */}
               <Route path="/app/partner" element={
                 <ProtectedRoute role="PARTNER">

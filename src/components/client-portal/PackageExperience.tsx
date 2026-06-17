@@ -3,7 +3,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   Accordion,
@@ -27,9 +26,10 @@ import {
   GraduationCap,
   Briefcase,
   ArrowLeftRight,
-  Building2,
   Download,
 } from "lucide-react";
+import AssociateChoiceCarousel from "./AssociateChoiceCarousel";
+import CoveredLogos from "./CoveredLogos";
 
 interface Service {
   id: string;
@@ -396,18 +396,18 @@ const PackageExperience = ({
       <div className="grid grid-cols-1 items-stretch gap-4 md:grid-cols-2">
         {/* LEFT — Package */}
         <Card className="relative flex flex-col overflow-hidden border-primary/30 bg-card shadow-xl">
-          <CardHeader className="space-y-1 pb-2">
+          <CardHeader className="space-y-0.5 pb-2 pt-3">
             <div className="flex items-center justify-between gap-2">
-              <CardTitle className="text-xl">{pkg.code_name} Package</CardTitle>
+              <CardTitle className="text-lg">{pkg.code_name} Package</CardTitle>
               <Badge className="shrink-0 gap-1 bg-gradient-to-r from-primary to-secondary text-primary-foreground shadow">
                 <Sparkles className="h-3 w-3" />
                 Best value
               </Badge>
             </div>
-            <CardDescription className="line-clamp-2 text-xs">{pkg.description}</CardDescription>
+            <CardDescription className="line-clamp-1 text-xs">{pkg.description}</CardDescription>
           </CardHeader>
 
-          <CardContent className="flex flex-1 flex-col gap-3 pb-4">
+          <CardContent className="flex flex-1 flex-col gap-2.5 pb-3">
             <div>
               <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
                 What's included — uncheck what you don't want
@@ -472,8 +472,12 @@ const PackageExperience = ({
               </Button>
             )}
 
+            {/* Covered logos — fills the lower empty space without overpowering
+                the package name, price and bullet list above. */}
+            <CoveredLogos kind={pkg.category === "Altitude" ? "companies" : "universities"} />
+
             {/* Price block */}
-            <div className="mt-auto rounded-xl border border-primary/20 bg-primary/5 p-3">
+            <div className="rounded-xl border border-primary/20 bg-primary/5 p-3">
               <div className="flex items-end justify-between">
                 <div>
                   <span className="text-3xl font-extrabold text-primary">€{total.toFixed(0)}</span>
@@ -509,19 +513,19 @@ const PackageExperience = ({
         {/* RIGHT — Choose your Associate (the WOW panel) */}
         <Card className="relative flex flex-col overflow-hidden border-secondary/30 bg-card shadow-xl">
           <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-primary via-secondary to-primary" />
-          <CardHeader className="space-y-1 bg-gradient-to-br from-secondary/10 via-primary/5 to-transparent pb-3">
-            <CardTitle className="flex items-center gap-2 text-xl">
-              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-secondary text-primary-foreground shadow">
+          <CardHeader className="space-y-0.5 bg-gradient-to-br from-secondary/10 via-primary/5 to-transparent pb-2 pt-3">
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-secondary text-primary-foreground shadow">
                 <Users className="h-4 w-4" />
               </span>
               Choose your Associate
             </CardTitle>
-            <CardDescription className="text-xs">
-              Your mentor is a student/pro who already did exactly what you want to do — they run your whole package 1:1.
+            <CardDescription className="text-xs leading-snug">
+              Your mentor already did exactly what you want to do — they run your whole package 1:1.
             </CardDescription>
           </CardHeader>
 
-          <CardContent className="flex flex-1 flex-col gap-3">
+          <CardContent className="flex flex-1 flex-col gap-2 pb-3">
             <div className="space-y-1.5">
               <label className="flex items-center gap-1.5 text-sm font-medium">
                 {filterMode === "sector" ? <Briefcase className="h-4 w-4 text-primary" /> : <GraduationCap className="h-4 w-4 text-primary" />}
@@ -545,100 +549,59 @@ const PackageExperience = ({
               </Select>
             </div>
 
-            <div className="grid max-h-[300px] grid-cols-1 gap-2.5 overflow-y-auto pr-1 sm:grid-cols-2">
-              {filteredAssociates.length === 0 ? (
-                <div className="col-span-full py-8 text-center text-sm text-muted-foreground">
-                  No associates match yet. Try another search, or clear the filter.
-                </div>
-              ) : (
-                filteredAssociates.slice(0, 8).map((a) => {
-                  const isSelected = selectedAssociateId === a.id;
-                  const ml = associateMatchLabel(a);
-                  const uni = a.university || a.master_program || "";
-                  const sec = a.sector || a.sector_2 || "";
-                  const details: { icon: typeof Briefcase; text: string }[] = [];
-                  if (uni && uni !== ml) details.push({ icon: GraduationCap, text: uni });
-                  if (a.company_name) details.push({ icon: Building2, text: a.company_name });
-                  if (sec && sec !== ml) details.push({ icon: Briefcase, text: sec });
+            {filteredAssociates.length === 0 ? (
+              <div className="py-8 text-center text-sm text-muted-foreground">
+                No associates match yet. Try another search, or clear the filter.
+              </div>
+            ) : (
+              <AssociateChoiceCarousel
+                associates={filteredAssociates}
+                fillHeight
+                isSelected={(a) => selectedAssociateId === a.id}
+                onToggle={(a) =>
+                  setSelectedAssociateId((prev) => (prev === a.id ? null : a.id))
+                }
+                getSectors={(a) => {
+                  const ap = a as AssociatePreview;
+                  return [ap.sector, ap.sector_2].filter((s): s is string => !!s && s.trim() !== "");
+                }}
+                renderActions={(a) => {
+                  const ap = a as AssociatePreview;
                   return (
-                    <button
-                      key={a.id}
-                      type="button"
-                      onClick={() => setSelectedAssociateId(isSelected ? null : a.id)}
-                      className={`group relative flex flex-col gap-2 overflow-hidden rounded-xl border p-3 text-left transition-all duration-200 hover:-translate-y-0.5 hover:shadow-xl ${
-                        isSelected
-                          ? "border-2 border-primary bg-gradient-to-br from-primary/10 to-secondary/10 shadow-lg ring-2 ring-primary/30"
-                          : "border-border/60 bg-gradient-to-br from-background/80 to-background/40 hover:border-primary/40"
-                      }`}
-                    >
-                      {isSelected && (
-                        <span className="absolute right-2 top-2 inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-primary to-secondary px-2 py-0.5 text-[10px] font-bold text-primary-foreground shadow">
-                          <Check className="h-3 w-3" />
-                          Selected
-                        </span>
+                    <>
+                      {ap.overview_url && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="flex-1 border-primary/20 hover:bg-primary/5 hover:text-primary"
+                          onClick={(e) => handleDownloadOverview(e, ap)}
+                        >
+                          <FileText className="mr-1.5 h-4 w-4" />
+                          Overview
+                        </Button>
                       )}
-                      <div className="flex items-center gap-3">
-                        <Avatar className={`h-16 w-16 ring-2 ${isSelected ? "ring-primary" : "ring-primary/15 group-hover:ring-primary/40"}`}>
-                          <AvatarImage src={a.photo_url || undefined} alt={`${a.first_name} ${a.last_name}`} />
-                          <AvatarFallback className="bg-gradient-to-br from-primary/20 to-secondary/20 text-base font-semibold text-primary">
-                            {a.first_name?.[0]}
-                            {a.last_name?.[0]}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="min-w-0 flex-1">
-                          <p className="truncate text-sm font-bold">
-                            {a.first_name} {a.last_name}
-                          </p>
-                          {ml && (
-                            <span className="mt-0.5 inline-block max-w-full truncate rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary">
-                              {ml}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                      {details.length > 0 && (
-                        <div className="space-y-0.5 rounded-lg bg-muted/40 px-2 py-1.5">
-                          {details.slice(0, 3).map((d, i) => {
-                            const DIcon = d.icon;
-                            return (
-                              <p key={i} className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
-                                <DIcon className="h-3 w-3 shrink-0 text-primary/70" />
-                                <span className="truncate">{d.text}</span>
-                              </p>
-                            );
-                          })}
-                        </div>
-                      )}
-                      <div className="mt-auto flex gap-1.5">
-                        {a.overview_url && (
-                          <span
-                            role="button"
-                            tabIndex={-1}
-                            className="inline-flex h-7 flex-1 items-center justify-center rounded-md border border-primary/20 px-2 text-xs font-medium transition-colors hover:bg-primary/5 hover:text-primary"
-                            onClick={(e) => handleDownloadOverview(e, a)}
-                          >
-                            <FileText className="mr-1 h-3 w-3" />
-                            Overview
-                          </span>
-                        )}
-                        {a.linkedin_url && (
+                      {ap.linkedin_url && (
+                        <Button
+                          asChild
+                          variant="outline"
+                          size="sm"
+                          className="flex-1 border-primary/20 hover:bg-primary/5 hover:text-primary"
+                        >
                           <a
-                            href={a.linkedin_url.startsWith("http") ? a.linkedin_url : `https://${a.linkedin_url}`}
+                            href={ap.linkedin_url.startsWith("http") ? ap.linkedin_url : `https://${ap.linkedin_url}`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            onClick={(e) => e.stopPropagation()}
-                            className="inline-flex h-7 flex-1 items-center justify-center rounded-md border border-primary/20 px-2 text-xs font-medium transition-colors hover:bg-primary/5 hover:text-primary"
                           >
-                            <Linkedin className="mr-1 h-3 w-3" />
+                            <Linkedin className="mr-1.5 h-4 w-4" />
                             LinkedIn
                           </a>
-                        )}
-                      </div>
-                    </button>
+                        </Button>
+                      )}
+                    </>
                   );
-                })
-              )}
-            </div>
+                }}
+              />
+            )}
 
             <div className="mt-auto">
               {selectedAssociate ? (
@@ -659,9 +622,9 @@ const PackageExperience = ({
       </div>
 
       {/* Collapsible: Buy single products (scorporo) + Extensions (add-ons) */}
-      <Accordion type="multiple" className="space-y-4">
+      <Accordion type="multiple" className="space-y-3">
         <AccordionItem value="create" className="rounded-lg border-none backdrop-blur-sm bg-background/90 shadow-lg overflow-hidden">
-          <AccordionTrigger className="px-6 py-5 hover:no-underline bg-gradient-to-r from-primary/10 to-transparent hover:from-primary/20">
+          <AccordionTrigger className="px-6 py-3 hover:no-underline bg-gradient-to-r from-primary/10 to-transparent hover:from-primary/20">
             <div className="flex items-center gap-3 text-left">
               <Plus className="h-5 w-5 text-primary" />
               <div>
@@ -722,7 +685,7 @@ const PackageExperience = ({
 
         {addonComponents.length > 0 && (
           <AccordionItem value="extensions" className="rounded-lg border-none backdrop-blur-sm bg-background/90 shadow-lg overflow-hidden">
-            <AccordionTrigger className="px-6 py-5 hover:no-underline bg-gradient-to-r from-secondary/10 to-transparent hover:from-secondary/20">
+            <AccordionTrigger className="px-6 py-3 hover:no-underline bg-gradient-to-r from-secondary/10 to-transparent hover:from-secondary/20">
               <div className="flex items-center gap-3 text-left">
                 <Sparkles className="h-5 w-5 text-secondary" />
                 <div>
