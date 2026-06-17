@@ -159,17 +159,11 @@ const AssociateChoiceCarousel = ({
                       </div>
                     )}
 
-                    {/* Name (ALWAYS visible) + headline company */}
+                    {/* Name (ALWAYS visible) — company now lives in a tidy box below */}
                     <div className="absolute inset-x-0 bottom-0 p-4">
                       <h3 className="text-xl font-bold leading-tight text-white drop-shadow-sm sm:text-2xl">
                         {associate.first_name} {associate.last_name}
                       </h3>
-                      {companies[0] && (
-                        <p className="mt-0.5 flex items-center gap-1 text-sm font-medium text-white/90">
-                          <Building2 className="h-3.5 w-3.5 shrink-0" />
-                          <span className="truncate">{companies[0]}</span>
-                        </p>
-                      )}
                     </div>
                   </div>
 
@@ -199,24 +193,40 @@ const AssociateChoiceCarousel = ({
                         </div>
                       )}
 
+                      {companies[0] && (
+                        <div className="flex items-start gap-2">
+                          <Building2 className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                          <Badge className="max-w-full truncate border-transparent bg-primary/10 text-primary hover:bg-primary/15">
+                            {companies[0]}
+                          </Badge>
+                        </div>
+                      )}
+
                       {sectors.length > 0 && (
                         <div className="flex items-start gap-2">
                           <Briefcase className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
                           <div className="flex flex-wrap gap-1.5">
-                            {sectors.map((s) => (
+                            {sectors.slice(0, fillHeight ? 1 : 2).map((s) => (
                               <Badge key={s} variant="outline">
                                 {s}
                               </Badge>
                             ))}
+                            {sectors.length > (fillHeight ? 1 : 2) && (
+                              <Badge variant="outline" className="text-muted-foreground">
+                                +{sectors.length - (fillHeight ? 1 : 2)}
+                              </Badge>
+                            )}
                           </div>
                         </div>
                       )}
                     </div>
 
-                    {/* Action buttons — kept inside the card, click does not toggle */}
+                    {/* Action buttons — kept inside the card, click does not toggle.
+                        flex-wrap so they drop to a new line instead of spilling
+                        out of a narrow card (e.g. the LinkedIn button). */}
                     {renderActions && (
                       <div
-                        className="mt-auto flex gap-2 pt-1"
+                        className="mt-auto flex flex-wrap gap-2 pt-1"
                         onClick={(e) => e.stopPropagation()}
                       >
                         {renderActions(associate)}
@@ -260,28 +270,40 @@ const AssociateChoiceCarousel = ({
         )}
       </Carousel>
 
-      {/* Navigation indicator: "N di M" + dots — signals that other associates exist */}
-      {!isSingle && (
-        <div className={cn("flex flex-col items-center gap-2", fillHeight ? "mt-2" : "mt-4")}>
-          <div className="flex items-center gap-1.5">
-            {associates.map((a, i) => (
-              <button
-                key={a.id}
-                type="button"
-                aria-label={`Go to associate ${i + 1}`}
-                onClick={() => api?.scrollTo(i)}
-                className={cn(
-                  "h-2 rounded-full transition-all",
-                  i === current ? "w-6 bg-primary" : "w-2 bg-muted-foreground/30 hover:bg-muted-foreground/50"
-                )}
-              />
-            ))}
+      {/* Navigation indicator: "N of M" + a small, capped set of dots so a long
+          associate list doesn't render dozens of distracting dots. */}
+      {!isSingle && (() => {
+        const maxDots = 5;
+        const windowStart =
+          count > maxDots
+            ? Math.min(Math.max(current - Math.floor(maxDots / 2), 0), count - maxDots)
+            : 0;
+        const dotIndices =
+          count > maxDots
+            ? Array.from({ length: maxDots }, (_, k) => windowStart + k)
+            : associates.map((_, i) => i);
+        return (
+          <div className={cn("flex flex-col items-center gap-2", fillHeight ? "mt-2" : "mt-4")}>
+            <div className="flex items-center gap-1.5">
+              {dotIndices.map((i) => (
+                <button
+                  key={i}
+                  type="button"
+                  aria-label={`Go to associate ${i + 1}`}
+                  onClick={() => api?.scrollTo(i)}
+                  className={cn(
+                    "h-2 rounded-full transition-all",
+                    i === current ? "w-6 bg-primary" : "w-2 bg-muted-foreground/30 hover:bg-muted-foreground/50"
+                  )}
+                />
+              ))}
+            </div>
+            <p className="text-xs font-medium text-muted-foreground">
+              {current + 1} of {count} associates · swipe or use the arrows
+            </p>
           </div>
-          <p className="text-xs font-medium text-muted-foreground">
-            {current + 1} of {count} associates · swipe or use the arrows
-          </p>
-        </div>
-      )}
+        );
+      })()}
     </div>
   );
 };

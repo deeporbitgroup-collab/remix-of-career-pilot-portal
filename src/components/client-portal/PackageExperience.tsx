@@ -1,5 +1,4 @@
 import { Fragment, useMemo, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -117,27 +116,64 @@ const categoryIcon: Record<string, typeof Plane> = {
   Layover: ArrowLeftRight,
 };
 
-async function downloadUrlAsFile(url: string) {
-  const fileName = (() => {
-    try {
-      const u = new URL(url);
-      return decodeURIComponent(u.pathname.split("/").filter(Boolean).pop() || "overview.pdf");
-    } catch {
-      return "overview.pdf";
+// Join a list into natural English: "A", "A and B", "A, B and C".
+const joinNatural = (items: string[]): string => {
+  const list = items.map((s) => s.trim()).filter(Boolean);
+  if (list.length === 0) return "";
+  if (list.length === 1) return list[0];
+  if (list.length === 2) return `${list[0]} and ${list[1]}`;
+  return `${list.slice(0, -1).join(", ")} and ${list[list.length - 1]}`;
+};
+
+// De-duplicate (case-insensitive) while keeping the first written form.
+const uniqueValues = (items: Array<string | null | undefined>): string[] => {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  items.forEach((raw) => {
+    const v = (raw || "").trim();
+    if (!v) return;
+    const key = v.toLowerCase();
+    if (seen.has(key)) return;
+    seen.add(key);
+    out.push(v);
+  });
+  return out;
+};
+
+// Build a single, grammatically-correct sentence from whatever the associate
+// filled in. The structure is trimmed to the available fields:
+//  - only a university            → "… has studied at X."
+//  - university(ies) + master     → "… has studied at X then at Y."
+//  - + company(ies) [+ sectors]   → "… and has worked at A and B in the fields of S1 and S2."
+const buildAssociateBio = (a: AssociatePreview): string => {
+  const fullName = `${a.first_name ?? ""} ${a.last_name ?? ""}`.trim() || "This Associate";
+  const unis = uniqueValues([a.university, a.university_2]);
+  const master = (a.master_program || "").trim();
+  const companies = uniqueValues([a.company_name, a.company_2]);
+  const sectors = uniqueValues([a.sector, a.sector_2]);
+
+  let education = "";
+  if (unis.length) {
+    education = `has studied at ${joinNatural(unis)}`;
+    if (master) education += ` then at ${master}`;
+  } else if (master) {
+    education = `has studied at ${master}`;
+  }
+
+  let work = "";
+  if (companies.length) {
+    work = `has worked at ${joinNatural(companies)}`;
+    if (sectors.length) {
+      work += ` in the field${sectors.length > 1 ? "s" : ""} of ${joinNatural(sectors)}`;
     }
-  })();
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(`Download failed (${res.status})`);
-  const blob = await res.blob();
-  const objectUrl = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = objectUrl;
-  a.download = fileName;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  URL.revokeObjectURL(objectUrl);
-}
+  } else if (sectors.length) {
+    work = `has experience in the field${sectors.length > 1 ? "s" : ""} of ${joinNatural(sectors)}`;
+  }
+
+  const clauses = [education, work].filter(Boolean);
+  if (clauses.length === 0) return `${fullName} is one of our Associates.`;
+  return `${fullName} ${clauses.join(" and ")}.`;
+};
 
 const PackageExperience = ({
   pkg,
@@ -155,6 +191,7 @@ const PackageExperience = ({
   const [selectedAssociateId, setSelectedAssociateId] = useState<string | null>(null);
   const [removed, setRemoved] = useState<Set<string>>(new Set());
   const [packageInfoOpen, setPackageInfoOpen] = useState(false);
+  const [bioAssociate, setBioAssociate] = useState<AssociatePreview | null>(null);
 
   const Icon = categoryIcon[pkg.category] || Plane;
   const packageName = `${pkg.code_name} — ${pkg.subtitle}`;
@@ -279,26 +316,6 @@ const PackageExperience = ({
       : filterMode === "sector"
       ? "Professional Sector of Interest"
       : "University of Interest";
-
-  const handleDownloadOverview = async (e: React.MouseEvent, associate: AssociatePreview) => {
-    e.stopPropagation();
-    if (!associate.overview_url) return;
-    try {
-      if (associate.overview_url.includes("/associate-overviews/")) {
-        await downloadUrlAsFile(associate.overview_url);
-        return;
-      }
-      const { data, error } = await supabase.functions.invoke("get-associate-overview-url", {
-        body: { associateId: associate.id, type: "overview" },
-      });
-      if (error) throw error;
-      if (!data?.url) throw new Error("Missing document URL");
-      await downloadUrlAsFile(data.url);
-    } catch (err) {
-      console.error("Error downloading overview:", err);
-      toast.error("Failed to download overview");
-    }
-  };
 
   // Add the configured package: one cart line per included component unit, all
   // sharing a packageGroupId so they're billed/managed as a package while still
@@ -569,17 +586,18 @@ const PackageExperience = ({
                   const ap = a as AssociatePreview;
                   return (
                     <>
-                      {ap.overview_url && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="flex-1 border-primary/20 hover:bg-primary/5 hover:text-primary"
-                          onClick={(e) => handleDownloadOverview(e, ap)}
-                        >
-                          <FileText className="mr-1.5 h-4 w-4" />
-                          Overview
-                        </Button>
-                      )}
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="flex-1 border-primary/20 hover:bg-primary/5 hover:text-primary"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setBioAssociate(ap);
+                        }}
+                      >
+                        <FileText className="mr-1.5 h-4 w-4" />
+                        Overview
+                      </Button>
                       {ap.linkedin_url && (
                         <Button
                           asChild
@@ -785,6 +803,43 @@ const PackageExperience = ({
               </li>
             ))}
           </ul>
+        </DialogContent>
+      </Dialog>
+
+      {/* Associate "Overview" popup — a dynamic bio built from filled fields */}
+      <Dialog open={!!bioAssociate} onOpenChange={(open) => !open && setBioAssociate(null)}>
+        <DialogContent className="max-w-md">
+          {bioAssociate && (
+            <>
+              <DialogHeader>
+                <div className="flex items-center gap-3">
+                  <span className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary/10 text-primary">
+                    {bioAssociate.photo_url ? (
+                      <img
+                        src={bioAssociate.photo_url}
+                        alt={`${bioAssociate.first_name} ${bioAssociate.last_name}`}
+                        className="h-full w-full object-cover object-top"
+                      />
+                    ) : (
+                      <span className="text-lg font-semibold">
+                        {(bioAssociate.first_name?.[0] ?? "").toUpperCase()}
+                        {(bioAssociate.last_name?.[0] ?? "").toUpperCase()}
+                      </span>
+                    )}
+                  </span>
+                  <div className="min-w-0">
+                    <DialogTitle className="text-xl">
+                      {bioAssociate.first_name} {bioAssociate.last_name}
+                    </DialogTitle>
+                    <DialogDescription className="text-xs">Associate overview</DialogDescription>
+                  </div>
+                </div>
+              </DialogHeader>
+              <p className="mt-1 text-base leading-relaxed text-foreground">
+                {buildAssociateBio(bioAssociate)}
+              </p>
+            </>
+          )}
         </DialogContent>
       </Dialog>
     </div>
