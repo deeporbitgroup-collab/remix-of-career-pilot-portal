@@ -33,6 +33,7 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import ActiveRecruitingSection from "@/components/talent-pool/ActiveRecruitingSection";
+import StudentScheduledEventsTab from "@/components/talent-pool/StudentScheduledEventsTab";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Calendar } from "@/components/ui/calendar";
@@ -813,8 +814,9 @@ const StudentDashboard = () => {
 
             {/* Three sections as tabs (overview above stays outside) */}
             <Tabs defaultValue="companies" className="w-full">
-              <TabsList className="grid w-full grid-cols-3 mb-4">
+              <TabsList className="grid w-full grid-cols-4 mb-4">
                 <TabsTrigger value="companies">Partner Companies</TabsTrigger>
+                <TabsTrigger value="events">Scheduled events</TabsTrigger>
                 <TabsTrigger value="prep">Prep Material</TabsTrigger>
                 <TabsTrigger value="profile">Personal Profile</TabsTrigger>
               </TabsList>
@@ -1386,6 +1388,11 @@ const StudentDashboard = () => {
                   ))
                 )}
               </div>
+              </TabsContent>
+
+              {/* SECTION 4 — Scheduled events (meeting accept / decline / counter) */}
+              <TabsContent value="events" className="space-y-4">
+                <StudentScheduledEventsTab studentId={userInfo.id} />
               </TabsContent>
             </Tabs>
           </>

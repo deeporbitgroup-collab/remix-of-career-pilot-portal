@@ -108,6 +108,166 @@ async function handlePropose(supabase: any, body: any) {
   return json(200, { success: true, meeting });
 }
 
+// Load a meeting by id (shared by accept/counter/decline). Returns null if absent.
+async function loadMeeting(supabase: any, meetingId: string) {
+  const { data, error } = await supabase
+    .from("recruiting_meetings")
+    .select("*")
+    .eq("id", meetingId)
+    .maybeSingle();
+  if (error) throw error;
+  return data;
+}
+
+// ---- Action: accept (the other party picks one of the proposed slots) ----
+async function handleAccept(supabase: any, body: any) {
+  const { meetingId, acceptedSlot } = body;
+  if (!meetingId || !acceptedSlot?.datetime) {
+    return json(400, { error: "meetingId and acceptedSlot.datetime are required" });
+  }
+  const meeting = await loadMeeting(supabase, meetingId);
+  if (!meeting) return json(404, { error: "Meeting not found" });
+  if (meeting.status !== "PROPOSED") {
+    return json(409, { error: `Meeting is ${meeting.status}, cannot accept` });
+  }
+
+  const { data: updated, error } = await supabase
+    .from("recruiting_meetings")
+    .update({
+      status: "CONFIRMED",
+      confirmed_slot: acceptedSlot,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", meetingId)
+    .select()
+    .single();
+  if (error) throw error;
+
+  const p = await resolveParties(supabase, meeting.company_id, meeting.student_id);
+  const tz = meeting.timezone ? ` (${meeting.timezone})` : "";
+  const when = `<strong>${acceptedSlot.datetime}</strong>${tz}`;
+  const titlePart = meeting.title ? ` — <strong>${meeting.title}</strong>` : "";
+  const subjTitle = meeting.title ? `: ${meeting.title}` : "";
+
+  await sendAll([
+    {
+      to: p.companyEmail,
+      subject: `Meeting confirmed with ${p.studentName}${subjTitle}`,
+      html: `<p><strong>${p.studentName}</strong> confirmed your meeting${titlePart} for ${when}.</p><p>The video link will be shared before the call.</p>`,
+    },
+    {
+      to: p.studentEmail,
+      subject: `Meeting confirmed with ${p.companyName}${subjTitle}`,
+      html: `<p>You confirmed the meeting with <strong>${p.companyName}</strong>${titlePart} for ${when}.</p><p>The video link will be shared before the call.</p>`,
+    },
+    {
+      to: ADMIN_EMAIL,
+      subject: `Meeting confirmed: ${p.companyName} ↔ ${p.studentName}`,
+      html: `<p><strong>${p.studentName}</strong> and <strong>${p.companyName}</strong> confirmed a meeting${titlePart} for ${when}.</p>`,
+    },
+  ]);
+
+  return json(200, { success: true, meeting: updated });
+}
+
+// ---- Action: counter (a party rejects the slots and proposes new ones) ----
+async function handleCounter(supabase: any, body: any) {
+  const { by, meetingId, proposedSlots, timezone } = body;
+  if (!meetingId || !Array.isArray(proposedSlots) || proposedSlots.length === 0) {
+    return json(400, { error: "meetingId and proposedSlots are required" });
+  }
+  const meeting = await loadMeeting(supabase, meetingId);
+  if (!meeting) return json(404, { error: "Meeting not found" });
+  if (meeting.status !== "PROPOSED") {
+    return json(409, { error: `Meeting is ${meeting.status}, cannot counter` });
+  }
+  const proposer = by === "STUDENT" ? "STUDENT" : "COMPANY";
+
+  const { data: updated, error } = await supabase
+    .from("recruiting_meetings")
+    .update({
+      proposed_slots: proposedSlots,
+      timezone: timezone || meeting.timezone || null,
+      proposed_by: proposer,
+      status: "PROPOSED",
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", meetingId)
+    .select()
+    .single();
+  if (error) throw error;
+
+  const p = await resolveParties(supabase, meeting.company_id, meeting.student_id);
+  const list = slotsHtml(proposedSlots, timezone || meeting.timezone);
+  const titlePart = meeting.title ? ` — <strong>${meeting.title}</strong>` : "";
+  const subjTitle = meeting.title ? `: ${meeting.title}` : "";
+  // The party that did NOT propose is the one who now needs to respond.
+  const counteredByStudent = proposer === "STUDENT";
+
+  await sendAll([
+    {
+      to: counteredByStudent ? p.companyEmail : p.studentEmail,
+      subject: `New times proposed${subjTitle}`,
+      html: `<p><strong>${counteredByStudent ? p.studentName : p.companyName}</strong> proposed new times${titlePart}. Open your <strong>Scheduled events</strong> tab to accept one or propose your own:</p><ul>${list}</ul>`,
+    },
+    {
+      to: counteredByStudent ? p.studentEmail : p.companyEmail,
+      subject: `You proposed new times${subjTitle}`,
+      html: `<p>You proposed new times${titlePart}. Proposed times:</p><ul>${list}</ul><p>You'll be notified when they respond.</p>`,
+    },
+    {
+      to: ADMIN_EMAIL,
+      subject: `Meeting counter-proposed: ${p.companyName} ↔ ${p.studentName}`,
+      html: `<p><strong>${counteredByStudent ? p.studentName : p.companyName}</strong> proposed new times${titlePart}.</p><ul>${list}</ul>`,
+    },
+  ]);
+
+  return json(200, { success: true, meeting: updated });
+}
+
+// ---- Action: decline (a party declines the meeting outright) ----
+async function handleDecline(supabase: any, body: any) {
+  const { meetingId } = body;
+  if (!meetingId) return json(400, { error: "meetingId is required" });
+  const meeting = await loadMeeting(supabase, meetingId);
+  if (!meeting) return json(404, { error: "Meeting not found" });
+  if (meeting.status === "CONFIRMED" || meeting.status === "COMPLETED") {
+    return json(409, { error: `Meeting is ${meeting.status}, cannot decline` });
+  }
+
+  const { data: updated, error } = await supabase
+    .from("recruiting_meetings")
+    .update({ status: "DECLINED", updated_at: new Date().toISOString() })
+    .eq("id", meetingId)
+    .select()
+    .single();
+  if (error) throw error;
+
+  const p = await resolveParties(supabase, meeting.company_id, meeting.student_id);
+  const titlePart = meeting.title ? ` — <strong>${meeting.title}</strong>` : "";
+  const subjTitle = meeting.title ? `: ${meeting.title}` : "";
+
+  await sendAll([
+    {
+      to: p.companyEmail,
+      subject: `Meeting declined${subjTitle}`,
+      html: `<p>The meeting${titlePart} with <strong>${p.studentName}</strong> was declined.</p>`,
+    },
+    {
+      to: p.studentEmail,
+      subject: `Meeting declined${subjTitle}`,
+      html: `<p>The meeting${titlePart} with <strong>${p.companyName}</strong> was declined.</p>`,
+    },
+    {
+      to: ADMIN_EMAIL,
+      subject: `Meeting declined: ${p.companyName} ↔ ${p.studentName}`,
+      html: `<p>The meeting${titlePart} between <strong>${p.companyName}</strong> and <strong>${p.studentName}</strong> was declined.</p>`,
+    },
+  ]);
+
+  return json(200, { success: true, meeting: updated });
+}
+
 serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
   try {
@@ -118,7 +278,13 @@ serve(async (req: Request) => {
     switch (action) {
       case "propose":
         return await handlePropose(supabase, body);
-      // 'accept', 'counter', 'set-link' arrive in C2.2 / C2.3
+      case "accept":
+        return await handleAccept(supabase, body);
+      case "counter":
+        return await handleCounter(supabase, body);
+      case "decline":
+        return await handleDecline(supabase, body);
+      // 'set-link' arrives in C2.3
       default:
         return json(400, { error: `Unsupported action: ${action}` });
     }
