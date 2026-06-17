@@ -13,6 +13,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import bgImage from "@/assets/client-portal-bg.jpeg";
 import GuestAssociateSelector from "@/components/client-portal/GuestAssociateSelector";
 import GuestCart from "@/components/client-portal/GuestCart";
+import PackageExperience, { ClientPackage, PackageComponent } from "@/components/client-portal/PackageExperience";
 import JobHubFormDialog from "@/components/JobHubFormDialog";
 import PilotAdvisor from "@/components/client-portal/PilotAdvisor";
 import BookingPopup from "@/components/BookingPopup";
@@ -42,6 +43,10 @@ interface AssociatePreview {
   master_program?: string | null;
   sector?: string | null;
   sector_2?: string | null;
+  company_name?: string | null;
+  company_2?: string | null;
+  linkedin_url?: string | null;
+  overview_url?: string | null;
 }
 
 // Service-specific background images (single bg)
@@ -83,7 +88,13 @@ interface GuestCartItem {
   university?: string;
   sector?: string;
   specificRequest?: string;
+  packageGroupId?: string;
+  packageName?: string;
+  packageRole?: "component" | "addon";
 }
+
+// Verticals that are sold as fixed-price packages.
+const PACKAGE_CATEGORIES = ["Take Off", "Summit", "Altitude", "Layover"];
 const categoryIcons: Record<string, any> = {
   "Take Off": Plane,
   "Layover": ArrowLeftRight,
@@ -158,6 +169,8 @@ const ClientServicesPage = () => {
   const openAdvisorParam = searchParams.get("advisor") === "1";
   const highlightRef = useRef<HTMLDivElement>(null);
   const [services, setServices] = useState<Service[]>([]);
+  const [packages, setPackages] = useState<ClientPackage[]>([]);
+  const [packageComponents, setPackageComponents] = useState<PackageComponent[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedService, setSelectedService] = useState<Service | null>(null);
   const [infoService, setInfoService] = useState<Service | null>(null);
@@ -209,6 +222,15 @@ const ClientServicesPage = () => {
     return altitudeExamplePdfs[serviceName] || null;
   };
 
+  // Whether a service in a given category ships with a downloadable demo PDF.
+  const hasDemoPdf = (serviceName: string, category: string): boolean => {
+    if (category === "Take Off") return !!takeOffExamplePdfs[serviceName];
+    if (category === "Layover") return !!layoverExamplePdfs[serviceName];
+    if (category === "Summit") return !!summitExamplePdfs[serviceName];
+    if (category === "Altitude") return !!altitudeExamplePdfs[serviceName];
+    return false;
+  };
+
   // Function to download PDF
   const handleDownloadPdf = (serviceName: string, category: string) => {
     let pdfPath: string | null = null;
@@ -254,12 +276,35 @@ const ClientServicesPage = () => {
   useEffect(() => {
     fetchServices();
     fetchAssociates();
+    fetchPackages();
   }, []);
+
+  const fetchPackages = async () => {
+    try {
+      const { data: pkgs, error: pkgErr } = await sb
+        .from('client_packages')
+        .select('*')
+        .eq('active', true)
+        .order('sort_order', { ascending: true });
+      if (pkgErr) throw pkgErr;
+
+      const { data: comps, error: compErr } = await sb
+        .from('client_package_components')
+        .select('*, service:client_services(*)')
+        .order('sort_order', { ascending: true });
+      if (compErr) throw compErr;
+
+      setPackages((pkgs || []) as ClientPackage[]);
+      setPackageComponents((comps || []) as PackageComponent[]);
+    } catch (error) {
+      console.error('Error fetching packages:', error);
+    }
+  };
   const fetchAssociates = async () => {
     try {
       const { data, error } = await sb
         .from('profiles')
-        .select('id, first_name, last_name, photo_url, university, university_2, master_program, sector, sector_2')
+        .select('id, first_name, last_name, photo_url, university, university_2, master_program, sector, sector_2, company_name, company_2, linkedin_url, overview_url')
         .eq('role', 'ASSOCIATE')
         .eq('status', 'approved')
         .not('photo_url', 'is', null);
@@ -393,7 +438,8 @@ const ClientServicesPage = () => {
         <div className="relative z-10 animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
       </div>;
   }
-  return <div className="min-h-screen p-4 md:p-8 relative" style={{
+  const isPackageView = !!(highlightCategory && PACKAGE_CATEGORIES.includes(highlightCategory));
+  return <div className={`min-h-screen relative ${isPackageView ? 'p-3 md:p-4' : 'p-4 md:p-8'}`} style={{
     backgroundImage: `url(${bgImage})`,
     backgroundSize: 'cover',
     backgroundPosition: 'center',
@@ -401,12 +447,12 @@ const ClientServicesPage = () => {
   }}>
       <div className="absolute inset-0 bg-black/40" />
       
-      <div className="max-w-7xl mx-auto space-y-6 relative z-10">
+      <div className={`max-w-7xl mx-auto relative z-10 ${isPackageView ? 'space-y-3' : 'space-y-6'}`}>
         {/* Header */}
-        <div className="flex justify-between items-center backdrop-blur-sm bg-background/80 p-4 rounded-lg shadow-lg">
+        <div className={`flex justify-between items-center backdrop-blur-sm bg-background/80 rounded-lg shadow-lg ${isPackageView ? 'px-4 py-2.5' : 'p-4'}`}>
           <div>
-            <h1 className="text-2xl md:text-3xl font-bold">Book Flight Plan</h1>
-            <p className="text-muted-foreground">Browse our career services</p>
+            <h1 className={`font-bold ${isPackageView ? 'text-xl' : 'text-2xl md:text-3xl'}`}>Book Flight Plan</h1>
+            {!isPackageView && <p className="text-muted-foreground">Browse our career services</p>}
           </div>
           <div className="flex gap-2">
             {/* Cart Icon */}
@@ -446,50 +492,71 @@ const ClientServicesPage = () => {
           </div>
         </div>
 
-        {/* Introduction */}
-        <Card className="backdrop-blur-sm bg-background/90 shadow-lg border-primary/20">
-          <CardHeader>
-            <CardTitle className="text-2xl">Our Premium Services</CardTitle>
-            <CardDescription>Choose the perfect service to advance your career</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div className="group relative overflow-hidden rounded-xl border border-primary/20 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-5 transition-all hover:border-primary/40 hover:shadow-md">
-                <div className="flex items-start gap-3">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/15 text-primary">
-                    <Info className="h-5 w-5" />
+        {/* Introduction — hidden on package verticals (each PackageExperience has its own header) */}
+        {!(highlightCategory && PACKAGE_CATEGORIES.includes(highlightCategory)) && (
+          <Card className="backdrop-blur-sm bg-background/90 shadow-lg border-primary/20">
+            <CardHeader>
+              <CardTitle className="text-2xl">Our Premium Services</CardTitle>
+              <CardDescription>Choose the perfect service to advance your career</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="group relative overflow-hidden rounded-xl border border-primary/20 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-5 transition-all hover:border-primary/40 hover:shadow-md">
+                  <div className="flex items-start gap-3">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/15 text-primary">
+                      <Info className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-foreground mb-1">How it works</h4>
+                      <p className="text-sm text-muted-foreground leading-relaxed">
+                        Pick a service, choose your Associate, and meet 1:1 online. You'll also get a PDF in your personal area.
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <h4 className="font-semibold text-foreground mb-1">How it works</h4>
-                    <p className="text-sm text-muted-foreground leading-relaxed">
-                      Pick a service, choose your Associate, and meet 1:1 online. You'll also get a PDF in your personal area.
-                    </p>
+                </div>
+                <div className="group relative overflow-hidden rounded-xl border border-primary/20 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-5 transition-all hover:border-primary/40 hover:shadow-md">
+                  <div className="flex items-start gap-3">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/15 text-primary">
+                      <Users className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-foreground mb-1">Ongoing support</h4>
+                      <p className="text-sm text-muted-foreground leading-relaxed">
+                        A dedicated WhatsApp group with you, your Associate, and a Career Pilot supervisor keeps your journey on track.
+                      </p>
+                    </div>
                   </div>
                 </div>
               </div>
-              <div className="group relative overflow-hidden rounded-xl border border-primary/20 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-5 transition-all hover:border-primary/40 hover:shadow-md">
-                <div className="flex items-start gap-3">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/15 text-primary">
-                    <Users className="h-5 w-5" />
-                  </div>
-                  <div>
-                    <h4 className="font-semibold text-foreground mb-1">Ongoing support</h4>
-                    <p className="text-sm text-muted-foreground leading-relaxed">
-                      A dedicated WhatsApp group with you, your Associate, and a Career Pilot supervisor keeps your journey on track.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
 
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Services by Category */}
         <div className="space-y-4">
           {sortedCategories.map(category => {
           const Icon = categoryIcons[category] || Globe;
           const categoryServices = orderedGroupedServices[category];
+          // Package verticals get the dedicated "wow" package experience.
+          const pkg = packages.find((p) => p.category === category);
+          if (PACKAGE_CATEGORIES.includes(category) && pkg) {
+            return (
+              <PackageExperience
+                key={category}
+                pkg={pkg}
+                components={packageComponents.filter((c) => c.package_id === pkg.id)}
+                services={categoryServices}
+                associates={associates}
+                onSelectService={(svc) => setSelectedService(svc)}
+                onAddToCart={handleAddToCart}
+                onShowInfo={(svc) => setInfoService(svc)}
+                onDownloadPdf={handleDownloadPdf}
+                getPreviewImage={(name) => getServicePreview(category, name)}
+                hasDemo={(name) => hasDemoPdf(name, category)}
+              />
+            );
+          }
           return <Card key={category} className="backdrop-blur-sm bg-background/90 shadow-lg overflow-hidden">
                 <Accordion type="single" collapsible defaultValue={highlightCategory === category ? category : undefined}>
                   <AccordionItem value={category} className="border-0">
@@ -845,7 +912,7 @@ const ClientServicesPage = () => {
         open={advisorOpen}
         onOpenChange={setAdvisorOpen}
         services={services
-          .filter(s => ["Take Off", "Summit", "Altitude", "Layover"].includes(s.category) && s.name !== "Additional Call with Associate")
+          .filter(s => ["Take Off", "Summit", "Altitude", "Layover"].includes(s.category) && s.name !== "Additional Call with Associate" && s.name !== "Take Off Package")
           .map(s => {
             let pdfPath: string | null = null;
             if (s.category === "Take Off") pdfPath = getExamplePdf(s.name);

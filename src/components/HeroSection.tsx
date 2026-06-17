@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { Plane, Star, GraduationCap, Building, ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
+import { Plane, Star, GraduationCap, Building, ArrowRight, ArrowLeftRight, ChevronLeft, ChevronRight } from "lucide-react";
 import BookingPopup from "./BookingPopup";
 import EcosystemOverlay from "./EcosystemOverlay";
 import HeroTrustStrip from "./HeroTrustStrip";
@@ -558,12 +558,13 @@ const HeroSection = () => {
             {language === 'it' ? '— Scegli il tuo percorso —' : '— Choose your pathway —'}
           </p>
 
-          {/* 3 Pathway buttons */}
-          <div className="relative z-10 grid grid-cols-3 gap-2.5 mt-2.5 animate-fade-in opacity-0" style={{ animationDelay: '0.5s', animationFillMode: 'forwards' }}>
+          {/* 4 Pathway buttons */}
+          <div className="relative z-10 grid grid-cols-2 gap-2.5 mt-2.5 animate-fade-in opacity-0" style={{ animationDelay: '0.5s', animationFillMode: 'forwards' }}>
             {[
               { icon: Plane, label: language === 'it' ? 'Liceo → Uni' : 'Highschool → Uni', href: '/client-portal/services?category=Take+Off' },
               { icon: GraduationCap, label: language === 'it' ? 'Uni → Master' : 'Uni → Master', href: '/client-portal/services?category=Summit' },
               { icon: Building, label: 'Internship', href: '/client-portal/services?category=Altitude' },
+              { icon: ArrowLeftRight, label: language === 'it' ? 'Trasferimento' : 'Uni Transfer', href: '/client-portal/services?category=Layover' },
             ].map(({ icon: Icon, label, href }) => (
               <button
                 key={label}

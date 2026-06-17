@@ -76,6 +76,9 @@ interface GuestCartItem {
   university2?: string;
   sector?: string;
   specificRequest?: string;
+  packageGroupId?: string;
+  packageName?: string;
+  packageRole?: "component" | "addon";
 }
 
 // Per-service availability slots
@@ -373,8 +376,9 @@ const ClientCheckout = () => {
       return;
     }
 
-    // Validate Associate Office Hours reason for call
-    const officeHoursItems = cartItems.filter(item => item.service.name === 'Associate Office Hours');
+    // Validate Associate Office Hours reason for call (skipped for package components —
+    // these are bundled deliverables, not a standalone call the client books a reason for).
+    const officeHoursItems = cartItems.filter(item => item.service.name === 'Associate Office Hours' && !item.packageGroupId);
     for (const item of officeHoursItems) {
       if (!item.specificRequest || item.specificRequest.trim() === '') {
         toast.error("Please describe the reason for your call for Associate Office Hours");
@@ -501,6 +505,14 @@ const ClientCheckout = () => {
 
         const isCvRewriteNoMeeting = isCvRewriteItem(item) && !!cvRewriteSkipMeeting[item.id];
 
+        // Resolve the working associate UUID. For Comparative items the cart stores
+        // a comma-joined display id; the deliverable is produced by the 2nd associate
+        // (from the other university), so the project is assigned to them.
+        const resolvedAssociateId =
+          item.associates && item.associates.length === 2
+            ? item.associates[1].id
+            : (item.associate?.id || null);
+
         // Create project for each item
         const { data: project, error: projectError } = await sb
           .from('client_projects')
@@ -508,15 +520,16 @@ const ClientCheckout = () => {
             client_id: clientUser.id,
             order_id: order.id,
             service_id: item.service.id,
-            associate_id: item.associate?.id || null,
+            associate_id: resolvedAssociateId,
             backup_associate_id: isCvRewriteNoMeeting ? null : backupAssociateId,
-            active_associate_id: item.associate?.id || null,
+            active_associate_id: resolvedAssociateId,
             scheduling_status: isCvRewriteNoMeeting
               ? 'no_meeting_requested'
-              : (item.associate?.id ? 'awaiting_primary' : null),
+              : (resolvedAssociateId ? 'awaiting_primary' : null),
             status: isCvRewriteNoMeeting ? 'documents_uploaded' : 'pending',
             additional_call_reason: (item as any).additionalCallReason || null,
             specific_request: item.specificRequest || null,
+            package_name: item.packageName || null,
           })
           .select()
           .single();
@@ -554,7 +567,7 @@ const ClientCheckout = () => {
         }
 
         // If an associate was selected AND a meeting is required, create the meeting slots for the project
-        if (item.associate?.id && project && !isCvRewriteNoMeeting) {
+        if (resolvedAssociateId && project && !isCvRewriteNoMeeting) {
           const serviceAvail = serviceAvailabilities.find(sa => sa.serviceItemId === item.id);
           if (serviceAvail) {
             const validSlots = serviceAvail.slots.filter(slot => slot.date && slot.timeSlot);
@@ -565,7 +578,7 @@ const ClientCheckout = () => {
                 .from('client_meeting_slots')
                 .insert({
                   project_id: project.id,
-                  associate_id: item.associate.id,
+                  associate_id: resolvedAssociateId,
                   slot_role: 'client_for_primary',
                   proposed_date: dateStr,
                   proposed_time: proposedTime,
@@ -743,6 +756,11 @@ const ClientCheckout = () => {
                   return (
                     <div key={item.id} className="flex justify-between items-start border-b pb-3">
                       <div className="flex-1">
+                        {item.packageName && (
+                          <Badge variant="outline" className="mb-1 border-primary/40 text-primary text-[10px]">
+                            {item.packageRole === "addon" ? "Add-on" : "Package"}: {item.packageName}
+                          </Badge>
+                        )}
                         <h4 className="font-medium">{item.service.name}</h4>
                         <p className="text-sm text-muted-foreground">{item.service.category}</p>
                         {isComparative ? (

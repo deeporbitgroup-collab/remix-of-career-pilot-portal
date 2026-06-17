@@ -1038,9 +1038,15 @@ const ServicesSection = () => {
                           </Button>
                           <Button 
                             className="flex-1 bg-gradient-sky text-white hover:opacity-90"
-                            onClick={() => window.location.href = '/client-portal/services'}
+                            onClick={() => {
+                              const cat: Record<string, string> = { takeoff: 'Take Off', layover: 'Layover', altitude: 'Altitude', summit: 'Summit' };
+                              const category = cat[service.id];
+                              window.location.href = category
+                                ? `/client-portal/services?category=${encodeURIComponent(category)}`
+                                : '/client-portal/services';
+                            }}
                           >
-                            {language === 'it' ? 'Acquista Servizi' : 'Purchase Services'}
+                            {language === 'it' ? 'Vedi il Pacchetto' : 'View Package'}
                           </Button>
                         </div>
                       )}

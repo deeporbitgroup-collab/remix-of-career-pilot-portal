@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
-import { Calendar, Clock, FileText, Download, Video, ChevronDown, ChevronUp, PhoneCall, CheckCircle2 } from "lucide-react";
+import { Calendar, Clock, FileText, Download, Video, ChevronDown, ChevronUp, PhoneCall, CheckCircle2, Layers } from "lucide-react";
 import { format } from "date-fns";
 import AssociateCard from "./AssociateCard";
 import SharedDocuments from "./SharedDocuments";
@@ -284,6 +284,43 @@ const MyProjectsSection = ({ clientId, clientName }: MyProjectsSectionProps) => 
   const activeProjects = projects.filter(p => p.status !== 'completed');
   const completedProjects = projects.filter(p => p.status === 'completed');
 
+  // Group per-component projects under their package so the area stays tidy.
+  const groupByPackage = (list: any[]) => {
+    const groups: { key: string; packageName: string | null; projects: any[] }[] = [];
+    const index = new Map<string, number>();
+    list.forEach((p) => {
+      const name = p.package_name || null;
+      const key = name ? `pkg:${name}` : `single:${p.id}`;
+      if (index.has(key)) {
+        groups[index.get(key)!].projects.push(p);
+      } else {
+        index.set(key, groups.length);
+        groups.push({ key, packageName: name, projects: [p] });
+      }
+    });
+    return groups;
+  };
+
+  const renderGroups = (list: any[], renderCard: (project: any) => JSX.Element) =>
+    groupByPackage(list).map((group) =>
+      group.packageName ? (
+        <div key={group.key} className="rounded-xl border border-primary/20 bg-primary/[0.03] p-3 sm:p-4">
+          <div className="mb-3 flex items-center gap-2">
+            <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/10 text-primary">
+              <Layers className="h-4 w-4" />
+            </span>
+            <span className="text-sm font-bold text-primary">{group.packageName}</span>
+            <Badge variant="outline" className="ml-auto text-xs">
+              {group.projects.length} {group.projects.length === 1 ? "service" : "services"}
+            </Badge>
+          </div>
+          <div className="space-y-3">{group.projects.map(renderCard)}</div>
+        </div>
+      ) : (
+        <div key={group.key}>{group.projects.map(renderCard)}</div>
+      )
+    );
+
   return (
     <div className="space-y-6">
       {/* Section Header */}
@@ -314,7 +351,7 @@ const MyProjectsSection = ({ clientId, clientName }: MyProjectsSectionProps) => 
           {activeProjects.length === 0 ? (
             <p className="text-center text-muted-foreground py-4">No active projects</p>
           ) : (
-            activeProjects.map((project) => (
+            renderGroups(activeProjects, (project) => (
               <ProjectCard
                 key={project.id}
                 project={project}
@@ -340,7 +377,7 @@ const MyProjectsSection = ({ clientId, clientName }: MyProjectsSectionProps) => 
             <CardDescription>Your finished services with downloadable documents</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            {completedProjects.map((project) => (
+            {renderGroups(completedProjects, (project) => (
               <ProjectCard
                 key={project.id}
                 project={project}

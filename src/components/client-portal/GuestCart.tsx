@@ -26,6 +26,9 @@ interface GuestCartItem {
   university?: string;
   sector?: string;
   specificRequest?: string;
+  packageGroupId?: string;
+  packageName?: string;
+  packageRole?: "component" | "addon";
 }
 
 interface GuestCartProps {
@@ -63,6 +66,11 @@ const GuestCart = ({ cartItems, onRemoveItem, onCheckout }: GuestCartProps) => {
               {cartItems.map((item) => (
                 <div key={item.id} className="flex justify-between items-start border-b pb-4">
                   <div className="flex-1">
+                    {item.packageName && (
+                      <Badge variant="outline" className="mb-1 border-primary/40 text-primary text-[10px]">
+                        {item.packageRole === "addon" ? "Add-on" : "Package"}: {item.packageName}
+                      </Badge>
+                    )}
                     <h4 className="font-semibold">{item.service.name}</h4>
                     <p className="text-sm text-muted-foreground mt-1">
                       Category: {item.service.category}

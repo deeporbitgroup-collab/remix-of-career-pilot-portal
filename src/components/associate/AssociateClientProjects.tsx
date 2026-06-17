@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Calendar, Clock, FileText, Upload, Video, ChevronDown, ChevronUp, User, Download, Eye, Link as LinkIcon } from "lucide-react";
+import { Calendar, Clock, FileText, Upload, Video, ChevronDown, ChevronUp, User, Download, Eye, Link as LinkIcon, Layers } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { format } from "date-fns";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -169,6 +169,63 @@ const AssociateClientProjects = ({ associateId, language, mode = 'all' }: Associ
   const showActive = mode === 'all' || mode === 'active';
   const showCompleted = mode === 'all' || mode === 'completed';
 
+  // Split per-component projects into package groups (kept together) + singles,
+  // so each client's package reads as one tidy block instead of scattered cards.
+  const splitByPackage = (list: any[]) => {
+    const packageGroups: { key: string; name: string; projects: any[] }[] = [];
+    const singles: any[] = [];
+    const index = new Map<string, number>();
+    list.forEach((p) => {
+      const name = p.package_name as string | null;
+      if (!name) {
+        singles.push(p);
+        return;
+      }
+      const key = `${p.client?.id || "x"}:${name}`;
+      if (index.has(key)) {
+        packageGroups[index.get(key)!].projects.push(p);
+      } else {
+        index.set(key, packageGroups.length);
+        packageGroups.push({ key, name, projects: [p] });
+      }
+    });
+    return { packageGroups, singles };
+  };
+
+  const renderProjectGrid = (list: any[], renderCard: (project: any) => JSX.Element) => {
+    const { packageGroups, singles } = splitByPackage(list);
+    return (
+      <div className="space-y-4">
+        {packageGroups.map((group) => (
+          <div key={group.key} className="rounded-xl border border-primary/20 bg-primary/[0.03] p-3 sm:p-4">
+            <div className="mb-3 flex items-center gap-2">
+              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                <Layers className="h-4 w-4" />
+              </span>
+              <span className="text-sm font-bold text-primary">{group.name}</span>
+              {group.projects[0]?.client && (
+                <span className="text-xs text-muted-foreground">
+                  · {group.projects[0].client.first_name} {group.projects[0].client.last_name}
+                </span>
+              )}
+              <Badge variant="outline" className="ml-auto text-xs">
+                {group.projects.length} {language === 'it' ? 'servizi' : 'services'}
+              </Badge>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {group.projects.map(renderCard)}
+            </div>
+          </div>
+        ))}
+        {singles.length > 0 && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {singles.map(renderCard)}
+          </div>
+        )}
+      </div>
+    );
+  };
+
   return (
     <div className="space-y-6">
       {uniqueClients.length > 1 && (
@@ -217,19 +274,17 @@ const AssociateClientProjects = ({ associateId, language, mode = 'all' }: Associ
                 {language === 'it' ? 'Nessun progetto attivo' : 'No active projects'}
               </p>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {activeProjects.map((project) => (
-                  <ProjectCard
-                    key={project.id}
-                    project={project}
-                    associateId={associateId}
-                    language={language}
-                    onSelectSlot={handleSelectSlot}
-                    isExpanded={expandedProjects.has(project.id)}
-                    onToggle={() => toggleProject(project.id)}
-                  />
-                ))}
-              </div>
+              renderProjectGrid(activeProjects, (project) => (
+                <ProjectCard
+                  key={project.id}
+                  project={project}
+                  associateId={associateId}
+                  language={language}
+                  onSelectSlot={handleSelectSlot}
+                  isExpanded={expandedProjects.has(project.id)}
+                  onToggle={() => toggleProject(project.id)}
+                />
+              ))
             )}
           </CardContent>
         </Card>
@@ -250,19 +305,17 @@ const AssociateClientProjects = ({ associateId, language, mode = 'all' }: Associ
                 {language === 'it' ? 'Nessun progetto completato' : 'No completed projects yet'}
               </p>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {completedProjects.map((project) => (
-                  <ProjectCard
-                    key={project.id}
-                    project={project}
-                    associateId={associateId}
-                    language={language}
-                    onSelectSlot={handleSelectSlot}
-                    isExpanded={expandedProjects.has(project.id)}
-                    onToggle={() => toggleProject(project.id)}
-                  />
-                ))}
-              </div>
+              renderProjectGrid(completedProjects, (project) => (
+                <ProjectCard
+                  key={project.id}
+                  project={project}
+                  associateId={associateId}
+                  language={language}
+                  onSelectSlot={handleSelectSlot}
+                  isExpanded={expandedProjects.has(project.id)}
+                  onToggle={() => toggleProject(project.id)}
+                />
+              ))
             )}
           </CardContent>
         </Card>
