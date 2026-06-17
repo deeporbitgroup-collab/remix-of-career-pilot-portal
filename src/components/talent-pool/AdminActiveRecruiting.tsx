@@ -17,6 +17,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import ActiveRecruitingChat from "./ActiveRecruitingChat";
 import ActiveRecruitingDocuments from "./ActiveRecruitingDocuments";
+import AdminMeetingLinks from "./AdminMeetingLinks";
 import { format } from "date-fns";
 
 interface RecruitingProcess {
@@ -149,6 +150,9 @@ export const AdminActiveRecruiting = () => {
           Refresh
         </Button>
       </div>
+
+      {/* Admin fallback: set interview links on confirmed meetings (C2.3) */}
+      <AdminMeetingLinks />
 
       {processes.length === 0 ? (
         <Card>

@@ -25,7 +25,9 @@ import {
   ClipboardCheck,
   Handshake,
   XCircle,
-  X
+  X,
+  Video,
+  Link as LinkIcon
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { TalentPoolLanguageProvider, useTalentPoolLanguage } from "@/contexts/TalentPoolLanguageContext";
@@ -71,6 +73,10 @@ const CompanyDashboardContent = () => {
   const [meetingDialogFor, setMeetingDialogFor] = useState<any>(null);
   const [meetingForm, setMeetingForm] = useState({ title: '', slot1: '', slot2: '', timezone: '' });
   const [submittingMeeting, setSubmittingMeeting] = useState(false);
+  // Interview link (C2.3): set/edit the call link + description on a CONFIRMED meeting.
+  const [linkDialogFor, setLinkDialogFor] = useState<any>(null);
+  const [linkForm, setLinkForm] = useState({ meetLink: '', description: '' });
+  const [submittingLink, setSubmittingLink] = useState(false);
 
   useEffect(() => {
     checkAuthAndLoadData();
@@ -290,6 +296,40 @@ const CompanyDashboardContent = () => {
       toast({ title: "Error", description: e.message || "Failed to propose meeting", variant: "destructive" });
     } finally {
       setSubmittingMeeting(false);
+    }
+  };
+
+  const openLinkDialog = (meeting: any) => {
+    setLinkDialogFor(meeting);
+    setLinkForm({ meetLink: meeting.meet_link || '', description: meeting.description || '' });
+  };
+
+  const handleSetLink = async () => {
+    if (!linkDialogFor || !company?.id) return;
+    if (!linkForm.meetLink.trim()) {
+      toast({ title: "Link required", description: "Paste the interview link (e.g. a Google Meet / Zoom URL).", variant: "destructive" });
+      return;
+    }
+    setSubmittingLink(true);
+    try {
+      const { error } = await supabase.functions.invoke('recruiting-meeting-action', {
+        body: {
+          action: 'set-link',
+          by: 'COMPANY',
+          meetingId: linkDialogFor.id,
+          meetLink: linkForm.meetLink.trim(),
+          description: linkForm.description.trim() || null,
+        }
+      });
+      if (error) throw error;
+      toast({ title: "Interview link saved", description: "The candidate and Career Pilot have been notified." });
+      setLinkDialogFor(null);
+      await loadMeetings(company.id);
+    } catch (e: any) {
+      console.error('Set link error:', e);
+      toast({ title: "Error", description: e.message || "Failed to save the link", variant: "destructive" });
+    } finally {
+      setSubmittingLink(false);
     }
   };
 
@@ -1043,7 +1083,21 @@ const CompanyDashboardContent = () => {
                                         <Badge variant="outline" className="text-[10px]">{m.status}</Badge>
                                       </div>
                                       {m.status === 'CONFIRMED' && m.confirmed_slot ? (
-                                        <p>Confirmed: <strong>{m.confirmed_slot.datetime}</strong>{m.timezone ? ` (${m.timezone})` : ''}</p>
+                                        <div className="space-y-1.5">
+                                          <p>Confirmed: <strong>{m.confirmed_slot.datetime}</strong>{m.timezone ? ` (${m.timezone})` : ''}</p>
+                                          {m.meet_link ? (
+                                            <a href={m.meet_link} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 font-medium text-primary hover:underline">
+                                              <Video className="h-3.5 w-3.5" /> Interview link
+                                            </a>
+                                          ) : (
+                                            <p className="text-muted-foreground">No interview link yet.</p>
+                                          )}
+                                          {m.description && <p className="text-muted-foreground">{m.description}</p>}
+                                          <Button size="sm" variant="outline" className="h-7 text-[11px]" onClick={() => openLinkDialog(m)}>
+                                            <LinkIcon className="h-3.5 w-3.5 mr-1" />
+                                            {m.meet_link ? 'Edit interview link' : 'Add interview link'}
+                                          </Button>
+                                        </div>
                                       ) : (
                                         <div>
                                           <p className="text-muted-foreground">
@@ -1149,6 +1203,40 @@ const CompanyDashboardContent = () => {
               <Button variant="outline" onClick={() => setMeetingDialogFor(null)} disabled={submittingMeeting}>Cancel</Button>
               <Button onClick={handleProposeMeeting} disabled={submittingMeeting}>
                 {submittingMeeting ? 'Sending...' : 'Propose meeting'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Interview link — set/edit the call link + description on a CONFIRMED meeting (C2.3) */}
+        <Dialog open={!!linkDialogFor} onOpenChange={(o) => { if (!o) setLinkDialogFor(null); }}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>{linkDialogFor?.meet_link ? 'Edit interview link' : 'Add interview link'}</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label>Interview link</Label>
+                <Input
+                  placeholder="https://meet.google.com/... or Zoom URL"
+                  value={linkForm.meetLink}
+                  onChange={(e) => setLinkForm({ ...linkForm, meetLink: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Description (optional)</Label>
+                <Textarea
+                  placeholder="e.g. Bring your portfolio. The call lasts ~30 minutes."
+                  value={linkForm.description}
+                  onChange={(e) => setLinkForm({ ...linkForm, description: e.target.value })}
+                />
+              </div>
+              <p className="text-xs text-muted-foreground">The candidate sees the link and description in their Scheduled events tab.</p>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setLinkDialogFor(null)} disabled={submittingLink}>Cancel</Button>
+              <Button onClick={handleSetLink} disabled={submittingLink}>
+                {submittingLink ? 'Saving...' : 'Save link'}
               </Button>
             </DialogFooter>
           </DialogContent>

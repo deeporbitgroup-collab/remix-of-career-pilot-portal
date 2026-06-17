@@ -153,7 +153,7 @@ async function handleAccept(supabase: any, body: any) {
     {
       to: p.companyEmail,
       subject: `Meeting confirmed with ${p.studentName}${subjTitle}`,
-      html: `<p><strong>${p.studentName}</strong> confirmed your meeting${titlePart} for ${when}.</p><p>The video link will be shared before the call.</p>`,
+      html: `<p><strong>${p.studentName}</strong> confirmed your meeting${titlePart} for ${when}.</p><p>Add the interview link from your dashboard (Selected Students → this candidate) so they can join.</p>`,
     },
     {
       to: p.studentEmail,
@@ -268,6 +268,64 @@ async function handleDecline(supabase: any, body: any) {
   return json(200, { success: true, meeting: updated });
 }
 
+// ---- Action: set-link (company, or admin as fallback, sets the call link) ----
+async function handleSetLink(supabase: any, body: any) {
+  const { by, meetingId, meetLink, description } = body;
+  if (!meetingId || !meetLink) {
+    return json(400, { error: "meetingId and meetLink are required" });
+  }
+  const meeting = await loadMeeting(supabase, meetingId);
+  if (!meeting) return json(404, { error: "Meeting not found" });
+  if (meeting.status !== "CONFIRMED") {
+    return json(409, { error: `Meeting is ${meeting.status}; the link can only be set on a confirmed meeting` });
+  }
+  const setter = by === "ADMIN" ? "ADMIN" : "COMPANY";
+
+  // Update the link always; only touch description when it is supplied, so
+  // re-sending the link never wipes an existing description.
+  const updatePayload: any = { meet_link: meetLink, updated_at: new Date().toISOString() };
+  if (description !== undefined) updatePayload.description = description || null;
+
+  const { data: updated, error } = await supabase
+    .from("recruiting_meetings")
+    .update(updatePayload)
+    .eq("id", meetingId)
+    .select()
+    .single();
+  if (error) throw error;
+
+  const p = await resolveParties(supabase, meeting.company_id, meeting.student_id);
+  const tz = meeting.timezone ? ` (${meeting.timezone})` : "";
+  const when = meeting.confirmed_slot?.datetime
+    ? ` for <strong>${meeting.confirmed_slot.datetime}</strong>${tz}`
+    : "";
+  const titlePart = meeting.title ? ` — <strong>${meeting.title}</strong>` : "";
+  const subjTitle = meeting.title ? `: ${meeting.title}` : "";
+  const desc = updatePayload.description ? `<p>${updatePayload.description}</p>` : "";
+  const linkHtml = `<p>Interview link: <a href="${meetLink}">${meetLink}</a></p>`;
+  const bySuffix = setter === "ADMIN" ? " (added by Career Pilot)" : "";
+
+  await sendAll([
+    {
+      to: p.studentEmail,
+      subject: `Interview link ready — ${p.companyName}${subjTitle}`,
+      html: `<p>Your interview with <strong>${p.companyName}</strong>${titlePart}${when} now has a link${bySuffix}.</p>${linkHtml}${desc}`,
+    },
+    {
+      to: p.companyEmail,
+      subject: `Interview link set — ${p.studentName}${subjTitle}`,
+      html: `<p>The interview link for <strong>${p.studentName}</strong>${titlePart}${when} was saved${bySuffix}.</p>${linkHtml}${desc}`,
+    },
+    {
+      to: ADMIN_EMAIL,
+      subject: `Interview link set: ${p.companyName} ↔ ${p.studentName}`,
+      html: `<p>Interview link set${bySuffix} for <strong>${p.companyName}</strong> ↔ <strong>${p.studentName}</strong>${titlePart}${when}.</p>${linkHtml}${desc}`,
+    },
+  ]);
+
+  return json(200, { success: true, meeting: updated });
+}
+
 serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
   try {
@@ -284,7 +342,8 @@ serve(async (req: Request) => {
         return await handleCounter(supabase, body);
       case "decline":
         return await handleDecline(supabase, body);
-      // 'set-link' arrives in C2.3
+      case "set-link":
+        return await handleSetLink(supabase, body);
       default:
         return json(400, { error: `Unsupported action: ${action}` });
     }

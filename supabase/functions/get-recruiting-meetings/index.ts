@@ -12,6 +12,7 @@ const corsHeaders = {
 interface RequestBody {
   companyId?: string;
   studentId?: string;
+  all?: boolean; // admin mode: return every meeting (no company/student filter)
 }
 
 serve(async (req: Request) => {
@@ -19,18 +20,21 @@ serve(async (req: Request) => {
 
   try {
     const supabase = createClient(supabaseUrl, supabaseKey);
-    const { companyId, studentId }: RequestBody = await req.json();
+    const { companyId, studentId, all }: RequestBody = await req.json();
 
-    if (!companyId && !studentId) {
+    if (!companyId && !studentId && !all) {
       return new Response(
-        JSON.stringify({ error: "companyId or studentId is required" }),
+        JSON.stringify({ error: "companyId, studentId or all is required" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
+    // all=true (admin) returns every meeting; otherwise filter by the given id(s).
     let query = supabase.from("recruiting_meetings").select("*");
-    if (companyId) query = query.eq("company_id", companyId);
-    if (studentId) query = query.eq("student_id", studentId);
+    if (!all) {
+      if (companyId) query = query.eq("company_id", companyId);
+      if (studentId) query = query.eq("student_id", studentId);
+    }
 
     const { data: meetings, error } = await query.order("created_at", { ascending: true });
     if (error) throw error;

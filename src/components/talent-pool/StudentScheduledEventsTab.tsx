@@ -26,7 +26,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useToast } from "@/hooks/use-toast";
-import { CalendarClock, CalendarCheck2, CalendarX2, Hourglass, Building2 } from "lucide-react";
+import { CalendarClock, CalendarCheck2, CalendarX2, Hourglass, Building2, Video } from "lucide-react";
 
 interface Slot {
   datetime: string;
@@ -197,10 +197,12 @@ const StudentScheduledEventsTab = ({ studentId }: { studentId: string }) => {
             <p className="font-medium text-emerald-900">
               Confirmed: {m.confirmed_slot.datetime}{m.timezone ? ` (${m.timezone})` : ""}
             </p>
-            {m.meet_link && (
-              <a href={m.meet_link} target="_blank" rel="noreferrer" className="text-primary hover:underline">
-                Join link
+            {m.meet_link ? (
+              <a href={m.meet_link} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 font-medium text-primary hover:underline">
+                <Video className="h-4 w-4" /> Join link
               </a>
+            ) : (
+              <p className="text-muted-foreground">The company will share the link soon.</p>
             )}
             {m.description && <p className="mt-1 text-muted-foreground">{m.description}</p>}
           </div>
