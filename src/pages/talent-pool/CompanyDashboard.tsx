@@ -78,6 +78,12 @@ const CompanyDashboardContent = () => {
   const [linkDialogFor, setLinkDialogFor] = useState<any>(null);
   const [linkForm, setLinkForm] = useState({ meetLink: '', description: '' });
   const [submittingLink, setSubmittingLink] = useState(false);
+  // Decision (C4): offer / reject the candidate.
+  const [offerDialogFor, setOfferDialogFor] = useState<any>(null);
+  const [offerForm, setOfferForm] = useState({ jobTitle: '', message: '' });
+  const [rejectDialogFor, setRejectDialogFor] = useState<any>(null);
+  const [rejectReason, setRejectReason] = useState('');
+  const [submittingDecision, setSubmittingDecision] = useState(false);
 
   useEffect(() => {
     checkAuthAndLoadData();

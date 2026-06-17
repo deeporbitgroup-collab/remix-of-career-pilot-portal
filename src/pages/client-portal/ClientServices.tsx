@@ -95,6 +95,52 @@ interface GuestCartItem {
 
 // Verticals that are sold as fixed-price packages.
 const PACKAGE_CATEGORIES = ["Take Off", "Summit", "Altitude", "Layover"];
+const TAKE_OFF_PACKAGE_PRICE = 350;
+
+/** Ensure non–add-on component internal prices sum to each package's fixed price. */
+function normalizePackagePricing(
+  packages: ClientPackage[],
+  components: PackageComponent[]
+): { packages: ClientPackage[]; components: PackageComponent[] } {
+  const packagesOut = packages.map((p) =>
+    p.category === "Take Off" ? { ...p, price: TAKE_OFF_PACKAGE_PRICE } : { ...p }
+  );
+  const componentsOut = components.map((c) => ({ ...c }));
+
+  for (const pkg of packagesOut) {
+    const core = componentsOut.filter((c) => c.package_id === pkg.id && !c.is_addon);
+    if (!core.length) continue;
+
+    const target = Number(pkg.price);
+    let coreSum = core.reduce((s, c) => s + Number(c.internal_price) * c.quantity, 0);
+    if (coreSum <= 0 || Math.abs(coreSum - target) < 0.01) continue;
+
+    const factor = target / coreSum;
+    for (const c of componentsOut) {
+      if (c.package_id === pkg.id && !c.is_addon) {
+        c.internal_price = Number(c.internal_price) * factor;
+      }
+    }
+
+    coreSum = componentsOut
+      .filter((c) => c.package_id === pkg.id && !c.is_addon)
+      .reduce((s, c) => s + Number(c.internal_price) * c.quantity, 0);
+    const diff = target - coreSum;
+    if (Math.abs(diff) >= 0.01) {
+      const anchor = [...core].sort(
+        (a, b) => Number(a.is_removable) - Number(b.is_removable) || a.sort_order - b.sort_order
+      )[0];
+      const idx = componentsOut.findIndex((c) => c.id === anchor.id);
+      if (idx >= 0) {
+        componentsOut[idx].internal_price =
+          Number(componentsOut[idx].internal_price) + diff / Math.max(anchor.quantity, 1);
+      }
+    }
+  }
+
+  return { packages: packagesOut, components: componentsOut };
+}
+
 const categoryIcons: Record<string, any> = {
   "Take Off": Plane,
   "Layover": ArrowLeftRight,
@@ -274,9 +320,17 @@ const ClientServicesPage = () => {
     localStorage.setItem('guest_cart', JSON.stringify(cartItems));
   }, [cartItems]);
   useEffect(() => {
-    fetchServices();
-    fetchAssociates();
-    fetchPackages();
+    const loadPageData = async () => {
+      setLoading(true);
+      try {
+        // Wait for services, packages and associates together so package
+        // verticals never flash the legacy accordion while packages load.
+        await Promise.all([fetchServices(), fetchAssociates(), fetchPackages()]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadPageData();
   }, []);
 
   const fetchPackages = async () => {
@@ -294,8 +348,12 @@ const ClientServicesPage = () => {
         .order('sort_order', { ascending: true });
       if (compErr) throw compErr;
 
-      setPackages((pkgs || []) as ClientPackage[]);
-      setPackageComponents((comps || []) as PackageComponent[]);
+      const { packages: normalizedPkgs, components: normalizedComps } = normalizePackagePricing(
+        (pkgs || []) as ClientPackage[],
+        (comps || []) as PackageComponent[]
+      );
+      setPackages(normalizedPkgs);
+      setPackageComponents(normalizedComps);
     } catch (error) {
       console.error('Error fetching packages:', error);
     }
@@ -355,8 +413,6 @@ const ClientServicesPage = () => {
     } catch (error: any) {
       console.error('Error fetching services:', error);
       toast.error("Failed to load services");
-    } finally {
-      setLoading(false);
     }
   };
   const groupedServices = useMemo(() => {
@@ -538,9 +594,11 @@ const ClientServicesPage = () => {
           {sortedCategories.map(category => {
           const Icon = categoryIcons[category] || Globe;
           const categoryServices = orderedGroupedServices[category];
-          // Package verticals get the dedicated "wow" package experience.
+          // Package verticals get the dedicated package experience — never fall
+          // back to the legacy accordion (avoids a flash if packages load late).
           const pkg = packages.find((p) => p.category === category);
-          if (PACKAGE_CATEGORIES.includes(category) && pkg) {
+          if (PACKAGE_CATEGORIES.includes(category)) {
+            if (!pkg) return null;
             return (
               <PackageExperience
                 key={category}

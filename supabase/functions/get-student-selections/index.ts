@@ -25,7 +25,7 @@ serve(async (req: Request) => {
     // Get base selections
     const { data: selectionsBase, error: selError } = await supabase
       .from('company_selected_students')
-      .select('id, company_id, selected_at')
+      .select('id, company_id, selected_at, stage, stage_updated_at')
       .eq('student_id', studentId)
       .order('selected_at', { ascending: false });
 
@@ -47,6 +47,8 @@ serve(async (req: Request) => {
       id: s.id,
       company_id: s.company_id,
       selected_at: s.selected_at,
+      stage: s.stage || 'IN_PROGRESS',
+      stage_updated_at: s.stage_updated_at,
       company_profile: profilesMap[s.company_id] || null,
     }));
 

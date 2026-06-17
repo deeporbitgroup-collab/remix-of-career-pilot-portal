@@ -175,6 +175,17 @@ const buildAssociateBio = (a: AssociatePreview): string => {
   return `${fullName} ${clauses.join(" and ")}.`;
 };
 
+const demoShortLabel = (name: string): string => {
+  const short: Record<string, string> = {
+    "Personalized Timeline": "Timeline",
+    "Personalized Career Roadmap": "Roadmap",
+    "In-Depth Presentations": "In-Depth",
+    "Comparative Presentations": "Comparative",
+    "Comparative Analysis": "Comparative",
+  };
+  return short[name] || name;
+};
+
 const PackageExperience = ({
   pkg,
   components,
@@ -239,14 +250,6 @@ const PackageExperience = ({
     });
     return Array.from(names);
   }, [services, coreComponents, hasDemo]);
-
-  const downloadAllDemos = () => {
-    // Stagger so the browser doesn't drop concurrent downloads.
-    demoPdfNames.forEach((name, i) => {
-      setTimeout(() => onDownloadPdf(name, pkg.category), i * 400);
-    });
-    toast.success(`Downloading ${demoPdfNames.length} sample PDF${demoPdfNames.length === 1 ? "" : "s"}…`);
-  };
 
   const total = useMemo(
     () => includedCore.reduce((sum, c) => sum + Number(c.internal_price) * c.quantity, 0),
@@ -478,15 +481,47 @@ const PackageExperience = ({
             </button>
 
             {demoPdfNames.length > 0 && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={downloadAllDemos}
-                className="w-full border-primary/30 text-primary hover:border-primary hover:bg-primary/5 hover:text-primary"
-              >
-                <Download className="mr-2 h-4 w-4" />
-                Download all {pkg.code_name} sample PDFs ({demoPdfNames.length})
-              </Button>
+              <div className="space-y-1.5">
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                  Sample projects
+                </p>
+                <div className="flex flex-wrap gap-2.5">
+                  {demoPdfNames.map((name) => {
+                    const previewImg = getPreviewImage?.(name);
+                    return (
+                      <div key={name} className="group w-[76px] shrink-0">
+                        <div className="relative aspect-[3/4] overflow-hidden rounded-md border border-border/70 bg-muted/40 shadow-sm ring-1 ring-black/5 transition-all group-hover:-translate-y-0.5 group-hover:border-primary/40 group-hover:shadow-md">
+                          {previewImg ? (
+                            <img
+                              src={previewImg}
+                              alt={`${name} preview`}
+                              loading="lazy"
+                              className="absolute inset-0 h-full w-full object-cover object-top"
+                            />
+                          ) : (
+                            <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-primary/10 to-secondary/10">
+                              <FileText className="h-7 w-7 text-primary/35" />
+                            </div>
+                          )}
+                          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-8 bg-gradient-to-t from-black/25 to-transparent" />
+                          <Button
+                            variant="secondary"
+                            size="icon"
+                            className="absolute right-1 top-1 h-6 w-6 rounded-md border border-white/20 bg-background/90 shadow-sm backdrop-blur-sm hover:bg-background"
+                            title={`Download ${name} demo`}
+                            onClick={() => onDownloadPdf(name, pkg.category)}
+                          >
+                            <Download className="h-3 w-3 text-primary" />
+                          </Button>
+                        </div>
+                        <p className="mt-1 text-center text-[10px] font-medium leading-tight text-muted-foreground line-clamp-2">
+                          {demoShortLabel(name)}
+                        </p>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
             )}
 
             {/* Covered logos — fills the lower empty space without overpowering

@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Plane, Star, GraduationCap, Building, ArrowRight, ArrowLeftRight, ChevronLeft, ChevronRight } from "lucide-react";
 import BookingPopup from "./BookingPopup";
@@ -99,6 +100,7 @@ const companies = [
 ];
 
 const HeroSection = () => {
+  const navigate = useNavigate();
   const [isBookingOpen, setIsBookingOpen] = useState(false);
   const [isEcosystemOpen, setIsEcosystemOpen] = useState(
     typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('openEcosystem') === '1'
@@ -264,7 +266,7 @@ const HeroSection = () => {
               <span className="h-px flex-1 bg-border" />
             </div>
             <button
-              onClick={() => window.location.href = '/client-portal/services?advisor=1'}
+              onClick={() => navigate('/client-portal/services?advisor=1')}
               className="group inline-flex items-center gap-2 rounded-full bg-background/70 backdrop-blur border border-secondary/40 hover:border-secondary hover:bg-secondary/10 px-4 py-2 transition-all active:scale-[0.97]"
               aria-label={language === 'it' ? 'Apri il Pilot Advisor AI' : 'Open Pilot Advisor AI'}
             >
@@ -416,7 +418,7 @@ const HeroSection = () => {
               <span className="h-px flex-1 bg-border" />
             </div>
             <button
-              onClick={() => window.location.href = '/client-portal/services?advisor=1'}
+              onClick={() => navigate('/client-portal/services?advisor=1')}
               className="group inline-flex items-center gap-2 rounded-full bg-background/70 backdrop-blur border border-secondary/40 hover:border-secondary hover:bg-secondary/10 px-4 py-2 transition-all active:scale-[0.97]"
               aria-label={language === 'it' ? 'Apri il Pilot Advisor AI' : 'Open Pilot Advisor AI'}
               title={language === 'it' ? 'Pilot Advisor — AI guidata' : 'Pilot Advisor — AI-guided'}
@@ -436,7 +438,7 @@ const HeroSection = () => {
           <div className="w-full max-w-4xl 2xl:max-w-6xl mx-auto">
             <div className="grid grid-cols-3 gap-4">
               <button
-                onClick={() => window.location.href = '/client-portal/services?category=Take+Off'}
+                onClick={() => navigate('/client-portal/services?category=Take+Off')}
                 className="group relative flex flex-col items-center justify-center gap-1.5 2xl:gap-2 bg-gradient-to-br from-primary via-primary to-secondary text-primary-foreground rounded-xl px-3 py-2.5 2xl:px-5 2xl:py-3.5 transition-all duration-300 hover:scale-105 hover:-translate-y-0.5 overflow-hidden"
                 style={{ boxShadow: '0 0 20px hsla(223, 83%, 27%, 0.45), 0 0 40px hsla(215, 100%, 60%, 0.25)' }}
               >
@@ -447,7 +449,7 @@ const HeroSection = () => {
                 </span>
               </button>
               <button
-                onClick={() => window.location.href = '/client-portal/services?category=Summit'}
+                onClick={() => navigate('/client-portal/services?category=Summit')}
                 className="group relative flex flex-col items-center justify-center gap-1.5 2xl:gap-2 bg-gradient-to-br from-primary via-primary to-secondary text-primary-foreground rounded-xl px-3 py-2.5 2xl:px-5 2xl:py-3.5 transition-all duration-300 hover:scale-105 hover:-translate-y-0.5 overflow-hidden"
                 style={{ boxShadow: '0 0 20px hsla(223, 83%, 27%, 0.45), 0 0 40px hsla(215, 100%, 60%, 0.25)' }}
               >
@@ -458,7 +460,7 @@ const HeroSection = () => {
                 </span>
               </button>
               <button
-                onClick={() => window.location.href = '/client-portal/services?category=Altitude'}
+                onClick={() => navigate('/client-portal/services?category=Altitude')}
                 className="group relative flex flex-col items-center justify-center gap-1.5 2xl:gap-2 bg-gradient-to-br from-primary via-primary to-secondary text-primary-foreground rounded-xl px-3 py-2.5 2xl:px-5 2xl:py-3.5 transition-all duration-300 hover:scale-105 hover:-translate-y-0.5 overflow-hidden"
                 style={{ boxShadow: '0 0 20px hsla(223, 83%, 27%, 0.45), 0 0 40px hsla(215, 100%, 60%, 0.25)' }}
               >
@@ -473,7 +475,7 @@ const HeroSection = () => {
             {/* Secondary text links right under pathway buttons */}
             <div className="flex items-center justify-center gap-x-4 2xl:gap-x-6 mt-2">
               <button
-                onClick={() => window.location.href = '/client-portal/services?category=Layover'}
+                onClick={() => navigate('/client-portal/services?category=Layover')}
                 className="text-sm 2xl:text-base text-muted-foreground hover:text-primary underline underline-offset-4 decoration-dotted transition-colors duration-300 font-medium"
               >
                 {language === 'it' ? 'Trasferimento Universitario' : 'University Transfer'}

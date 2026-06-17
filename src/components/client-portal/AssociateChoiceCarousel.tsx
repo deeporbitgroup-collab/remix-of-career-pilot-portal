@@ -52,15 +52,7 @@ const getInitials = (a: AssociateLike) =>
   `${(a.first_name?.[0] ?? "").toUpperCase()}${(a.last_name?.[0] ?? "").toUpperCase()}`;
 
 const getCompanies = (a: AssociateLike): string[] =>
-  Array.from(
-    new Set(
-      [
-        a.company_name,
-        a.company_2,
-        ...((a.professional_experiences || []).map((e) => e?.company) as (string | undefined)[]),
-      ].filter((c): c is string => !!c && c.trim() !== "")
-    )
-  );
+  [a.company_name, a.company_2].filter((c): c is string => !!c && c.trim() !== "");
 
 const AssociateChoiceCarousel = ({
   associates,
@@ -193,12 +185,25 @@ const AssociateChoiceCarousel = ({
                         </div>
                       )}
 
-                      {companies[0] && (
+                      {companies.length > 0 && (
                         <div className="flex items-start gap-2">
                           <Building2 className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-                          <Badge className="max-w-full truncate border-transparent bg-primary/10 text-primary hover:bg-primary/15">
-                            {companies[0]}
-                          </Badge>
+                          <div className="flex flex-wrap gap-1.5">
+                            {companies.map((company, i) => (
+                              <Badge
+                                key={`${company}-${i}`}
+                                variant={i === 0 ? "default" : "outline"}
+                                className={cn(
+                                  "max-w-full truncate",
+                                  i === 0
+                                    ? "border-transparent bg-primary/10 text-primary hover:bg-primary/15"
+                                    : "border-dashed"
+                                )}
+                              >
+                                {company}
+                              </Badge>
+                            ))}
+                          </div>
                         </div>
                       )}
 

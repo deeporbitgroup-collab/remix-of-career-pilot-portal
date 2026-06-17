@@ -169,15 +169,15 @@ BEGIN
 
     SELECT id INTO svc FROM public.client_services WHERE category = 'Take Off' AND name = 'Personalized Timeline' LIMIT 1;
     INSERT INTO public.client_package_components (package_id, service_id, label, quantity, internal_price, is_removable, sort_order)
-    VALUES (pkg_id, svc, 'Personalized Timeline', 1, 150, false, 1);
+    VALUES (pkg_id, svc, 'Personalized Timeline', 1, 131.26, false, 1);
 
     SELECT id INTO svc FROM public.client_services WHERE category = 'Take Off' AND name = 'In-Depth Presentations' LIMIT 1;
     INSERT INTO public.client_package_components (package_id, service_id, label, quantity, internal_price, is_removable, sort_order)
-    VALUES (pkg_id, svc, 'In-Depth Presentation', 1, 100, true, 2);
+    VALUES (pkg_id, svc, 'In-Depth Presentation', 1, 87.50, true, 2);
 
     SELECT id INTO svc FROM public.client_services WHERE category = 'Take Off' AND name = 'Associate Office Hours' LIMIT 1;
     INSERT INTO public.client_package_components (package_id, service_id, label, quantity, internal_price, is_removable, sort_order)
-    VALUES (pkg_id, svc, '2x Associate Office Hours', 2, 50, true, 3);
+    VALUES (pkg_id, svc, '2x Associate Office Hours', 2, 65.62, true, 3);
 
     -- add-on: Comparative Presentations (+110, 2nd university + 2nd associate)
     SELECT id INTO svc FROM public.client_services WHERE category = 'Take Off' AND name = 'Comparative Presentations' LIMIT 1;
