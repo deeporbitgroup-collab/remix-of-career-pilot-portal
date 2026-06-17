@@ -38,10 +38,21 @@ async function resolveParties(supabase: any, companyId: string, studentId: strin
   };
 }
 
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+// Format a "YYYY-MM-DDTHH:mm" wall-clock slot into "20 Jun 2026, 15:00".
+// No timezone conversion — the tz label is shown separately. Falls back to raw.
+function fmtSlot(datetime?: string): string {
+  if (!datetime) return "";
+  const m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/.exec(datetime);
+  if (!m) return datetime;
+  const [, y, mo, d, h, mi] = m;
+  return `${parseInt(d, 10)} ${MONTHS[parseInt(mo, 10) - 1]} ${y}, ${h}:${mi}`;
+}
+
 function slotsHtml(slots: any[], timezone?: string) {
   const tz = timezone ? ` <span style="color:#64748b">(${timezone})</span>` : "";
   return (slots || [])
-    .map((s, i) => `<li>Option ${i + 1}: <strong>${s?.datetime ?? ""}</strong>${tz}${s?.label ? ` — ${s.label}` : ""}</li>`)
+    .map((s, i) => `<li>Option ${i + 1}: <strong>${fmtSlot(s?.datetime)}</strong>${tz}${s?.label ? ` — ${s.label}` : ""}</li>`)
     .join("");
 }
 
@@ -145,7 +156,7 @@ async function handleAccept(supabase: any, body: any) {
 
   const p = await resolveParties(supabase, meeting.company_id, meeting.student_id);
   const tz = meeting.timezone ? ` (${meeting.timezone})` : "";
-  const when = `<strong>${acceptedSlot.datetime}</strong>${tz}`;
+  const when = `<strong>${fmtSlot(acceptedSlot.datetime)}</strong>${tz}`;
   const titlePart = meeting.title ? ` — <strong>${meeting.title}</strong>` : "";
   const subjTitle = meeting.title ? `: ${meeting.title}` : "";
 
@@ -297,7 +308,7 @@ async function handleSetLink(supabase: any, body: any) {
   const p = await resolveParties(supabase, meeting.company_id, meeting.student_id);
   const tz = meeting.timezone ? ` (${meeting.timezone})` : "";
   const when = meeting.confirmed_slot?.datetime
-    ? ` for <strong>${meeting.confirmed_slot.datetime}</strong>${tz}`
+    ? ` for <strong>${fmtSlot(meeting.confirmed_slot.datetime)}</strong>${tz}`
     : "";
   const titlePart = meeting.title ? ` — <strong>${meeting.title}</strong>` : "";
   const subjTitle = meeting.title ? `: ${meeting.title}` : "";

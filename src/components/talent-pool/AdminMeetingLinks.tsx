@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
+import { formatSlot } from "@/lib/meeting-format";
 import { Video, Link as LinkIcon, RefreshCw, ChevronDown, ChevronUp, CalendarClock } from "lucide-react";
 
 interface Slot {
@@ -103,7 +104,7 @@ const AdminMeetingLinks = () => {
         </div>
         {m.confirmed_slot?.datetime && (
           <p className="text-xs text-muted-foreground">
-            Confirmed: {m.confirmed_slot.datetime}{m.timezone ? ` (${m.timezone})` : ""}
+            Confirmed: {formatSlot(m.confirmed_slot.datetime, m.timezone)}
           </p>
         )}
         <Input

@@ -32,6 +32,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { TalentPoolLanguageProvider, useTalentPoolLanguage } from "@/contexts/TalentPoolLanguageContext";
 import { cn } from "@/lib/utils";
+import { formatSlot } from "@/lib/meeting-format";
 
 const SECTORS = [
   "Consulting", "Finance", "Technology", "Healthcare", "Manufacturing",
@@ -1084,7 +1085,7 @@ const CompanyDashboardContent = () => {
                                       </div>
                                       {m.status === 'CONFIRMED' && m.confirmed_slot ? (
                                         <div className="space-y-1.5">
-                                          <p>Confirmed: <strong>{m.confirmed_slot.datetime}</strong>{m.timezone ? ` (${m.timezone})` : ''}</p>
+                                          <p>Confirmed: <strong>{formatSlot(m.confirmed_slot.datetime, m.timezone)}</strong></p>
                                           {m.meet_link ? (
                                             <a href={m.meet_link} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 font-medium text-primary hover:underline">
                                               <Video className="h-3.5 w-3.5" /> Interview link
@@ -1105,7 +1106,7 @@ const CompanyDashboardContent = () => {
                                           </p>
                                           <ul className="list-disc list-inside">
                                             {(m.proposed_slots || []).map((s: any, i: number) => (
-                                              <li key={i}>{s.datetime}{m.timezone ? ` (${m.timezone})` : ''}</li>
+                                              <li key={i}>{formatSlot(s.datetime, m.timezone)}</li>
                                             ))}
                                           </ul>
                                         </div>

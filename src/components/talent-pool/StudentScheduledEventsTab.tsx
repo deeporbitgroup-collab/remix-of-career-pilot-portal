@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useToast } from "@/hooks/use-toast";
+import { formatSlot } from "@/lib/meeting-format";
 import { CalendarClock, CalendarCheck2, CalendarX2, Hourglass, Building2, Video } from "lucide-react";
 
 interface Slot {
@@ -195,7 +196,7 @@ const StudentScheduledEventsTab = ({ studentId }: { studentId: string }) => {
         {m.status === "CONFIRMED" && m.confirmed_slot ? (
           <div className="rounded-md bg-emerald-50 border border-emerald-100 p-3 text-sm">
             <p className="font-medium text-emerald-900">
-              Confirmed: {m.confirmed_slot.datetime}{m.timezone ? ` (${m.timezone})` : ""}
+              Confirmed: {formatSlot(m.confirmed_slot.datetime, m.timezone)}
             </p>
             {m.meet_link ? (
               <a href={m.meet_link} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 font-medium text-primary hover:underline">
@@ -213,7 +214,7 @@ const StudentScheduledEventsTab = ({ studentId }: { studentId: string }) => {
             </p>
             <ul className="list-disc list-inside">
               {(m.proposed_slots || []).map((s, i) => (
-                <li key={i}>{s.datetime}{m.timezone ? ` (${m.timezone})` : ""}{s.label ? ` — ${s.label}` : ""}</li>
+                <li key={i}>{formatSlot(s.datetime, m.timezone)}{s.label ? ` — ${s.label}` : ""}</li>
               ))}
             </ul>
           </div>
@@ -319,7 +320,7 @@ const StudentScheduledEventsTab = ({ studentId }: { studentId: string }) => {
                   className="flex items-center gap-3 rounded-md border p-3 cursor-pointer hover:bg-muted/50"
                 >
                   <RadioGroupItem value={s.datetime} id={`slot-${i}`} />
-                  <span>{s.datetime}{acceptFor?.timezone ? ` (${acceptFor.timezone})` : ""}{s.label ? ` — ${s.label}` : ""}</span>
+                  <span>{formatSlot(s.datetime, acceptFor?.timezone)}{s.label ? ` — ${s.label}` : ""}</span>
                 </Label>
               ))}
             </RadioGroup>
