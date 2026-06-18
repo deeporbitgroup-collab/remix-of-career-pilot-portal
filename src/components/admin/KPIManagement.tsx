@@ -142,8 +142,8 @@ const KPIManagement = ({ roleFilter }: KPIManagementProps = {}) => {
       if (error) throw error;
 
       toast({
-        title: "KPI creato",
-        description: "Nuova definizione KPI aggiunta con successo"
+        title: "KPI created",
+        description: "New KPI definition added successfully"
       });
 
       setShowAddModal(false);
@@ -160,7 +160,7 @@ const KPIManagement = ({ roleFilter }: KPIManagementProps = {}) => {
     } catch (error: any) {
       toast({
         variant: "destructive",
-        title: "Errore",
+        title: "Error",
         description: error.message
       });
     }
@@ -184,8 +184,8 @@ const KPIManagement = ({ roleFilter }: KPIManagementProps = {}) => {
       if (error) throw error;
 
       toast({
-        title: "KPI aggiornato",
-        description: "Definizione KPI modificata con successo"
+        title: "KPI updated",
+        description: "KPI definition updated successfully"
       });
 
       setEditingKPI(null);
@@ -193,14 +193,14 @@ const KPIManagement = ({ roleFilter }: KPIManagementProps = {}) => {
     } catch (error: any) {
       toast({
         variant: "destructive",
-        title: "Errore",
+        title: "Error",
         description: error.message
       });
     }
   };
 
   const handleDeleteKPI = async (id: string) => {
-    if (!confirm("Sei sicuro di voler eliminare questo KPI? Questa azione eliminerà anche tutti i valori associati.")) {
+    if (!confirm("Are you sure you want to delete this KPI? This action will also delete all associated values.")) {
       return;
     }
 
@@ -222,15 +222,15 @@ const KPIManagement = ({ roleFilter }: KPIManagementProps = {}) => {
       if (error) throw error;
 
       toast({
-        title: "KPI eliminato",
-        description: "Definizione KPI e valori associati eliminati con successo"
+        title: "KPI deleted",
+        description: "KPI definition and associated values deleted successfully"
       });
 
       fetchDefinitions();
     } catch (error: any) {
       toast({
         variant: "destructive",
-        title: "Errore",
+        title: "Error",
         description: error.message
       });
     }
@@ -246,15 +246,15 @@ const KPIManagement = ({ roleFilter }: KPIManagementProps = {}) => {
       if (error) throw error;
 
       toast({
-        title: enabled ? "KPI attivato" : "KPI disattivato",
-        description: `Il KPI è stato ${enabled ? 'attivato' : 'disattivato'} con successo`
+        title: enabled ? "KPI enabled" : "KPI disabled",
+        description: `The KPI was ${enabled ? 'enabled' : 'disabled'} successfully`
       });
 
       fetchDefinitions();
     } catch (error: any) {
       toast({
         variant: "destructive",
-        title: "Errore",
+        title: "Error",
         description: error.message
       });
     }
@@ -294,15 +294,15 @@ const KPIManagement = ({ roleFilter }: KPIManagementProps = {}) => {
       }
 
       toast({
-        title: "KPI aggiornato",
-        description: "Valore KPI salvato con successo"
+        title: "KPI updated",
+        description: "KPI value saved successfully"
       });
 
       fetchUserKPIs(userId);
     } catch (error: any) {
       toast({
         variant: "destructive",
-        title: "Errore",
+        title: "Error",
         description: error.message
       });
     }
@@ -325,10 +325,10 @@ const KPIManagement = ({ roleFilter }: KPIManagementProps = {}) => {
       <Card>
         <CardHeader>
           <div className="flex justify-between items-center">
-            <CardTitle>Definizioni KPI</CardTitle>
+            <CardTitle>KPI Definitions</CardTitle>
             <Button onClick={() => setShowAddModal(true)}>
               <Plus className="mr-2 h-4 w-4" />
-              Aggiungi KPI
+              Add KPI
             </Button>
           </div>
         </CardHeader>
@@ -361,14 +361,14 @@ const KPIManagement = ({ roleFilter }: KPIManagementProps = {}) => {
                     <DropdownMenuContent align="end">
                       <DropdownMenuItem onClick={() => setEditingKPI(def)}>
                         <Edit className="mr-2 h-4 w-4" />
-                        Modifica
+                        Edit
                       </DropdownMenuItem>
                       <DropdownMenuItem 
                         onClick={() => handleDeleteKPI(def.id)}
                         className="text-destructive"
                       >
                         <Trash2 className="mr-2 h-4 w-4" />
-                        Elimina
+                        Delete
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
@@ -382,12 +382,12 @@ const KPIManagement = ({ roleFilter }: KPIManagementProps = {}) => {
       {/* User KPI Management */}
       <Card>
         <CardHeader>
-          <CardTitle>Gestione KPI Utenti</CardTitle>
+          <CardTitle>User KPI Management</CardTitle>
           <div className="mt-4">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Cerca per nome, email o azienda..."
+                placeholder="Search by name, email, or company..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-10"
@@ -429,7 +429,7 @@ const KPIManagement = ({ roleFilter }: KPIManagementProps = {}) => {
                         }}
                       >
                         <Edit className="h-4 w-4 mr-1" />
-                        Gestisci KPI
+                        Manage KPIs
                       </Button>
                     </div>
                   </CardHeader>
@@ -444,11 +444,11 @@ const KPIManagement = ({ roleFilter }: KPIManagementProps = {}) => {
       <Dialog open={showAddModal} onOpenChange={setShowAddModal}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Aggiungi Nuova Definizione KPI</DialogTitle>
+            <DialogTitle>Add New KPI Definition</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <Label>Chiave (unica)</Label>
+              <Label>Key (unique)</Label>
               <Input
                 value={newKPI.key}
                 onChange={(e) => setNewKPI({...newKPI, key: e.target.value})}
@@ -456,28 +456,28 @@ const KPIManagement = ({ roleFilter }: KPIManagementProps = {}) => {
               />
             </div>
             <div>
-              <Label>Etichetta</Label>
+              <Label>Label</Label>
               <Input
                 value={newKPI.label}
                 onChange={(e) => setNewKPI({...newKPI, label: e.target.value})}
-                placeholder="es. Chiamate Effettuate"
+                placeholder="e.g. Calls Made"
               />
             </div>
             <div>
-              <Label>Descrizione</Label>
+              <Label>Description</Label>
               <Input
                 value={newKPI.description}
                 onChange={(e) => setNewKPI({...newKPI, description: e.target.value})}
-                placeholder="es. Numero totale di chiamate effettuate"
+                placeholder="e.g. Total number of calls made"
               />
             </div>
             <div className="flex gap-4">
               <Button onClick={handleCreateKPI}>
                 <Save className="mr-2 h-4 w-4" />
-                Salva
+                Save
               </Button>
               <Button variant="outline" onClick={() => setShowAddModal(false)}>
-                Annulla
+                Cancel
               </Button>
             </div>
           </div>
@@ -489,11 +489,11 @@ const KPIManagement = ({ roleFilter }: KPIManagementProps = {}) => {
         <Dialog open={!!editingKPI} onOpenChange={() => setEditingKPI(null)}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Modifica Definizione KPI</DialogTitle>
+              <DialogTitle>Edit KPI Definition</DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
               <div>
-                <Label>Chiave (unica)</Label>
+                <Label>Key (unique)</Label>
                 <Input
                   value={editingKPI.key}
                   onChange={(e) => setEditingKPI({...editingKPI, key: e.target.value})}
@@ -501,24 +501,24 @@ const KPIManagement = ({ roleFilter }: KPIManagementProps = {}) => {
                 />
               </div>
               <div>
-                <Label>Etichetta</Label>
+                <Label>Label</Label>
                 <Input
                   value={editingKPI.label}
                   onChange={(e) => setEditingKPI({...editingKPI, label: e.target.value})}
-                  placeholder="es. Chiamate Effettuate"
+                  placeholder="e.g. Calls Made"
                 />
               </div>
               <div>
-                <Label>Descrizione</Label>
+                <Label>Description</Label>
                 <Textarea
                   value={editingKPI.description || ''}
                   onChange={(e) => setEditingKPI({...editingKPI, description: e.target.value})}
-                  placeholder="es. Numero totale di chiamate effettuate"
+                  placeholder="e.g. Total number of calls made"
                   rows={3}
                 />
               </div>
               <div>
-                <Label>Applica a</Label>
+                <Label>Applies to</Label>
                 <Select 
                   value={editingKPI.applies_to} 
                   onValueChange={(value: 'ASSOCIATE' | 'PARTNER' | 'ADMIN') => setEditingKPI({...editingKPI, applies_to: value})}
@@ -534,7 +534,7 @@ const KPIManagement = ({ roleFilter }: KPIManagementProps = {}) => {
                 </Select>
               </div>
               <div>
-                <Label>Tipo di grafico</Label>
+                <Label>Chart type</Label>
                 <Select 
                   value={editingKPI.chart_type} 
                   onValueChange={(value: 'number' | 'bar' | 'pie') => setEditingKPI({...editingKPI, chart_type: value})}
@@ -543,14 +543,14 @@ const KPIManagement = ({ roleFilter }: KPIManagementProps = {}) => {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="number">Numero</SelectItem>
-                    <SelectItem value="bar">Grafico a barre</SelectItem>
-                    <SelectItem value="pie">Grafico a torta</SelectItem>
+                    <SelectItem value="number">Number</SelectItem>
+                    <SelectItem value="bar">Bar chart</SelectItem>
+                    <SelectItem value="pie">Pie chart</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div>
-                <Label>Ordine</Label>
+                <Label>Order</Label>
                 <Input
                   type="number"
                   value={editingKPI.order_index}
@@ -560,10 +560,10 @@ const KPIManagement = ({ roleFilter }: KPIManagementProps = {}) => {
               <div className="flex gap-4">
                 <Button onClick={() => handleUpdateKPI(editingKPI)}>
                   <Save className="mr-2 h-4 w-4" />
-                  Salva modifiche
+                  Save changes
                 </Button>
                 <Button variant="outline" onClick={() => setEditingKPI(null)}>
-                  Annulla
+                  Cancel
                 </Button>
               </div>
             </div>
@@ -577,7 +577,7 @@ const KPIManagement = ({ roleFilter }: KPIManagementProps = {}) => {
           <DialogContent className="max-w-2xl">
             <DialogHeader>
               <DialogTitle>
-                Gestione KPI - {selectedUser.role === 'ASSOCIATE' 
+                KPI Management - {selectedUser.role === 'ASSOCIATE'
                   ? `${selectedUser.first_name} ${selectedUser.last_name}`
                   : selectedUser.company_name}
               </DialogTitle>
@@ -604,7 +604,7 @@ const KPIManagement = ({ roleFilter }: KPIManagementProps = {}) => {
                       </div>
                       {userKPIs[def.id] && (
                         <p className="text-xs text-muted-foreground">
-                          Ultimo aggiornamento: {format(new Date(userKPIs[def.id].updated_at), 'dd MMM yyyy HH:mm', { locale: it })}
+                          Last updated: {format(new Date(userKPIs[def.id].updated_at), 'dd MMM yyyy HH:mm', { locale: it })}
                         </p>
                       )}
                     </div>

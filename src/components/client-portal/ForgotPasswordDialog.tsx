@@ -21,7 +21,7 @@ export const ForgotPasswordDialog = ({ open, onOpenChange }: ForgotPasswordDialo
     e.preventDefault();
 
     if (!email || !email.includes('@')) {
-      toast.error("Inserisci un indirizzo email valido");
+      toast.error("Enter a valid email address");
       return;
     }
 
@@ -35,10 +35,10 @@ export const ForgotPasswordDialog = ({ open, onOpenChange }: ForgotPasswordDialo
       if (error) throw error;
 
       setSent(true);
-      toast.success("Email inviata! Controlla la tua casella di posta.");
+      toast.success("Email sent! Check your inbox.");
     } catch (error: any) {
       console.error("Password reset error:", error);
-      toast.error(error.message || "Errore durante l'invio. Riprova.");
+      toast.error(error.message || "Error while sending. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -54,11 +54,11 @@ export const ForgotPasswordDialog = ({ open, onOpenChange }: ForgotPasswordDialo
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Password Dimenticata?</DialogTitle>
+          <DialogTitle>Forgot Password?</DialogTitle>
           <DialogDescription>
-            {sent 
-              ? "Controlla la tua email per il link di reset."
-              : "Inserisci la tua email e ti invieremo un link per reimpostare la password."
+            {sent
+              ? "Check your email for the reset link."
+              : "Enter your email and we'll send you a link to reset your password."
             }
           </DialogDescription>
         </DialogHeader>
@@ -68,14 +68,14 @@ export const ForgotPasswordDialog = ({ open, onOpenChange }: ForgotPasswordDialo
             <div className="flex items-center justify-center p-6 bg-green-50 rounded-lg">
               <div className="text-center">
                 <Mail className="h-12 w-12 text-green-600 mx-auto mb-3" />
-                <p className="text-green-700 font-medium">Email Inviata!</p>
+                <p className="text-green-700 font-medium">Email Sent!</p>
                 <p className="text-sm text-muted-foreground mt-1">
-                  Se esiste un account con questa email, riceverai le istruzioni per reimpostare la password.
+                  If an account exists with this email, you'll receive instructions to reset your password.
                 </p>
               </div>
             </div>
             <Button onClick={handleClose} className="w-full">
-              Chiudi
+              Close
             </Button>
           </div>
         ) : (
@@ -87,7 +87,7 @@ export const ForgotPasswordDialog = ({ open, onOpenChange }: ForgotPasswordDialo
                 <Input
                   id="reset-email"
                   type="email"
-                  placeholder="tuaemail@esempio.com"
+                  placeholder="youremail@example.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="pl-10"
@@ -103,7 +103,7 @@ export const ForgotPasswordDialog = ({ open, onOpenChange }: ForgotPasswordDialo
                 className="flex-1"
                 disabled={loading}
               >
-                Annulla
+                Cancel
               </Button>
               <Button
                 type="submit"
@@ -113,10 +113,10 @@ export const ForgotPasswordDialog = ({ open, onOpenChange }: ForgotPasswordDialo
                 {loading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Invio...
+                    Sending...
                   </>
                 ) : (
-                  "Invia Link"
+                  "Send Link"
                 )}
               </Button>
             </div>

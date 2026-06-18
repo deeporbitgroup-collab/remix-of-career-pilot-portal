@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/accordion";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Sheet, SheetClose, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { toast } from "sonner";
 import {
   Plane,
@@ -433,7 +434,179 @@ const PackageExperience = ({
   );
 
   return (
-    <div className="space-y-3" style={accentStyle}>
+    <div style={accentStyle}>
+      {/* ===================== MOBILE compact layout ===================== */}
+      <div className="md:hidden flex flex-col gap-2.5">
+        {/* Header */}
+        <div className="flex items-center gap-2.5">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/15 text-primary">
+            <Icon className="h-5 w-5" />
+          </div>
+          <div className="min-w-0">
+            <h2 className="text-xl font-extrabold uppercase leading-tight tracking-wide text-primary">
+              <span className="inline-block border-b-[3px] border-secondary pb-0.5">{pkg.code_name}</span>
+            </h2>
+            <p className="truncate text-[11px] text-foreground/70">{pkg.subtitle}</p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setPackageInfoOpen(true)}
+            className="ml-auto inline-flex shrink-0 items-center gap-1 rounded-full border border-primary/20 px-2.5 py-1 text-[11px] font-medium text-primary"
+          >
+            <Info className="h-3.5 w-3.5" /> Info
+          </button>
+        </div>
+
+        {/* What's included (summary) + Customize via bottom-sheet */}
+        <div className="rounded-xl border border-primary/20 bg-card p-3 shadow-sm">
+          <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">What's included</p>
+          <ul className="space-y-1">
+            {includedCore.map((c) => (
+              <li key={c.id} className="flex items-start gap-1.5 text-[13px]">
+                <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />
+                <span className="font-medium text-foreground">{c.label || c.service?.name}</span>
+              </li>
+            ))}
+            {coreComponents.filter((c) => removed.has(c.id)).map((c) => (
+              <li key={c.id} className="flex items-start gap-1.5 text-[13px] text-muted-foreground line-through">
+                <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 opacity-40" />
+                <span>{c.label || c.service?.name}</span>
+              </li>
+            ))}
+          </ul>
+          {coreComponents.some((c) => c.is_removable) && (
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button variant="outline" size="sm" className="mt-2 w-full border-primary/30 text-primary">
+                  Customize components
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="bottom" className="max-h-[82vh] overflow-y-auto rounded-t-2xl">
+                <SheetHeader>
+                  <SheetTitle>Customize your {pkg.code_name} package</SheetTitle>
+                </SheetHeader>
+                <p className="mb-3 mt-1 text-xs text-muted-foreground">Uncheck what you don't need — the price updates automatically.</p>
+                <ul className="space-y-3">
+                  {coreComponents.map((comp) => {
+                    const isRemoved = removed.has(comp.id);
+                    const label = comp.label || comp.service?.name || "Component";
+                    return (
+                      <li key={comp.id} className="flex items-start gap-2.5 text-sm">
+                        {comp.is_removable ? (
+                          <Checkbox
+                            checked={!isRemoved}
+                            onCheckedChange={(checked) => {
+                              setRemoved((prev) => {
+                                const next = new Set(prev);
+                                if (checked) next.delete(comp.id);
+                                else next.add(comp.id);
+                                return next;
+                              });
+                            }}
+                            className="mt-0.5"
+                            aria-label={`Toggle ${label}`}
+                          />
+                        ) : (
+                          <Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                        )}
+                        <span className={`flex-1 font-medium ${isRemoved ? "text-muted-foreground line-through" : "text-foreground"}`}>
+                          {label}
+                          {!comp.is_removable && <span className="ml-1.5 text-[10px] font-normal uppercase tracking-wide text-primary/70">included</span>}
+                        </span>
+                        <span className="shrink-0 text-xs text-muted-foreground">€{(Number(comp.internal_price) * comp.quantity).toFixed(0)}</span>
+                      </li>
+                    );
+                  })}
+                </ul>
+                <div className="mt-4 flex items-center justify-between border-t pt-3">
+                  <span className="text-sm text-muted-foreground">Total</span>
+                  <span className="text-xl font-extrabold text-primary">€{total.toFixed(0)}</span>
+                </div>
+                <SheetClose asChild>
+                  <Button className="mt-3 w-full bg-gradient-to-r from-primary to-secondary font-bold">Done</Button>
+                </SheetClose>
+              </SheetContent>
+            </Sheet>
+          )}
+        </div>
+
+        {/* Demo / sample projects */}
+        {demoPdfNames.length > 0 && (
+          <div className="flex flex-wrap gap-2">
+            {demoPdfNames.map((name) => (
+              <Button key={name} variant="outline" size="sm" className="h-7 text-[11px]" onClick={() => onDownloadPdf(name, pkg.category)}>
+                <Download className="mr-1 h-3 w-3" /> {demoShortLabel(name)}
+              </Button>
+            ))}
+          </div>
+        )}
+
+        {/* Price + add to cart */}
+        <div className="rounded-xl border border-primary/20 bg-primary/5 p-3">
+          <div className="flex items-end justify-between">
+            <div>
+              <span className="text-3xl font-extrabold text-primary">€{total.toFixed(0)}</span>
+              {total < fullPrice && <span className="ml-2 text-sm text-muted-foreground line-through">€{fullPrice.toFixed(0)}</span>}
+            </div>
+            {removed.size > 0 && (
+              <Badge variant="secondary" className="bg-amber-100 text-amber-700">Customized</Badge>
+            )}
+          </div>
+          <Button className="mt-2.5 w-full bg-gradient-to-r from-primary to-secondary text-base font-bold shadow-md" size="lg" onClick={addPackageToCart}>
+            <ShoppingCart className="mr-2 h-5 w-5" />
+            {selectedAssociate ? `Add with ${selectedAssociate.first_name}` : "Pick an Associate below"}
+          </Button>
+        </div>
+
+        {/* Choose your Associate */}
+        <div className="rounded-xl border border-secondary/30 bg-card p-3">
+          <p className="mb-1.5 flex items-center gap-1.5 text-sm font-semibold">
+            <Users className="h-4 w-4 text-primary" /> Choose your Associate
+          </p>
+          <Select value={associateFilter || "__all__"} onValueChange={(v) => setAssociateFilter(v === "__all__" ? "" : v)}>
+            <SelectTrigger className="w-full border-primary/20"><SelectValue placeholder="Pick from the list" /></SelectTrigger>
+            <SelectContent className="max-h-72">
+              <SelectItem value="__all__">All {filterLabel.toLowerCase()}</SelectItem>
+              {availableValues.map((v) => (<SelectItem key={v} value={v}>{v}</SelectItem>))}
+            </SelectContent>
+          </Select>
+          <div className="mt-2">
+            {filteredAssociates.length === 0 ? (
+              <p className="py-6 text-center text-sm text-muted-foreground">No associates match yet. Try another filter.</p>
+            ) : (
+              <AssociateChoiceCarousel
+                associates={filteredAssociates}
+                isSelected={(a) => selectedAssociateId === a.id}
+                onToggle={(a) => setSelectedAssociateId((prev) => (prev === a.id ? null : a.id))}
+                getSectors={(a) => {
+                  const ap = a as AssociatePreview;
+                  return [ap.sector, ap.sector_2].filter((s): s is string => !!s && s.trim() !== "");
+                }}
+                renderActions={(a) => {
+                  const ap = a as AssociatePreview;
+                  return (
+                    <>
+                      <Button variant="outline" size="sm" className="flex-1 border-primary/20" onClick={(e) => { e.stopPropagation(); setBioAssociate(ap); }}>
+                        <FileText className="mr-1.5 h-4 w-4" /> Overview
+                      </Button>
+                      {ap.linkedin_url && (
+                        <Button asChild variant="outline" size="sm" className="flex-1 border-primary/20">
+                          <a href={ap.linkedin_url.startsWith("http") ? ap.linkedin_url : `https://${ap.linkedin_url}`} target="_blank" rel="noopener noreferrer">
+                            <Linkedin className="mr-1.5 h-4 w-4" /> LinkedIn
+                          </a>
+                        </Button>
+                      )}
+                    </>
+                  );
+                }}
+              />
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* ===================== DESKTOP layout (unchanged) ===================== */}
+      <div className="hidden md:block space-y-3">
       {/* Slim category header (keeps the whole experience in one screen) */}
       <div className="flex items-center gap-3 rounded-xl border border-primary/20 bg-background/90 px-4 py-2.5 shadow-lg backdrop-blur-sm">
         <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/15 text-primary shrink-0">
@@ -854,8 +1027,10 @@ const PackageExperience = ({
           </AccordionItem>
         )}
       </Accordion>
+      </div>
+      {/* ===================== END DESKTOP layout ===================== */}
 
-      {/* Package info popup */}
+      {/* Package info popup (shared by mobile + desktop) */}
       <Dialog open={packageInfoOpen} onOpenChange={setPackageInfoOpen}>
         <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto">
           <DialogHeader>

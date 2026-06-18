@@ -58,16 +58,16 @@ interface RegistrationDataDisplayProps {
 }
 
 const levelLabels: Record<string, string> = {
-  native: "Madrelingua",
-  advanced: "Avanzato",
-  intermediate: "Intermedio",
-  basic: "Base"
+  native: "Native",
+  advanced: "Advanced",
+  intermediate: "Intermediate",
+  basic: "Basic"
 };
 
 const statusLabels: Record<string, string> = {
-  university_student: "Studente Universitario",
-  master_student: "Studente Master",
-  professional: "Professionista"
+  university_student: "University Student",
+  master_student: "Master's Student",
+  professional: "Professional"
 };
 
 export default function RegistrationDataDisplay({
@@ -90,13 +90,13 @@ export default function RegistrationDataDisplay({
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <User className="h-5 w-5" />
-            Dati di Registrazione
+            Registration Data
           </CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-muted-foreground text-sm">
-            Nessun dato di registrazione dettagliato disponibile per questo associate.
-            I dati saranno visibili per i nuovi utenti registrati con il modulo aggiornato.
+            No detailed registration data available for this associate.
+            Data will be visible for new users registered with the updated form.
           </p>
         </CardContent>
       </Card>
@@ -138,7 +138,7 @@ export default function RegistrationDataDisplay({
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-lg">
             <User className="h-5 w-5" />
-            Metodi di Presentazione Scelti
+            Selected Presentation Methods
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -162,7 +162,7 @@ export default function RegistrationDataDisplay({
               </Badge>
             )}
             {!presentation && (
-              <span className="text-muted-foreground text-sm">Non specificato</span>
+              <span className="text-muted-foreground text-sm">Not specified</span>
             )}
           </div>
           {linkedinUrl && (
@@ -182,7 +182,7 @@ export default function RegistrationDataDisplay({
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-lg">
               <GraduationCap className="h-5 w-5" />
-              Informazioni About
+              About Information
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
@@ -190,7 +190,7 @@ export default function RegistrationDataDisplay({
             <div>
               <span className="text-sm text-muted-foreground">Status: </span>
               <Badge variant="secondary" className="text-sm">
-                {about.status ? statusLabels[about.status] || about.status : "Non specificato"}
+                {about.status ? statusLabels[about.status] || about.status : "Not specified"}
               </Badge>
             </div>
 
@@ -198,15 +198,15 @@ export default function RegistrationDataDisplay({
             {about.status === "university_student" && (
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 bg-muted/30 rounded-lg p-4">
                 <div>
-                  <p className="text-xs text-muted-foreground uppercase">Università</p>
+                  <p className="text-xs text-muted-foreground uppercase">University</p>
                   <p className="font-medium">{about.university || "-"}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-muted-foreground uppercase">Corso di Laurea</p>
+                  <p className="text-xs text-muted-foreground uppercase">Degree Course</p>
                   <p className="font-medium">{about.course || "-"}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-muted-foreground uppercase">Media</p>
+                  <p className="text-xs text-muted-foreground uppercase">GPA</p>
                   <p className="font-medium">{about.gpa || "-"}</p>
                 </div>
               </div>
@@ -222,15 +222,15 @@ export default function RegistrationDataDisplay({
                   </h5>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 bg-muted/30 rounded-lg p-4">
                     <div>
-                      <p className="text-xs text-muted-foreground uppercase">Istituzione</p>
+                      <p className="text-xs text-muted-foreground uppercase">Institution</p>
                       <p className="font-medium">{about.masterInstitution || "-"}</p>
                     </div>
                     <div>
-                      <p className="text-xs text-muted-foreground uppercase">Tipo Master</p>
+                      <p className="text-xs text-muted-foreground uppercase">Master's Type</p>
                       <p className="font-medium">{about.masterType || "-"}</p>
                     </div>
                     <div>
-                      <p className="text-xs text-muted-foreground uppercase">Media</p>
+                      <p className="text-xs text-muted-foreground uppercase">GPA</p>
                       <p className="font-medium">{about.masterGpa || "-"}</p>
                     </div>
                   </div>
@@ -239,19 +239,19 @@ export default function RegistrationDataDisplay({
                   <div className="space-y-2">
                     <h5 className="text-sm font-semibold flex items-center gap-2">
                       <GraduationCap className="h-4 w-4" />
-                      Laurea Precedente
+                      Previous Degree
                     </h5>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 bg-muted/30 rounded-lg p-4">
                       <div>
-                        <p className="text-xs text-muted-foreground uppercase">Università</p>
+                        <p className="text-xs text-muted-foreground uppercase">University</p>
                         <p className="font-medium">{about.previousUniversity || "-"}</p>
                       </div>
                       <div>
-                        <p className="text-xs text-muted-foreground uppercase">Corso</p>
+                        <p className="text-xs text-muted-foreground uppercase">Course</p>
                         <p className="font-medium">{about.previousCourse || "-"}</p>
                       </div>
                       <div>
-                        <p className="text-xs text-muted-foreground uppercase">Media</p>
+                        <p className="text-xs text-muted-foreground uppercase">GPA</p>
                         <p className="font-medium">{about.previousGpa || "-"}</p>
                       </div>
                     </div>
@@ -266,19 +266,19 @@ export default function RegistrationDataDisplay({
                 <div className="space-y-2">
                   <h5 className="text-sm font-semibold flex items-center gap-2">
                     <Building className="h-4 w-4" />
-                    Posizione Attuale
+                    Current Position
                   </h5>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 bg-muted/30 rounded-lg p-4">
                     <div>
-                      <p className="text-xs text-muted-foreground uppercase">Azienda</p>
+                      <p className="text-xs text-muted-foreground uppercase">Company</p>
                       <p className="font-medium">{about.currentCompany || "-"}</p>
                     </div>
                     <div>
-                      <p className="text-xs text-muted-foreground uppercase">Posizione</p>
+                      <p className="text-xs text-muted-foreground uppercase">Position</p>
                       <p className="font-medium">{about.currentPosition || "-"}</p>
                     </div>
                     <div>
-                      <p className="text-xs text-muted-foreground uppercase">Settore</p>
+                      <p className="text-xs text-muted-foreground uppercase">Sector</p>
                       <p className="font-medium">{about.companySector || "-"}</p>
                     </div>
                   </div>
@@ -288,15 +288,15 @@ export default function RegistrationDataDisplay({
                   <div className="space-y-2">
                     <h5 className="text-sm font-semibold flex items-center gap-2">
                       <GraduationCap className="h-4 w-4" />
-                      Formazione
+                      Education
                     </h5>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-muted/30 rounded-lg p-4">
                       <div>
-                        <p className="text-xs text-muted-foreground uppercase">Università</p>
+                        <p className="text-xs text-muted-foreground uppercase">University</p>
                         <p className="font-medium">{about.professionalUniversity || "-"}</p>
                       </div>
                       <div>
-                        <p className="text-xs text-muted-foreground uppercase">Titolo</p>
+                        <p className="text-xs text-muted-foreground uppercase">Degree</p>
                         <p className="font-medium">{about.professionalDegree || "-"}</p>
                       </div>
                     </div>
@@ -311,15 +311,15 @@ export default function RegistrationDataDisplay({
                     </h5>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 bg-muted/30 rounded-lg p-4">
                       <div>
-                        <p className="text-xs text-muted-foreground uppercase">Istituzione</p>
+                        <p className="text-xs text-muted-foreground uppercase">Institution</p>
                         <p className="font-medium">{about.professionalMasterInstitution || "-"}</p>
                       </div>
                       <div>
-                        <p className="text-xs text-muted-foreground uppercase">Programma</p>
+                        <p className="text-xs text-muted-foreground uppercase">Program</p>
                         <p className="font-medium">{about.professionalMasterProgram || "-"}</p>
                       </div>
                       <div>
-                        <p className="text-xs text-muted-foreground uppercase">Voto</p>
+                        <p className="text-xs text-muted-foreground uppercase">Grade</p>
                         <p className="font-medium">{about.professionalMasterGpa || "-"}</p>
                       </div>
                     </div>
@@ -329,7 +329,7 @@ export default function RegistrationDataDisplay({
                 {/* Previous Work Experiences */}
                 {renderExperiences(
                   about.previousWorkExperiences,
-                  "Esperienze Lavorative Precedenti",
+                  "Previous Work Experiences",
                   <Briefcase className="h-4 w-4" />
                 )}
               </>
@@ -338,12 +338,12 @@ export default function RegistrationDataDisplay({
             {/* Common Experiences */}
             {renderExperiences(
               about.professionalExperiences,
-              "Esperienze Professionali",
+              "Professional Experiences",
               <Briefcase className="h-4 w-4" />
             )}
             {renderExperiences(
               about.volunteerExperiences,
-              "Esperienze di Volontariato",
+              "Volunteer Experiences",
               <User className="h-4 w-4" />
             )}
           </CardContent>
@@ -356,7 +356,7 @@ export default function RegistrationDataDisplay({
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-lg">
               <Globe className="h-5 w-5" />
-              Lingue
+              Languages
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -380,7 +380,7 @@ export default function RegistrationDataDisplay({
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-lg">
               <Award className="h-5 w-5" />
-              Certificazioni
+              Certifications
             </CardTitle>
           </CardHeader>
           <CardContent>

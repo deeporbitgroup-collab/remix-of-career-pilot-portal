@@ -72,7 +72,11 @@ const StudentDashboard = () => {
   const cvInputRef = useRef<HTMLInputElement>(null);
   const coverInputRef = useRef<HTMLInputElement>(null);
   const videoInputRef = useRef<HTMLInputElement>(null);
+  const passportInputRef = useRef<HTMLInputElement>(null);
   const [uploadingVideo, setUploadingVideo] = useState(false);
+  const [uploadingPassport, setUploadingPassport] = useState(false);
+  const [savingBureaucracy, setSavingBureaucracy] = useState(false);
+  const [viewingPassport, setViewingPassport] = useState(false);
 
   const COMPENSATION_OPTIONS = [
     { value: "PAID", label: t('studentTalentPool.compensation.paid') },
@@ -223,8 +227,8 @@ const StudentDashboard = () => {
     } catch (error) {
       console.error('Error loading dashboard data:', error);
       toast({
-        title: "Errore",
-        description: "Impossibile caricare i dati",
+        title: "Error",
+        description: "Unable to load data",
         variant: "destructive"
       });
     } finally {
@@ -554,6 +558,83 @@ const StudentDashboard = () => {
     }
   };
 
+  // --- Work eligibility / bureaucracy (passport, visa, address, dates) ---
+  const handlePassportUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const allowed = ['image/jpeg', 'image/png', 'application/pdf'].includes(file.type);
+    if (!allowed) {
+      toast({ title: "Invalid file", description: "Upload a JPG, PNG or PDF of your passport.", variant: "destructive" });
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      toast({ title: "File too large", description: "Please keep the passport scan under 10MB.", variant: "destructive" });
+      return;
+    }
+    setUploadingPassport(true);
+    try {
+      // Fixed object name so a re-upload replaces the previous scan.
+      const path = `${userInfo.id}/passport`;
+      const { error: upErr } = await supabase.storage
+        .from('talent-pool-passports')
+        .upload(path, file, { upsert: true, contentType: file.type });
+      if (upErr) throw upErr;
+
+      const { error: rpcErr } = await supabase.rpc('talent_pool_update_student_bureaucracy' as any, {
+        _user_id: userInfo.id,
+        _passport_url: path,
+      });
+      if (rpcErr) throw rpcErr;
+
+      setStudentProfile((prev: any) => prev ? { ...prev, passport_url: path } : prev);
+      toast({ title: "Passport uploaded", description: "Your passport scan has been saved securely." });
+    } catch (err: any) {
+      console.error('Passport upload error:', err);
+      toast({ title: "Upload failed", description: err.message || "Could not upload the passport.", variant: "destructive" });
+    } finally {
+      setUploadingPassport(false);
+      if (passportInputRef.current) passportInputRef.current.value = '';
+    }
+  };
+
+  const handleViewPassport = async (studentId: string) => {
+    setViewingPassport(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('get-passport-url', { body: { studentId } });
+      if (error) throw error;
+      if (data?.url) window.open(data.url, '_blank', 'noopener,noreferrer');
+      else throw new Error('No passport found');
+    } catch (e: any) {
+      console.error('View passport error:', e);
+      toast({ title: "Error", description: e.message || "Could not open the passport.", variant: "destructive" });
+    } finally {
+      setViewingPassport(false);
+    }
+  };
+
+  const handleSaveBureaucracy = async () => {
+    setSavingBureaucracy(true);
+    try {
+      const { error } = await supabase.rpc('talent_pool_update_student_bureaucracy' as any, {
+        _user_id: userInfo.id,
+        _uk_work_visa: studentProfile?.uk_work_visa || null,
+        _work_start_date: studentProfile?.internship_start_date || null,
+        _work_end_date: studentProfile?.internship_end_date || null,
+        _home_address: studentProfile?.home_address ?? '',
+        _city: studentProfile?.city ?? '',
+        _country: studentProfile?.country ?? '',
+        _citizenship: studentProfile?.citizenship ?? '',
+      });
+      if (error) throw error;
+      toast({ title: "Details saved", description: "Your work-eligibility details have been updated." });
+    } catch (e: any) {
+      console.error('Save bureaucracy error:', e);
+      toast({ title: "Error", description: e.message || "Could not save your details.", variant: "destructive" });
+    } finally {
+      setSavingBureaucracy(false);
+    }
+  };
+
   const toggleCompanyType = (type: string) => {
     setStudentProfile(prev => {
       if (!prev) return prev;
@@ -748,7 +829,7 @@ const StudentDashboard = () => {
                             <AvatarFallback>{company?.company_name?.[0] || 'C'}</AvatarFallback>
                           </Avatar>
                           <div className="flex-1">
-                            <h4 className="font-semibold text-lg">{company?.company_name || 'Azienda'}</h4>
+                            <h4 className="font-semibold text-lg">{company?.company_name || 'Company'}</h4>
                             <div className="flex gap-2 mt-2">
                               <Badge variant="secondary">{company?.size || 'N/A'}</Badge>
                               <Badge variant="outline">{company?.sector || 'N/A'}</Badge>
@@ -1199,6 +1280,136 @@ const StudentDashboard = () => {
 
 
 
+              {/* Work eligibility & bureaucracy — passport, visa, dates, address */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Briefcase className="h-5 w-5 text-primary" />
+                    {language === 'it' ? 'Idoneità al lavoro & documenti' : 'Work Eligibility & Documents'}
+                  </CardTitle>
+                  <p className="text-sm text-muted-foreground">
+                    {language === 'it'
+                      ? 'Questi dati aiutano le aziende con le pratiche burocratiche (visto, documento, date, residenza). Visibili alle aziende che ti selezionano e al team Career Pilot.'
+                      : 'These details help companies with paperwork (visa, ID, dates, residence). Visible to companies that select you and the Career Pilot team.'}
+                  </p>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {/* Passport */}
+                  <div className="space-y-2">
+                    <Label>{language === 'it' ? 'Passaporto' : 'Passport'}</Label>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Button variant="outline" onClick={() => passportInputRef.current?.click()} disabled={uploadingPassport}>
+                        <Upload className="h-4 w-4 mr-2" />
+                        {uploadingPassport
+                          ? (language === 'it' ? 'Caricamento...' : 'Uploading...')
+                          : studentProfile.passport_url
+                            ? (language === 'it' ? 'Sostituisci passaporto' : 'Replace passport')
+                            : (language === 'it' ? 'Carica passaporto' : 'Upload passport')}
+                      </Button>
+                      {studentProfile.passport_url && (
+                        <Button variant="outline" onClick={() => handleViewPassport(userInfo.id)} disabled={viewingPassport}>
+                          <Eye className="h-4 w-4 mr-2" />
+                          {viewingPassport ? (language === 'it' ? 'Apertura...' : 'Opening...') : (language === 'it' ? 'Visualizza' : 'View')}
+                        </Button>
+                      )}
+                      {studentProfile.passport_url && (
+                        <span className="inline-flex items-center gap-1 text-xs font-medium text-green-600">
+                          <CheckCircle className="h-3.5 w-3.5" /> {language === 'it' ? 'Caricato' : 'Uploaded'}
+                        </span>
+                      )}
+                    </div>
+                    <Input
+                      ref={passportInputRef}
+                      type="file"
+                      accept=".jpg,.jpeg,.png,.pdf,image/jpeg,image/png,application/pdf"
+                      onChange={handlePassportUpload}
+                      className="hidden"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      {language === 'it'
+                        ? 'JPG, PNG o PDF (max 10MB). Conservato in modo sicuro e mostrato solo tramite link temporaneo.'
+                        : 'JPG, PNG or PDF (max 10MB). Stored securely and shown only via a temporary link.'}
+                    </p>
+                  </div>
+
+                  {/* UK work visa */}
+                  <div className="space-y-2">
+                    <Label>{language === 'it' ? 'Diritto a lavorare nel Regno Unito' : 'Right to work in the UK'}</Label>
+                    <Select
+                      value={studentProfile.uk_work_visa || ''}
+                      onValueChange={(v) => setStudentProfile(prev => prev ? { ...prev, uk_work_visa: v } : prev)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder={language === 'it' ? 'Seleziona...' : 'Select...'} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="YES">{language === 'it' ? 'Sì, posso lavorare in UK' : 'Yes, I can work in the UK'}</SelectItem>
+                        <SelectItem value="NO">{language === 'it' ? 'No' : 'No'}</SelectItem>
+                        <SelectItem value="APPLYING">{language === 'it' ? 'In richiesta' : 'Applying / in progress'}</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Work dates */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-2">
+                      <Label>{language === 'it' ? 'Inizio lavoro' : 'Work start date'}</Label>
+                      <Input
+                        type="date"
+                        value={studentProfile.internship_start_date || ''}
+                        onChange={(e) => setStudentProfile(prev => prev ? { ...prev, internship_start_date: e.target.value || null } : prev)}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>{language === 'it' ? 'Fine lavoro' : 'Work end date'}</Label>
+                      <Input
+                        type="date"
+                        value={studentProfile.internship_end_date || ''}
+                        onChange={(e) => setStudentProfile(prev => prev ? { ...prev, internship_end_date: e.target.value || null } : prev)}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Residence + citizenship */}
+                  <div className="space-y-2">
+                    <Label>{language === 'it' ? 'Indirizzo di casa' : 'Home address'}</Label>
+                    <Input
+                      value={studentProfile.home_address || ''}
+                      onChange={(e) => setStudentProfile(prev => prev ? { ...prev, home_address: e.target.value } : prev)}
+                      placeholder={language === 'it' ? 'Via, numero civico...' : 'Street, number...'}
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-2">
+                      <Label>{language === 'it' ? 'Città' : 'City'}</Label>
+                      <Input
+                        value={studentProfile.city || ''}
+                        onChange={(e) => setStudentProfile(prev => prev ? { ...prev, city: e.target.value } : prev)}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>{language === 'it' ? 'Paese' : 'Country'}</Label>
+                      <Input
+                        value={studentProfile.country || ''}
+                        onChange={(e) => setStudentProfile(prev => prev ? { ...prev, country: e.target.value } : prev)}
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>{language === 'it' ? 'Cittadinanza' : 'Citizenship'}</Label>
+                    <Input
+                      value={studentProfile.citizenship || ''}
+                      onChange={(e) => setStudentProfile(prev => prev ? { ...prev, citizenship: e.target.value } : prev)}
+                      placeholder={language === 'it' ? 'es. Italiana' : 'e.g. Italian'}
+                    />
+                  </div>
+
+                  <Button onClick={handleSaveBureaucracy} disabled={savingBureaucracy} className="w-full">
+                    {savingBureaucracy ? (language === 'it' ? 'Salvataggio...' : 'Saving...') : (language === 'it' ? 'Salva dettagli' : 'Save details')}
+                  </Button>
+                </CardContent>
+              </Card>
+
               <Card>
                 <CardHeader>
                   <CardTitle>Profile Visibility</CardTitle>
@@ -1272,6 +1483,11 @@ const StudentDashboard = () => {
                       <FileText className="h-4 w-4" />
                       {language === 'it' ? 'Apri Prep Material' : 'Open Prep Material'}
                     </Button>
+                    <p className="md:hidden text-xs text-muted-foreground">
+                      {language === 'it'
+                        ? 'Per sfogliare comodamente tutto il materiale, ti consigliamo di aprirlo su desktop.'
+                        : 'To browse all the material comfortably, we recommend opening it on desktop.'}
+                    </p>
                   </CardContent>
                 </Card>
               </TabsContent>
@@ -1325,8 +1541,9 @@ const StudentDashboard = () => {
                     </CardContent>
                   </Card>
                 ) : (
-                  filteredCompanies.map(company => (
-                    <Card key={company.id}>
+                  <div className="md:space-y-4 max-md:-mx-4 max-md:flex max-md:snap-x max-md:snap-mandatory max-md:gap-3 max-md:overflow-x-auto max-md:px-4 max-md:pb-2">
+                  {filteredCompanies.map(company => (
+                    <Card key={company.id} className="max-md:snap-center max-md:shrink-0 max-md:w-[85vw]">
                       <CardContent className="pt-6">
                         <div className="flex gap-4">
                           <Avatar className="h-16 w-16">
@@ -1359,7 +1576,8 @@ const StudentDashboard = () => {
                         </div>
                       </CardContent>
                     </Card>
-                  ))
+                  ))}
+                  </div>
                 )}
               </div>
               </TabsContent>

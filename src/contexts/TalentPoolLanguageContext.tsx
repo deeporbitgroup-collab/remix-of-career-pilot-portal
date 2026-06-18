@@ -11,10 +11,8 @@ interface TalentPoolLanguageContextType {
 const TalentPoolLanguageContext = createContext<TalentPoolLanguageContextType | undefined>(undefined);
 
 export const TalentPoolLanguageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [language, setLanguageState] = useState<TalentPoolLanguage>(() => {
-    const stored = localStorage.getItem('talentPoolLanguage');
-    return (stored === 'en' || stored === 'it') ? stored : 'it';
-  });
+  // Talent Pool is English-only across the whole product.
+  const [language] = useState<TalentPoolLanguage>('en');
 
   const [translations, setTranslations] = useState<Record<string, any>>({});
 
@@ -30,10 +28,8 @@ export const TalentPoolLanguageProvider: React.FC<{ children: React.ReactNode }>
     loadTranslations();
   }, [language]);
 
-  const setLanguage = (lang: TalentPoolLanguage) => {
-    setLanguageState(lang);
-    localStorage.setItem('talentPoolLanguage', lang);
-  };
+  // English-only: kept for API compatibility, but language never changes.
+  const setLanguage = (_lang: TalentPoolLanguage) => {};
 
   const t = (key: string): string => {
     const keys = key.split('.');

@@ -114,7 +114,15 @@ const AdminDashboard = () => {
           payment_reference: s.payment_reference,
           monthly_payment_active: s.monthly_payment_active,
           monthly_payment_start_date: s.monthly_payment_start_date,
-          profile_visible_to_companies: s.profile_visible_to_companies
+          profile_visible_to_companies: s.profile_visible_to_companies,
+          passport_url: s.passport_url,
+          uk_work_visa: s.uk_work_visa,
+          internship_start_date: s.internship_start_date,
+          internship_end_date: s.internship_end_date,
+          home_address: s.home_address,
+          city: s.city,
+          country: s.country,
+          citizenship: s.citizenship
         }] : []
       }));
 
@@ -226,8 +234,8 @@ const AdminDashboard = () => {
     } catch (error) {
       console.error('Error loading dashboard data:', error);
       toast({
-        title: "Errore",
-        description: "Impossibile caricare i dati",
+        title: "Error",
+        description: "Could not load the data",
         variant: "destructive"
       });
     } finally {
@@ -273,18 +281,18 @@ const AdminDashboard = () => {
 
       if (action === 'REJECT') {
         newStatus = 'rejected';
-        actionText = 'rifiutato';
+        actionText = 'rejected';
         emailAction = 'REJECTED';
       } else if (action === 'ADMIT') {
         // Free access: admitting approves the student directly — makes them visible
         // to companies (via tp_set_student_status) and sends the access email.
         // No payment step.
         newStatus = 'active_member';
-        actionText = 'approvato e reso visibile alle aziende';
+        actionText = 'approved and made visible to companies';
         emailAction = 'TALENT_POOL_ACCESS';
       } else { // CONFIRM_PAYMENT (legacy path, kept for manually-staged students)
         newStatus = 'active_member';
-        actionText = 'approvato con accesso completo';
+        actionText = 'approved with full access';
         emailAction = 'PAYMENT_VERIFIED';
       }
 
@@ -328,16 +336,16 @@ const AdminDashboard = () => {
       }
 
       toast({
-        title: "✅ Successo",
-        description: `Studente ${actionText}. Email inviata.`,
+        title: "✅ Success",
+        description: `Student ${actionText}. Email sent.`,
       });
 
       loadDashboardData();
     } catch (error) {
       console.error('Error updating student:', error);
       toast({
-        title: "❌ Errore",
-        description: "Impossibile aggiornare lo stato dello studente",
+        title: "❌ Error",
+        description: "Could not update the student status",
         variant: "destructive"
       });
     }
@@ -355,16 +363,16 @@ const AdminDashboard = () => {
       if (error) throw error;
 
       toast({
-        title: "❌ Pagamento Rifiutato",
-        description: "Lo studente deve caricare nuovamente la ricevuta",
+        title: "❌ Payment Rejected",
+        description: "The student must upload the receipt again",
       });
 
       loadDashboardData();
     } catch (error) {
       console.error('Error rejecting payment:', error);
       toast({
-        title: "❌ Errore",
-        description: "Impossibile rifiutare il pagamento",
+        title: "❌ Error",
+        description: "Could not reject the payment",
         variant: "destructive"
       });
     }
@@ -403,16 +411,16 @@ const AdminDashboard = () => {
       }
 
       toast({
-        title: "Successo",
-        description: `Azienda ${action === 'REJECT' ? 'rifiutata' : 'approvata con accesso completo'}. Email inviata.`,
+        title: "Success",
+        description: `Company ${action === 'REJECT' ? 'rejected' : 'approved with full access'}. Email sent.`,
       });
 
       loadDashboardData();
     } catch (error) {
       console.error('Error updating company:', error);
       toast({
-        title: "Errore",
-        description: "Impossibile aggiornare lo stato dell'azienda",
+        title: "Error",
+        description: "Could not update the company status",
         variant: "destructive"
       });
     }
@@ -517,8 +525,8 @@ const AdminDashboard = () => {
       if (error) throw error;
 
       toast({
-        title: "Pagamento Verificato e Accesso Concesso",
-        description: "Lo studente ha ora accesso completo alla Talent Pool",
+        title: "Payment Verified and Access Granted",
+        description: "The student now has full access to the Talent Pool",
       });
 
       await loadDashboardData();
@@ -527,8 +535,8 @@ const AdminDashboard = () => {
       // Reload to restore correct state on error
       await loadDashboardData();
       toast({
-        title: "Errore",
-        description: "Impossibile verificare il pagamento",
+        title: "Error",
+        description: "Could not verify the payment",
         variant: "destructive"
       });
     }
@@ -569,16 +577,16 @@ const AdminDashboard = () => {
       }
 
       toast({
-        title: "Accesso Concesso",
-        description: "Lo studente ha ora accesso completo alla Talent Pool ed è visibile alle aziende. Email inviata.",
+        title: "Access Granted",
+        description: "The student now has full access to the Talent Pool and is visible to companies. Email sent.",
       });
 
       loadDashboardData();
     } catch (error) {
       console.error('Error granting access:', error);
       toast({
-        title: "Errore",
-        description: "Errore durante la concessione dell'accesso",
+        title: "Error",
+        description: "Error while granting access",
         variant: "destructive"
       });
     }
@@ -868,7 +876,7 @@ const AdminDashboard = () => {
     try {
       const finalUrl = await getSignedUrlIfNeeded(fileUrl);
       const res = await fetch(finalUrl);
-      if (!res.ok) throw new Error('Download fallito');
+      if (!res.ok) throw new Error('Download failed');
       const contentType = res.headers.get('content-type') || '';
       const blob = await res.blob();
 
@@ -904,13 +912,13 @@ const AdminDashboard = () => {
         return;
       }
 
-      // Fallback: scarica il file così com'è
+      // Fallback: download the file as-is
       trigger(blob, filename);
     } catch (error) {
-      console.error('Errore download documento:', error);
+      console.error('Document download error:', error);
       toast({
-        title: 'Errore download',
-        description: 'Impossibile scaricare il documento',
+        title: 'Download error',
+        description: 'Could not download the document',
         variant: 'destructive'
       });
     }
@@ -921,36 +929,55 @@ const AdminDashboard = () => {
     navigate('/talent-pool');
   };
 
+  const [viewingPassport, setViewingPassport] = useState<string | null>(null);
+  const handleViewPassport = async (studentId: string) => {
+    setViewingPassport(studentId);
+    try {
+      const { data, error } = await supabase.functions.invoke('get-passport-url', { body: { studentId } });
+      if (error) throw error;
+      if (data?.url) window.open(data.url, '_blank', 'noopener,noreferrer');
+      else throw new Error('No passport found');
+    } catch (e: any) {
+      console.error('View passport error:', e);
+      toast({ title: "Error", description: e.message || "Could not open the passport", variant: "destructive" });
+    } finally {
+      setViewingPassport(null);
+    }
+  };
+
+  const ukVisaLabelIt = (v?: string) =>
+    v === 'YES' ? 'Yes, can work in the UK' : v === 'NO' ? 'No' : v === 'APPLYING' ? 'Applying' : '—';
+
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'pending_review':
         return (
           <Badge className="bg-warning text-white">
-            <Clock className="h-3 w-3 mr-1" /> In Revisione
+            <Clock className="h-3 w-3 mr-1" /> Under Review
           </Badge>
         );
       case 'accepted_pending_payment':
         return (
           <Badge className="bg-sky text-white">
-            <UserPlus className="h-3 w-3 mr-1" /> Ammesso - Attesa Pagamento
+            <UserPlus className="h-3 w-3 mr-1" /> Admitted - Awaiting Payment
           </Badge>
         );
       case 'payment_uploaded':
         return (
           <Badge className="bg-warning text-white">
-            <Clock className="h-3 w-3 mr-1" /> Pagamento Da Verificare
+            <Clock className="h-3 w-3 mr-1" /> Payment To Verify
           </Badge>
         );
       case 'active_member':
         return (
           <Badge className="bg-success text-white">
-            <CheckCircle className="h-3 w-3 mr-1" /> Membro Attivo
+            <CheckCircle className="h-3 w-3 mr-1" /> Active Member
           </Badge>
         );
       case 'rejected':
         return (
           <Badge variant="destructive">
-            <XCircle className="h-3 w-3 mr-1" /> Rifiutato
+            <XCircle className="h-3 w-3 mr-1" /> Rejected
           </Badge>
         );
       case 'left':
@@ -978,19 +1005,19 @@ const AdminDashboard = () => {
       case 'PENDING':
         return (
           <Badge className="bg-warning text-white">
-            <Clock className="h-3 w-3 mr-1" /> In Attesa
+            <Clock className="h-3 w-3 mr-1" /> Pending
           </Badge>
         );
       case 'APPROVED':
         return (
           <Badge className="bg-success text-white">
-            <CheckCircle className="h-3 w-3 mr-1" /> Approvata
+            <CheckCircle className="h-3 w-3 mr-1" /> Approved
           </Badge>
         );
       case 'REJECTED':
         return (
           <Badge variant="destructive">
-            <XCircle className="h-3 w-3 mr-1" /> Rifiutata
+            <XCircle className="h-3 w-3 mr-1" /> Rejected
           </Badge>
         );
       default:
@@ -1020,7 +1047,7 @@ const AdminDashboard = () => {
               variant="outline"
               onClick={() => navigate('/')}
             >
-              Torna al Sito
+              Back to Site
             </Button>
             <Button
               variant="outline"
@@ -1038,13 +1065,13 @@ const AdminDashboard = () => {
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-medium text-steel-gray">
-                Studenti Totali
+                Total Students
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-primary">{stats.totalStudents}</div>
               <div className="text-xs text-steel-gray mt-1">
-                {stats.approvedStudents} attivi, {stats.admittedStudents} ammessi, {stats.pendingStudents} in attesa
+                {stats.approvedStudents} active, {stats.admittedStudents} admitted, {stats.pendingStudents} pending
               </div>
             </CardContent>
           </Card>
@@ -1052,13 +1079,13 @@ const AdminDashboard = () => {
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-medium text-steel-gray">
-                Aziende Totali
+                Total Companies
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-primary">{stats.totalCompanies}</div>
               <div className="text-xs text-steel-gray mt-1">
-                {stats.approvedCompanies} approvate, {stats.pendingCompanies} in attesa
+                {stats.approvedCompanies} approved, {stats.pendingCompanies} pending
               </div>
             </CardContent>
           </Card>
@@ -1080,7 +1107,7 @@ const AdminDashboard = () => {
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-medium text-steel-gray">
-                Tasso Conversione
+                Conversion Rate
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -1090,7 +1117,7 @@ const AdminDashboard = () => {
                   : 0}%
               </div>
               <div className="text-xs text-steel-gray mt-1">
-                Studenti con accesso completo
+                Students with full access
               </div>
             </CardContent>
           </Card>
@@ -1101,19 +1128,19 @@ const AdminDashboard = () => {
           <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="students" className="flex items-center gap-2">
               <Users className="h-4 w-4" />
-              Studenti
+              Students
             </TabsTrigger>
             <TabsTrigger value="companies" className="flex items-center gap-2">
               <Building2 className="h-4 w-4" />
-              Aziende
+              Companies
             </TabsTrigger>
             <TabsTrigger value="payments" className="flex items-center gap-2">
               <CreditCard className="h-4 w-4" />
-              Pagamenti
+              Payments
             </TabsTrigger>
             <TabsTrigger value="notifications" className="flex items-center gap-2">
               <Bell className="h-4 w-4" />
-              Notifiche
+              Notifications
               {selections.length > 0 && (
                 <Badge className="ml-1 bg-primary">{selections.length}</Badge>
               )}
@@ -1132,7 +1159,7 @@ const AdminDashboard = () => {
           <TabsContent value="students">
             <Card>
               <CardHeader>
-                <CardTitle>Gestione Studenti - Richieste di Accesso</CardTitle>
+                <CardTitle>Student Management - Access Requests</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
@@ -1159,34 +1186,34 @@ const AdminDashboard = () => {
                             <p className="font-medium">{student.email}</p>
                           </div>
                           <div className="space-y-1">
-                            <p className="text-sm text-steel-gray">📱 Telefono</p>
-                            <p className="font-medium">{student.student_profiles?.[0]?.phone || 'Non fornito'}</p>
+                            <p className="text-sm text-steel-gray">📱 Phone</p>
+                            <p className="font-medium">{student.student_profiles?.[0]?.phone || 'Not provided'}</p>
                           </div>
                           {student.student_profiles?.[0]?.linkedin_url && (
                             <div className="space-y-1">
                               <p className="text-sm text-steel-gray">🔗 LinkedIn</p>
-                              <a 
-                                href={student.student_profiles[0].linkedin_url} 
-                                target="_blank" 
+                              <a
+                                href={student.student_profiles[0].linkedin_url}
+                                target="_blank"
                                 rel="noopener noreferrer"
                                 className="text-primary hover:underline text-sm"
                               >
-                                Visualizza Profilo
+                                View Profile
                               </a>
                             </div>
                           )}
                           <div className="space-y-1">
-                            <p className="text-sm text-steel-gray">📅 Data Registrazione</p>
+                            <p className="text-sm text-steel-gray">📅 Registration Date</p>
                             <p className="font-medium">
                               {new Date(student.created_at).toLocaleDateString('it-IT')}
                             </p>
                           </div>
                           {student.student_profiles?.[0]?.monthly_payment_active && (
                             <div className="space-y-1">
-                              <p className="text-sm text-steel-gray">💳 Stato Pagamento</p>
+                              <p className="text-sm text-steel-gray">💳 Payment Status</p>
                               <Badge className="bg-success text-white">
                                 <CheckCircle className="h-3 w-3 mr-1" />
-                                Attivo
+                                Active
                               </Badge>
                             </div>
                           )}
@@ -1194,7 +1221,7 @@ const AdminDashboard = () => {
 
                         {/* Documenti */}
                         <div className="p-3 bg-cloud-white rounded-lg">
-                          <p className="text-sm font-semibold text-steel-gray mb-2">📄 Documenti Caricati</p>
+                          <p className="text-sm font-semibold text-steel-gray mb-2">📄 Uploaded Documents</p>
                           <div className="flex flex-wrap gap-2">
                             {student.student_profiles?.[0]?.cv_url && (
                               <Button
@@ -1202,12 +1229,12 @@ const AdminDashboard = () => {
                                 variant="outline"
                                 onClick={() => downloadAsPdf(
                                   student.student_profiles[0].cv_url,
-                                  `${student.student_profiles?.[0]?.first_name || 'Studente'}_${student.student_profiles?.[0]?.last_name || ''}_CV.pdf`
+                                  `${student.student_profiles?.[0]?.first_name || 'Student'}_${student.student_profiles?.[0]?.last_name || ''}_CV.pdf`
                                 )}
                                 className="flex items-center gap-1"
                               >
                                 <FileText className="h-4 w-4" />
-                                Scarica CV
+                                Download CV
                               </Button>
                             )}
                             {student.student_profiles?.[0]?.cover_letter_url && (
@@ -1216,12 +1243,12 @@ const AdminDashboard = () => {
                                 variant="outline"
                                 onClick={() => downloadAsPdf(
                                   student.student_profiles[0].cover_letter_url,
-                                  `${student.student_profiles?.[0]?.first_name || 'Studente'}_${student.student_profiles?.[0]?.last_name || ''}_CoverLetter.pdf`
+                                  `${student.student_profiles?.[0]?.first_name || 'Student'}_${student.student_profiles?.[0]?.last_name || ''}_CoverLetter.pdf`
                                 )}
                                 className="flex items-center gap-1"
                               >
                                 <FileText className="h-4 w-4" />
-                                Scarica Cover Letter
+                                Download Cover Letter
                               </Button>
                             )}
                             {student.student_profiles?.[0]?.presentation_video_url && (
@@ -1232,25 +1259,62 @@ const AdminDashboard = () => {
                                 className="flex items-center gap-1"
                               >
                                 <FileText className="h-4 w-4" />
-                                Apri Video Presentazione
+                                Open Presentation Video
                               </Button>
                             )}
                             {!student.student_profiles?.[0]?.cv_url && !student.student_profiles?.[0]?.cover_letter_url && !student.student_profiles?.[0]?.presentation_video_url && (
-                              <p className="text-sm text-steel-gray">Nessun documento caricato</p>
+                              <p className="text-sm text-steel-gray">No documents uploaded</p>
                             )}
                           </div>
                         </div>
 
 
+                        {/* Idoneità al lavoro / burocrazia */}
+                        {(() => {
+                          const p = student.student_profiles?.[0];
+                          const has = p && (p.passport_url || p.uk_work_visa || p.citizenship || p.home_address || p.city || p.country || p.internship_start_date || p.internship_end_date);
+                          if (!has) return null;
+                          return (
+                            <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg space-y-1.5">
+                              <p className="text-sm font-semibold text-steel-gray">🛂 Work Eligibility</p>
+                              <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-steel-gray">
+                                {p.uk_work_visa && <p><span className="text-muted-foreground">UK Visa:</span> <strong>{ukVisaLabelIt(p.uk_work_visa)}</strong></p>}
+                                {p.citizenship && <p><span className="text-muted-foreground">Citizenship:</span> <strong>{p.citizenship}</strong></p>}
+                                {(p.internship_start_date || p.internship_end_date) && (
+                                  <p className="col-span-2">
+                                    <span className="text-muted-foreground">Availability:</span>{' '}
+                                    {p.internship_start_date ? new Date(p.internship_start_date).toLocaleDateString() : '—'} → {p.internship_end_date ? new Date(p.internship_end_date).toLocaleDateString() : '—'}
+                                  </p>
+                                )}
+                                {(p.home_address || p.city || p.country) && (
+                                  <p className="col-span-2"><span className="text-muted-foreground">Residence:</span> {[p.home_address, p.city, p.country].filter(Boolean).join(', ')}</p>
+                                )}
+                              </div>
+                              {p.passport_url && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="mt-1 flex items-center gap-1"
+                                  onClick={() => handleViewPassport(student.id)}
+                                  disabled={viewingPassport === student.id}
+                                >
+                                  <FileText className="h-4 w-4" />
+                                  {viewingPassport === student.id ? 'Opening...' : 'Open Passport'}
+                                </Button>
+                              )}
+                            </div>
+                          );
+                        })()}
+
                         {/* Visibilità Aziende */}
                         <div className="p-3 bg-sky-50 border border-sky-200 rounded-lg">
                           <div className="flex items-center justify-between">
                             <div>
-                              <p className="text-sm font-semibold text-steel-gray">👁️ Visibilità Aziende</p>
+                              <p className="text-sm font-semibold text-steel-gray">👁️ Company Visibility</p>
                               <p className="text-xs text-steel-gray mt-1">
-                                {student.student_profiles?.[0]?.profile_visible_to_companies 
-                                  ? "✅ Visibile alle aziende" 
-                                  : "🚫 Nascosto dalle aziende"}
+                                {student.student_profiles?.[0]?.profile_visible_to_companies
+                                  ? "✅ Visible to companies"
+                                  : "🚫 Hidden from companies"}
                               </p>
                             </div>
                             <Badge 
@@ -1260,7 +1324,7 @@ const AdminDashboard = () => {
                                   : "bg-gray-400 text-white"
                               }
                             >
-                              {student.student_profiles?.[0]?.profile_visible_to_companies ? "VISIBILE" : "NASCOSTO"}
+                              {student.student_profiles?.[0]?.profile_visible_to_companies ? "VISIBLE" : "HIDDEN"}
                             </Badge>
                           </div>
                         </div>
@@ -1268,7 +1332,7 @@ const AdminDashboard = () => {
                         {/* Ricevuta Pagamento - mostra solo se status = payment_uploaded */}
                         {student.status === 'payment_uploaded' && (
                           <div className="p-3 bg-warning/10 border border-warning rounded-lg">
-                            <p className="text-sm font-semibold text-warning mb-2">💳 Ricevuta Pagamento Caricata</p>
+                            <p className="text-sm font-semibold text-warning mb-2">💳 Payment Receipt Uploaded</p>
                             <div className="flex gap-2">
                               {/* Find and display receipt if uploaded */}
                               {paymentReceipts
@@ -1280,12 +1344,12 @@ const AdminDashboard = () => {
                                     variant="outline"
                                     onClick={() => downloadAsPdf(
                                       receipt.receipt_url,
-                                      `Ricevuta_${student.student_profiles?.[0]?.first_name}_${student.student_profiles?.[0]?.last_name}.pdf`
+                                      `Receipt_${student.student_profiles?.[0]?.first_name}_${student.student_profiles?.[0]?.last_name}.pdf`
                                     )}
                                     className="flex items-center gap-1"
                                   >
                                     <FileText className="h-4 w-4" />
-                                    Scarica Ricevuta
+                                    Download Receipt
                                   </Button>
                                 ))}
                             </div>
@@ -1301,14 +1365,14 @@ const AdminDashboard = () => {
                               className="flex-1"
                             >
                               <UserX className="h-4 w-4 mr-2" />
-                              Rifiuta
+                              Reject
                             </Button>
                             <Button
                               onClick={() => handleStudentAction(student.id, 'ADMIT')}
                               className="flex-1 bg-success hover:bg-success/90 text-white"
                             >
                               <UserPlus className="h-4 w-4 mr-2" />
-                              Ammetti
+                              Admit
                             </Button>
                           </div>
                         )}
@@ -1316,7 +1380,7 @@ const AdminDashboard = () => {
                         {student.status === 'accepted_pending_payment' && (
                           <div className="p-3 bg-sky/10 border border-sky rounded-lg">
                             <p className="text-sm text-steel-gray">
-                              ⏳ Lo studente è ammesso e deve caricare la ricevuta di pagamento. Nessuna azione richiesta al momento.
+                              ⏳ The student is admitted and must upload the payment receipt. No action required at the moment.
                             </p>
                           </div>
                         )}
@@ -1329,14 +1393,14 @@ const AdminDashboard = () => {
                               className="flex-1"
                             >
                               <XCircle className="h-4 w-4 mr-2" />
-                              Rifiuta Pagamento
+                              Reject Payment
                             </Button>
                             <Button
                               onClick={() => handleStudentAction(student.id, 'CONFIRM_PAYMENT')}
                               className="flex-1 bg-success hover:bg-success/90 text-white"
                             >
                               <DoorOpen className="h-4 w-4 mr-2" />
-                              Conferma Pagamento (Entra)
+                              Confirm Payment (Enter)
                             </Button>
                           </div>
                         )}
@@ -1435,7 +1499,7 @@ const AdminDashboard = () => {
                               className="w-full"
                             >
                               <Trash2 className="h-4 w-4 mr-2" />
-                              Elimina dalla Dashboard
+                              Remove from Dashboard
                             </Button>
                           </div>
                         )}
@@ -1445,7 +1509,7 @@ const AdminDashboard = () => {
                   {students.length === 0 && (
                     <div className="text-center py-12">
                       <Users className="h-12 w-12 text-steel-gray/30 mx-auto mb-3" />
-                      <p className="text-steel-gray">Nessuno studente registrato</p>
+                      <p className="text-steel-gray">No students registered</p>
                     </div>
                   )}
                 </div>
@@ -1457,7 +1521,7 @@ const AdminDashboard = () => {
           <TabsContent value="companies">
             <Card>
               <CardHeader>
-                <CardTitle>Gestione Aziende - Richieste di Accesso</CardTitle>
+                <CardTitle>Company Management - Access Requests</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
@@ -1480,7 +1544,7 @@ const AdminDashboard = () => {
                           <div className="flex-1">
                             <h3 className="text-lg font-semibold flex items-center gap-2">
                               <Building2 className="h-5 w-5 text-primary" />
-                              {company.company_profiles?.[0]?.company_name || 'Nome non fornito'}
+                              {company.company_profiles?.[0]?.company_name || 'Name not provided'}
                             </h3>
                             <div className="mt-1">
                               {getCompanyRegistrationBadge(company.registration_status, company.status)}
@@ -1499,21 +1563,21 @@ const AdminDashboard = () => {
                         {/* Dati dell'azienda */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 p-3 bg-runway-gray rounded-lg">
                           <div className="space-y-1">
-                            <p className="text-sm text-steel-gray">📧 Email Referente</p>
+                            <p className="text-sm text-steel-gray">📧 Reference Email</p>
                             <p className="font-medium">{company.company_profiles?.[0]?.reference_email || company.email}</p>
                           </div>
                           <div className="space-y-1">
-                            <p className="text-sm text-steel-gray">🏢 Settore</p>
-                            <p className="font-medium">{company.company_profiles?.[0]?.sector || 'Non specificato'}</p>
+                            <p className="text-sm text-steel-gray">🏢 Sector</p>
+                            <p className="font-medium">{company.company_profiles?.[0]?.sector || 'Not specified'}</p>
                           </div>
                           <div className="space-y-1">
-                            <p className="text-sm text-steel-gray">📏 Dimensione</p>
+                            <p className="text-sm text-steel-gray">📏 Size</p>
                             <p className="font-medium">
                               {company.company_profiles?.[0]?.size === 'STARTUP' && 'Startup (1-10)'}
                               {company.company_profiles?.[0]?.size === 'BOUTIQUE' && 'Boutique (11-50)'}
-                              {company.company_profiles?.[0]?.size === 'MEDIUM_SIZE' && 'Media (51-200)'}
-                              {company.company_profiles?.[0]?.size === 'LARGE_COMPANY' && 'Grande (200+)'}
-                              {!company.company_profiles?.[0]?.size && 'Non specificata'}
+                              {company.company_profiles?.[0]?.size === 'MEDIUM_SIZE' && 'Medium (51-200)'}
+                              {company.company_profiles?.[0]?.size === 'LARGE_COMPANY' && 'Large (200+)'}
+                              {!company.company_profiles?.[0]?.size && 'Not specified'}
                             </p>
                           </div>
                           {company.company_profiles?.[0]?.linkedin_url && (
@@ -1525,12 +1589,12 @@ const AdminDashboard = () => {
                                 rel="noopener noreferrer"
                                 className="text-primary hover:underline text-sm"
                               >
-                                Visualizza Pagina Aziendale
+                                View Company Page
                               </a>
                             </div>
                           )}
                           <div className="space-y-1">
-                            <p className="text-sm text-steel-gray">📅 Data Registrazione</p>
+                            <p className="text-sm text-steel-gray">📅 Registration Date</p>
                             <p className="font-medium">
                               {new Date(company.created_at).toLocaleDateString('it-IT')}
                             </p>
@@ -1546,14 +1610,14 @@ const AdminDashboard = () => {
                               className="flex-1"
                             >
                               <UserX className="h-4 w-4 mr-2" />
-                              Rifiuta
+                              Reject
                             </Button>
                             <Button
                               onClick={() => handleCompanyAction(company.id, 'APPROVE')}
                               className="flex-1 bg-gradient-to-r from-success to-success/90 hover:from-success/90 hover:to-success text-white shadow-lg shadow-success/30 border-2 border-success/50 font-semibold"
                             >
                               <DoorOpen className="h-4 w-4 mr-2" />
-                              Dai Accesso (Entrata)
+                              Grant Access (Enter)
                             </Button>
                           </div>
                         )}
@@ -1563,13 +1627,13 @@ const AdminDashboard = () => {
                               variant="destructive"
                               onClick={() => handleDeleteUser(
                                 company.id, 
-                                company.company_profiles?.[0]?.company_name || 'Azienda',
+                                company.company_profiles?.[0]?.company_name || 'Company',
                                 'company'
                               )}
                               className="w-full"
                             >
                               <Trash2 className="h-4 w-4 mr-2" />
-                              {company.registration_status === 'REJECTED' ? 'Elimina dalla Dashboard' : 'Elimina Definitivamente'}
+                              {company.registration_status === 'REJECTED' ? 'Remove from Dashboard' : 'Delete Permanently'}
                             </Button>
                           </div>
                         )}
@@ -1579,7 +1643,7 @@ const AdminDashboard = () => {
                   {companies.length === 0 && (
                     <div className="text-center py-12">
                       <Building2 className="h-12 w-12 text-steel-gray/30 mx-auto mb-3" />
-                      <p className="text-steel-gray">Nessuna azienda registrata</p>
+                      <p className="text-steel-gray">No companies registered</p>
                     </div>
                   )}
                 </div>
@@ -1591,7 +1655,7 @@ const AdminDashboard = () => {
           <TabsContent value="payments">
             <Card>
               <CardHeader>
-                <CardTitle>Gestione Pagamenti - Ricevute Caricate</CardTitle>
+                <CardTitle>Payment Management - Uploaded Receipts</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
@@ -1614,13 +1678,13 @@ const AdminDashboard = () => {
                                     <p className="text-sm text-steel-gray">{receipt.talent_pool_users?.email}</p>
                                     <div className="flex items-center gap-4 mt-2">
                                       <span className="text-sm">
-                                        Tipo: <strong>{receipt.payment_type === 'MONTHLY' ? 'Mensile' : 'Stage'}</strong>
+                                        Type: <strong>{receipt.payment_type === 'MONTHLY' ? 'Monthly' : 'Internship'}</strong>
                                       </span>
                                       <span className="text-sm">
-                                        Importo: <strong>€{receipt.amount}</strong>
+                                        Amount: <strong>€{receipt.amount}</strong>
                                       </span>
                                       <span className="text-sm">
-                                        Data: {new Date(receipt.created_at).toLocaleDateString('it-IT')}
+                                        Date: {new Date(receipt.created_at).toLocaleDateString('it-IT')}
                                       </span>
                                     </div>
                                   </div>
@@ -1630,7 +1694,7 @@ const AdminDashboard = () => {
                                   {receipt.verification_status === 'VERIFIED' ? (
                                     <Badge className="bg-success text-white">
                                       <CheckCircle className="h-3 w-3 mr-1" />
-                                      Pagamento Verificato
+                                      Payment Verified
                                     </Badge>
                                   ) : (
                                     <Button
@@ -1639,14 +1703,14 @@ const AdminDashboard = () => {
                                       className="bg-blue-600 hover:bg-blue-700 text-white"
                                     >
                                       <CheckCircle className="h-4 w-4 mr-1" />
-                                      Verifica Pagamento
+                                      Verify Payment
                                     </Button>
                                   )}
 
                                   {isAccessGranted ? (
                                     <Badge className="bg-green-600 text-white">
                                       <DoorOpen className="h-3 w-3 mr-1" />
-                                      Accesso Concesso
+                                      Access Granted
                                     </Badge>
                                   ) : (
                                     <Button
@@ -1655,7 +1719,7 @@ const AdminDashboard = () => {
                                       className="bg-success hover:bg-success/90 text-white"
                                     >
                                       <DoorOpen className="h-4 w-4 mr-1" />
-                                      Concedi Accesso alla Talent Pool
+                                      Grant Access to the Talent Pool
                                     </Button>
                                   )}
 
@@ -1665,10 +1729,10 @@ const AdminDashboard = () => {
                                       variant="outline"
                                       onClick={() => downloadAsPdf(
                                         receipt.receipt_url,
-                                        `${(receipt.talent_pool_users?.student_profiles?.[0]?.first_name || 'Studente')}_${(receipt.talent_pool_users?.student_profiles?.[0]?.last_name || '')}_ricevuta_${new Date(receipt.created_at).toISOString().slice(0,10)}.pdf`
+                                        `${(receipt.talent_pool_users?.student_profiles?.[0]?.first_name || 'Student')}_${(receipt.talent_pool_users?.student_profiles?.[0]?.last_name || '')}_receipt_${new Date(receipt.created_at).toISOString().slice(0,10)}.pdf`
                                       )}
                                     >
-                                      📄 Scarica documento
+                                      📄 Download document
                                     </Button>
                                   )}
                                   
@@ -1701,7 +1765,7 @@ const AdminDashboard = () => {
                         {visibleReceipts.length === 0 && (
                           <div className="text-center py-12">
                             <CreditCard className="h-12 w-12 text-steel-gray/30 mx-auto mb-3" />
-                            <p className="text-steel-gray">Nessun pagamento registrato</p>
+                            <p className="text-steel-gray">No payments registered</p>
                           </div>
                         )}
                       </>
@@ -1716,21 +1780,21 @@ const AdminDashboard = () => {
           <TabsContent value="notifications">
             <Card>
               <CardHeader>
-                <CardTitle>Notifiche Admin - Selezioni Studenti</CardTitle>
+                <CardTitle>Admin Notifications - Student Selections</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
                   {selections.length === 0 ? (
                     <div className="text-center py-12">
                       <Bell className="h-12 w-12 text-steel-gray/30 mx-auto mb-3" />
-                      <p className="text-steel-gray">Nessuna selezione al momento</p>
+                      <p className="text-steel-gray">No selections yet</p>
                     </div>
                   ) : (
                     selections.map((selection) => {
-                      const companyName = selection.company_name || selection.company?.company_profiles?.[0]?.company_name || 'Azienda';
+                      const companyName = selection.company_name || selection.company?.company_profiles?.[0]?.company_name || 'Company';
                       const studentName = (selection.student_first_name || selection.student_last_name)
                         ? `${selection.student_first_name || ''} ${selection.student_last_name || ''}`.trim()
-                        : `${selection.talent_pool_users?.student_profiles?.[0]?.first_name || ''} ${selection.talent_pool_users?.student_profiles?.[0]?.last_name || ''}`.trim() || 'Studente';
+                        : `${selection.talent_pool_users?.student_profiles?.[0]?.first_name || ''} ${selection.talent_pool_users?.student_profiles?.[0]?.last_name || ''}`.trim() || 'Student';
                       const studentEmail = selection.student_email || selection.talent_pool_users?.email || '';
 
                       return (
@@ -1743,17 +1807,17 @@ const AdminDashboard = () => {
                                   {companyName}
                                 </h3>
                                 <p className="text-sm text-steel-gray mt-1">
-                                  ha selezionato <span className="font-semibold">{studentName}</span>
+                                  selected <span className="font-semibold">{studentName}</span>
                                 </p>
                                 <p className="text-xs text-steel-gray mt-1">
-                                  <strong>Data e ora:</strong> {new Date(selection.selected_at).toLocaleString('it-IT', { dateStyle: 'medium', timeStyle: 'short' })}
+                                  <strong>Date and time:</strong> {new Date(selection.selected_at).toLocaleString('it-IT', { dateStyle: 'medium', timeStyle: 'short' })}
                                 </p>
                               </div>
                             </div>
 
                             <div className="p-3 bg-runway-gray rounded-lg">
                               <p className="text-sm">
-                                <strong>Email Studente:</strong> {studentEmail}
+                                <strong>Student Email:</strong> {studentEmail}
                               </p>
                             </div>
 

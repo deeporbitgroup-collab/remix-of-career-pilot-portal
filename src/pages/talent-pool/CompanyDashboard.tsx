@@ -27,7 +27,13 @@ import {
   XCircle,
   X,
   Video,
-  Link as LinkIcon
+  Link as LinkIcon,
+  ShieldCheck,
+  Sparkles,
+  BadgeCheck,
+  Users,
+  CheckCircle2,
+  Eye
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { TalentPoolLanguageProvider, useTalentPoolLanguage } from "@/contexts/TalentPoolLanguageContext";
@@ -50,7 +56,7 @@ const SIZES = [
 const CompanyDashboardContent = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { t } = useTalentPoolLanguage();
+  const { t, language } = useTalentPoolLanguage();
   const [loading, setLoading] = useState(true);
   const [company, setCompany] = useState<any>(null);
   const [students, setStudents] = useState<any[]>([]);
@@ -184,7 +190,19 @@ const CompanyDashboardContent = () => {
 
   const loadStudents = async () => {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase.rpc as any)('talent_pool_get_students_for_company');
+
+      if (!error && Array.isArray(data)) {
+        setStudents(data);
+        return;
+      }
+
+      if (error) {
+        console.warn('RPC talent_pool_get_students_for_company unavailable, using fallback:', error.message);
+      }
+
+      // Fallback: visible + unlocked profiles (pre-migration or RPC not yet deployed)
+      const { data: fallback, error: fallbackErr } = await supabase
         .from('student_profiles')
         .select(`
           id,
@@ -204,13 +222,12 @@ const CompanyDashboardContent = () => {
         .eq('access_status', 'UNLOCKED')
         .not('user_id', 'is', null);
 
-
-      if (error) {
-        console.error('Error loading students:', error);
+      if (fallbackErr) {
+        console.error('Error loading students:', fallbackErr);
         return;
       }
 
-      setStudents(data || []);
+      setStudents(fallback || []);
     } catch (error) {
       console.error('Error loading students:', error);
     }
@@ -596,6 +613,25 @@ const CompanyDashboardContent = () => {
     navigate('/talent-pool');
   };
 
+  const [viewingPassport, setViewingPassport] = useState<string | null>(null);
+  const handleViewPassport = async (studentId: string) => {
+    setViewingPassport(studentId);
+    try {
+      const { data, error } = await supabase.functions.invoke('get-passport-url', { body: { studentId } });
+      if (error) throw error;
+      if (data?.url) window.open(data.url, '_blank', 'noopener,noreferrer');
+      else throw new Error('No passport found');
+    } catch (e: any) {
+      console.error('View passport error:', e);
+      toast({ title: "Error", description: e.message || "Could not open the passport", variant: "destructive" });
+    } finally {
+      setViewingPassport(null);
+    }
+  };
+
+  const ukVisaLabel = (v?: string) =>
+    v === 'YES' ? 'Can work in the UK' : v === 'NO' ? 'No UK work right' : v === 'APPLYING' ? 'UK visa: applying' : null;
+
   const downloadFile = async (url: string, filename: string) => {
     try {
       const response = await fetch(url);
@@ -697,6 +733,98 @@ const CompanyDashboardContent = () => {
               <LogOut className="h-4 w-4" />
               Logout
             </Button>
+          </div>
+        </div>
+
+        {/* Partner status — premium "azienda convenzionata" banner */}
+        <div className="relative mb-8 overflow-hidden rounded-2xl border border-emerald-500/25 bg-gradient-to-br from-emerald-700 via-green-600 to-teal-600 p-6 shadow-[0_20px_60px_-15px_rgba(16,185,129,0.45)] md:p-8">
+          <div className="pointer-events-none absolute -right-20 -top-20 h-56 w-56 rounded-full bg-white/10 blur-3xl" />
+          <div className="pointer-events-none absolute -bottom-16 -left-16 h-48 w-48 rounded-full bg-amber-300/15 blur-3xl" />
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_80%_20%,rgba(255,255,255,0.12),transparent_50%)]" />
+
+          <div className="relative flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+            <div className="flex items-start gap-4 md:gap-5">
+              <div className="relative shrink-0">
+                <div className="absolute -inset-1 rounded-2xl bg-gradient-to-br from-amber-300/60 to-emerald-200/40 blur-sm" />
+                <div className="relative flex h-16 w-16 items-center justify-center overflow-hidden rounded-2xl border-2 border-white/30 bg-white/15 shadow-lg backdrop-blur-sm md:h-20 md:w-20">
+                  {company?.company_profiles?.[0]?.logo_url ? (
+                    <img
+                      src={company.company_profiles[0].logo_url}
+                      alt=""
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    <Building2 className="h-8 w-8 text-white md:h-9 md:w-9" />
+                  )}
+                </div>
+                <span className="absolute -bottom-1 -right-1 flex h-7 w-7 items-center justify-center rounded-full border-2 border-emerald-600 bg-amber-400 shadow-md">
+                  <BadgeCheck className="h-4 w-4 text-emerald-900" />
+                </span>
+              </div>
+
+              <div className="min-w-0 text-white">
+                <div className="mb-2 flex flex-wrap items-center gap-2">
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-white/25 bg-white/10 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.18em] text-emerald-50 backdrop-blur-sm">
+                    <Sparkles className="h-3 w-3 text-amber-300" />
+                    Career Pilot Partner
+                  </span>
+                  <span className="inline-flex items-center gap-1 rounded-full bg-emerald-950/30 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-100">
+                    <span className="relative flex h-2 w-2">
+                      <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-300 opacity-75" />
+                      <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-200" />
+                    </span>
+                    {t('companyDashboard.partner.active')}
+                  </span>
+                </div>
+                <h2 className="text-2xl font-bold tracking-tight md:text-3xl">
+                  {t('companyDashboard.partner.title')}
+                </h2>
+                <p className="mt-1 max-w-xl text-sm text-emerald-50/90 md:text-base">
+                  {t('companyDashboard.partner.subtitle')}
+                </p>
+                {company?.approved_at && (
+                  <p className="mt-2 flex items-center gap-1.5 text-xs text-emerald-100/80">
+                    <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
+                    {t('companyDashboard.partner.since')}{' '}
+                    {new Date(company.approved_at).toLocaleDateString(
+                      language === 'it' ? 'it-IT' : 'en-GB',
+                      { day: 'numeric', month: 'long', year: 'numeric' }
+                    )}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:shrink-0">
+              <div className="rounded-xl border border-white/20 bg-white/10 px-4 py-3 text-center backdrop-blur-md">
+                <div className="flex items-center justify-center gap-1.5 text-emerald-100/80">
+                  <Users className="h-4 w-4" />
+                  <span className="text-[10px] font-semibold uppercase tracking-wide">
+                    {t('companyDashboard.partner.statsCandidates')}
+                  </span>
+                </div>
+                <p className="mt-1 text-3xl font-bold tabular-nums text-white">{students.length}</p>
+              </div>
+              <div className="rounded-xl border border-white/20 bg-white/10 px-4 py-3 text-center backdrop-blur-md">
+                <div className="flex items-center justify-center gap-1.5 text-emerald-100/80">
+                  <Handshake className="h-4 w-4" />
+                  <span className="text-[10px] font-semibold uppercase tracking-wide">
+                    {t('companyDashboard.partner.statsSelected')}
+                  </span>
+                </div>
+                <p className="mt-1 text-3xl font-bold tabular-nums text-white">{selectedList.length}</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="relative mt-5 flex flex-wrap items-center gap-2 border-t border-white/15 pt-4">
+            <span className="inline-flex items-center gap-1.5 rounded-lg bg-white/15 px-3 py-1.5 text-xs font-medium text-white backdrop-blur-sm">
+              <ShieldCheck className="h-4 w-4 text-amber-300" />
+              {t('companyDashboard.partner.verified')}
+            </span>
+            <span className="text-xs text-emerald-50/75">
+              {t('companyDashboard.partner.visibilityNote')}
+            </span>
           </div>
         </div>
 
@@ -862,55 +990,93 @@ const CompanyDashboardContent = () => {
                 </Dialog>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
+                  <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-4 md:col-span-2 lg:col-span-3">
+                    <div className="flex flex-wrap items-center gap-3">
+                      <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-600 text-white shadow-md">
+                        <ShieldCheck className="h-5 w-5" />
+                      </div>
+                      <div>
+                        <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">
+                          {t('companyDashboard.profile.partnershipStatus')}
+                        </p>
+                        <p className="font-semibold text-emerald-900">
+                          {t('companyDashboard.partner.title')}
+                        </p>
+                        <p className="text-sm text-steel-gray">
+                          {t('companyDashboard.profile.partnershipDesc')}
+                        </p>
+                      </div>
+                      <Badge className="ml-auto bg-emerald-600 text-white hover:bg-emerald-600">
+                        <CheckCircle2 className="mr-1 h-3 w-3" />
+                        {t('companyDashboard.profile.approved')}
+                      </Badge>
+                    </div>
+                  </div>
+
                   {company?.company_profiles?.[0]?.logo_url && (
-                    <div className="md:col-span-3 flex justify-center mb-4">
-                      <img 
-                        src={company.company_profiles[0].logo_url} 
-                        alt="Company logo" 
-                        className="h-24 w-24 object-cover rounded border"
-                      />
+                    <div className="flex justify-center md:col-span-2 lg:col-span-3">
+                      <div className="relative">
+                        <div className="absolute -inset-1 rounded-2xl bg-gradient-to-br from-emerald-400/40 to-green-600/20 blur-sm" />
+                        <img
+                          src={company.company_profiles[0].logo_url}
+                          alt="Company logo"
+                          className="relative h-28 w-28 rounded-2xl border-2 border-white object-cover shadow-lg"
+                        />
+                      </div>
                     </div>
                   )}
-                  <div>
-                    <p className="text-sm text-steel-gray">Company Name</p>
-                    <p className="font-semibold">{company?.company_profiles?.[0]?.company_name || 'N/A'}</p>
+
+                  <div className="rounded-lg border bg-muted/30 p-4">
+                    <p className="text-xs font-medium uppercase tracking-wide text-steel-gray">
+                      {t('companyDashboard.profile.companyName')}
+                    </p>
+                    <p className="mt-1 font-semibold">{company?.company_profiles?.[0]?.company_name || 'N/A'}</p>
                   </div>
-                  <div>
-                    <p className="text-sm text-steel-gray">Sector</p>
-                    <p className="font-semibold">{company?.company_profiles?.[0]?.sector || 'N/A'}</p>
+                  <div className="rounded-lg border bg-muted/30 p-4">
+                    <p className="text-xs font-medium uppercase tracking-wide text-steel-gray">
+                      {t('companyDashboard.profile.sector')}
+                    </p>
+                    <p className="mt-1 font-semibold">{company?.company_profiles?.[0]?.sector || 'N/A'}</p>
                   </div>
-                  <div>
-                    <p className="text-sm text-steel-gray">Size</p>
-                    <p className="font-semibold">
+                  <div className="rounded-lg border bg-muted/30 p-4">
+                    <p className="text-xs font-medium uppercase tracking-wide text-steel-gray">
+                      {t('companyDashboard.profile.size')}
+                    </p>
+                    <p className="mt-1 font-semibold">
                       {SIZES.find(s => s.value === company?.company_profiles?.[0]?.size)?.label || 'N/A'}
                     </p>
                   </div>
-                  <div>
-                    <p className="text-sm text-steel-gray">Email</p>
-                    <p className="font-semibold">{company?.company_profiles?.[0]?.reference_email || 'N/A'}</p>
+                  <div className="rounded-lg border bg-muted/30 p-4">
+                    <p className="text-xs font-medium uppercase tracking-wide text-steel-gray">
+                      {t('companyDashboard.profile.email')}
+                    </p>
+                    <p className="mt-1 font-semibold break-all">
+                      {company?.company_profiles?.[0]?.reference_email || 'N/A'}
+                    </p>
                   </div>
                   {company?.company_profiles?.[0]?.linkedin_url && (
-                    <div>
-                      <p className="text-sm text-steel-gray">LinkedIn</p>
-                      <a 
+                    <div className="rounded-lg border bg-muted/30 p-4">
+                      <p className="text-xs font-medium uppercase tracking-wide text-steel-gray">LinkedIn</p>
+                      <a
                         href={company.company_profiles[0].linkedin_url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-primary hover:underline"
+                        className="mt-1 inline-flex items-center gap-1 font-semibold text-primary hover:underline"
                       >
-                        View Profile
+                        {t('companyDashboard.profile.viewLinkedin')}
+                        <LinkIcon className="h-3.5 w-3.5" />
                       </a>
                     </div>
                   )}
-                  <div>
-                    <p className="text-sm text-steel-gray">Status</p>
-                    <Badge className="bg-success text-white">Approved</Badge>
-                  </div>
                   {company?.company_profiles?.[0]?.description && (
-                    <div className="md:col-span-3">
-                      <p className="text-sm text-steel-gray mb-1">Description</p>
-                      <p className="font-medium whitespace-pre-wrap">{company.company_profiles[0].description}</p>
+                    <div className="rounded-lg border bg-muted/30 p-4 md:col-span-2 lg:col-span-3">
+                      <p className="text-xs font-medium uppercase tracking-wide text-steel-gray">
+                        {t('companyDashboard.profile.description')}
+                      </p>
+                      <p className="mt-1 whitespace-pre-wrap font-medium">
+                        {company.company_profiles[0].description}
+                      </p>
                     </div>
                   )}
                 </div>
@@ -930,10 +1096,12 @@ const CompanyDashboardContent = () => {
               <CardContent>
                 {students.length === 0 ? (
                   <div className="text-center py-12">
-                    <User className="h-12 w-12 text-steel-gray mx-auto mb-4 opacity-50" />
-                    <p className="text-steel-gray">No students available at the moment</p>
-                    <p className="text-sm text-steel-gray mt-2">
-                      Students who have completed their payment and made their profiles visible will appear here
+                    <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-500/10">
+                      <Users className="h-8 w-8 text-emerald-600 opacity-80" />
+                    </div>
+                    <p className="font-medium text-foreground">{t('companyDashboard.students.emptyTitle')}</p>
+                    <p className="text-sm text-steel-gray mt-2 max-w-md mx-auto">
+                      {t('companyDashboard.students.emptyDesc')}
                     </p>
                   </div>
                 ) : (
@@ -1124,6 +1292,35 @@ const CompanyDashboardContent = () => {
                                 </Button>
                               )}
                             </div>
+
+                            {/* Work eligibility (bureaucracy: passport, visa, dates, residence) */}
+                            {(student.passport_url || student.uk_work_visa || student.citizenship || student.home_address || student.city || student.country || student.internship_start_date || student.internship_end_date) && (
+                              <div className="rounded-md border bg-muted/30 p-2 space-y-1 text-xs">
+                                <p className="font-medium">Work eligibility</p>
+                                {student.uk_work_visa && <p>{ukVisaLabel(student.uk_work_visa)}</p>}
+                                {student.citizenship && <p>Citizenship: <strong>{student.citizenship}</strong></p>}
+                                {(student.internship_start_date || student.internship_end_date) && (
+                                  <p>
+                                    Availability: {student.internship_start_date ? new Date(student.internship_start_date).toLocaleDateString() : '—'} → {student.internship_end_date ? new Date(student.internship_end_date).toLocaleDateString() : '—'}
+                                  </p>
+                                )}
+                                {(student.home_address || student.city || student.country) && (
+                                  <p className="text-muted-foreground">{[student.home_address, student.city, student.country].filter(Boolean).join(', ')}</p>
+                                )}
+                                {student.passport_url && (
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="h-7 text-[11px]"
+                                    onClick={() => handleViewPassport(selection.student_id)}
+                                    disabled={viewingPassport === selection.student_id}
+                                  >
+                                    <Eye className="h-3.5 w-3.5 mr-1" />
+                                    {viewingPassport === selection.student_id ? 'Opening...' : 'View passport'}
+                                  </Button>
+                                )}
+                              </div>
+                            )}
 
                             {/* Next step — Schedule meeting is live (C2); the rest arrive in C3/C4 */}
                             <div className="border-t pt-3">

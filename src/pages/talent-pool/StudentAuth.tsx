@@ -16,23 +16,23 @@ import { TalentPoolLanguageProvider, useTalentPoolLanguage } from "@/contexts/Ta
 import { ForgotPasswordDialog } from "@/components/talent-pool/ForgotPasswordDialog";
 
 const studentSchema = z.object({
-  firstName: z.string().trim().min(1, "Nome richiesto").max(100),
-  lastName: z.string().trim().min(1, "Cognome richiesto").max(100),
-  email: z.string().trim().email("Email non valida").max(255),
-  phone: z.string().trim().min(10, "Numero di telefono non valido"),
-  password: z.string().min(8, "Minimo 8 caratteri")
-    .regex(/[A-Z]/, "Almeno una maiuscola richiesta")
-    .regex(/[0-9]/, "Almeno un numero richiesto"),
+  firstName: z.string().trim().min(1, "Name required").max(100),
+  lastName: z.string().trim().min(1, "Surname required").max(100),
+  email: z.string().trim().email("Invalid email").max(255),
+  phone: z.string().trim().min(10, "Invalid phone number"),
+  password: z.string().min(8, "Minimum 8 characters")
+    .regex(/[A-Z]/, "At least one uppercase letter required")
+    .regex(/[0-9]/, "At least one number required"),
   confirmPassword: z.string(),
   linkedin: z.string()
     .optional()
     .refine(
       (val) => !val || val === "" || val.startsWith("https://www.linkedin.com/") || val.startsWith("https://linkedin.com/"),
-      "Inserisci un URL LinkedIn valido (https://www.linkedin.com/...)"
+      "Enter a valid LinkedIn URL (https://www.linkedin.com/...)"
     ),
-  termsAccepted: z.boolean().refine(val => val === true, "Devi accettare i termini")
+  termsAccepted: z.boolean().refine(val => val === true, "You must accept the terms")
 }).refine(data => data.password === data.confirmPassword, {
-  message: "Le password non corrispondono",
+  message: "Passwords do not match",
   path: ["confirmPassword"]
 });
 
@@ -262,13 +262,13 @@ const StudentAuthContent = () => {
 
       if (error) {
         if (error.code === '28000' || error.message?.includes('INVALID_CREDENTIALS')) {
-          throw new Error("Credenziali non valide");
+          throw new Error("Invalid credentials");
         }
         throw error;
       }
 
       if (!data) {
-        throw new Error("Errore durante l'accesso");
+        throw new Error("Error during login");
       }
 
       // Parse the JSONB response
@@ -475,13 +475,13 @@ const StudentAuthContent = () => {
                   <Input
                     id="linkedin"
                     type="text"
-                    placeholder="https://www.linkedin.com/in/tuoprofilo"
+                    placeholder="https://www.linkedin.com/in/your-profile"
                     value={formData.linkedin}
                     onChange={(e) => setFormData({...formData, linkedin: e.target.value})}
                     className={errors.linkedin ? "border-red-500" : ""}
                   />
                   {errors.linkedin && <p className="text-red-500 text-sm">{errors.linkedin}</p>}
-                  <p className="text-xs text-steel-gray">Opzionale - Inserisci il tuo profilo LinkedIn completo</p>
+                  <p className="text-xs text-steel-gray">Optional - Enter your full LinkedIn profile</p>
                 </div>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

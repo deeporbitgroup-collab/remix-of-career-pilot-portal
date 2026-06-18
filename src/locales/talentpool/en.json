@@ -177,6 +177,33 @@
       "rejectedDesc": "Your registration has been rejected"
     }
   },
+  "companyDashboard": {
+    "partner": {
+      "title": "Partner Company",
+      "subtitle": "Full access to Career Pilot's curated, admin-approved candidate pool.",
+      "active": "Active",
+      "since": "Partner since",
+      "verified": "Verified by Career Pilot",
+      "visibilityNote": "You only see candidates admitted by admin and made visible to the pool.",
+      "statsCandidates": "Candidates",
+      "statsSelected": "Selected"
+    },
+    "profile": {
+      "partnershipStatus": "Partnership status",
+      "partnershipDesc": "Your company is approved and can browse Talent Pool profiles.",
+      "approved": "Approved",
+      "companyName": "Company name",
+      "sector": "Sector",
+      "size": "Size",
+      "email": "Reference email",
+      "description": "Description",
+      "viewLinkedin": "LinkedIn profile"
+    },
+    "students": {
+      "emptyTitle": "No candidates available right now",
+      "emptyDesc": "Profiles of registered Talent Pool candidates will appear here once admin approves them and grants pool access."
+    }
+  },
   "adminLogin": {
     "title": "Admin Access",
     "subtitle": "Career Pilot reserved area",

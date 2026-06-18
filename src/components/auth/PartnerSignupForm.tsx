@@ -11,16 +11,16 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 const signupSchema = z.object({
-  companyName: z.string().min(1, "Ragione sociale richiesta"),
-  email: z.string().email("Email non valida"),
-  phone: z.string().regex(/^\+?[1-9]\d{1,14}$/, "Numero di telefono non valido"),
+  companyName: z.string().min(1, "Company name required"),
+  email: z.string().email("Invalid email"),
+  phone: z.string().regex(/^\+?[1-9]\d{1,14}$/, "Invalid phone number"),
   password: z.string()
-    .min(8, "La password deve contenere almeno 8 caratteri")
-    .regex(/[A-Z]/, "La password deve contenere almeno una maiuscola")
-    .regex(/[0-9]/, "La password deve contenere almeno un numero"),
+    .min(8, "Password must contain at least 8 characters")
+    .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
+    .regex(/[0-9]/, "Password must contain at least one number"),
   confirmPassword: z.string(),
 }).refine((data) => data.password === data.confirmPassword, {
-  message: "Le password non coincidono",
+  message: "Passwords do not match",
   path: ["confirmPassword"],
 });
 
@@ -80,7 +80,7 @@ const PartnerSignupForm = () => {
     } catch (error: any) {
       toast({
         variant: "destructive",
-        title: "Errore nella registrazione",
+        title: "Registration error",
         description: error.message,
       });
     } finally {

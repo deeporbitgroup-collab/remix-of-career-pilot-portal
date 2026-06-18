@@ -142,8 +142,8 @@ export default function AssociateDetail() {
     } catch (error) {
       console.error("Error fetching associate:", error);
       toast({
-        title: "Errore",
-        description: "Impossibile caricare i dati dell'associate",
+        title: "Error",
+        description: "Unable to load associate data",
         variant: "destructive"
       });
     } finally {
@@ -184,14 +184,14 @@ export default function AssociateDetail() {
       if (error) throw error;
 
       toast({
-        title: "Email di reset inviata",
-        description: `Un'email di reset password è stata inviata a ${associate.email}`
+        title: "Reset email sent",
+        description: `A password reset email has been sent to ${associate.email}`
       });
       setResetPasswordDialog(false);
     } catch (error) {
       toast({
-        title: "Errore",
-        description: "Impossibile inviare l'email di reset",
+        title: "Error",
+        description: "Unable to send the reset email",
         variant: "destructive"
       });
     } finally {
@@ -211,16 +211,16 @@ export default function AssociateDetail() {
       if (error) throw error;
 
       toast({
-        title: "Stato aggiornato",
-        description: `Lo stato è stato cambiato in ${statusChangeDialog.newStatus}`
+        title: "Status updated",
+        description: `The status has been changed to ${statusChangeDialog.newStatus}`
       });
-      
+
       setStatusChangeDialog({ open: false, newStatus: null });
       fetchAssociateData();
     } catch (error) {
       toast({
-        title: "Errore",
-        description: "Impossibile aggiornare lo stato",
+        title: "Error",
+        description: "Unable to update the status",
         variant: "destructive"
       });
     }
@@ -288,16 +288,16 @@ export default function AssociateDetail() {
       if (error) throw error;
 
       toast({
-        title: "Profilo aggiornato",
-        description: "Le modifiche sono state salvate con successo"
+        title: "Profile updated",
+        description: "Changes have been saved successfully"
       });
-      
+
       setIsEditing(false);
       fetchAssociateData();
     } catch (error: any) {
       toast({
-        title: "Errore",
-        description: error.message || "Impossibile salvare le modifiche",
+        title: "Error",
+        description: error.message || "Unable to save changes",
         variant: "destructive"
       });
     } finally {
@@ -312,8 +312,8 @@ export default function AssociateDetail() {
     // Validate file type
     if (!file.type.startsWith('image/')) {
       toast({
-        title: "Errore",
-        description: "Seleziona un file immagine valido",
+        title: "Error",
+        description: "Select a valid image file",
         variant: "destructive"
       });
       return;
@@ -322,8 +322,8 @@ export default function AssociateDetail() {
     // Validate file size (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
       toast({
-        title: "Errore",
-        description: "L'immagine deve essere inferiore a 5MB",
+        title: "Error",
+        description: "The image must be smaller than 5MB",
         variant: "destructive"
       });
       return;
@@ -361,15 +361,15 @@ export default function AssociateDetail() {
       if (updateError) throw updateError;
 
       toast({
-        title: "Foto aggiornata",
-        description: "La foto profilo è stata aggiornata con successo"
+        title: "Photo updated",
+        description: "The profile photo has been updated successfully"
       });
 
       fetchAssociateData();
     } catch (error: any) {
       toast({
-        title: "Errore",
-        description: error.message || "Impossibile caricare la foto",
+        title: "Error",
+        description: error.message || "Unable to upload the photo",
         variant: "destructive"
       });
     } finally {
@@ -385,8 +385,8 @@ export default function AssociateDetail() {
     // Validate file type (PDF only)
     if (file.type !== 'application/pdf') {
       toast({
-        title: "Errore",
-        description: "Seleziona un file PDF valido",
+        title: "Error",
+        description: "Select a valid PDF file",
         variant: "destructive"
       });
       return;
@@ -395,8 +395,8 @@ export default function AssociateDetail() {
     // Validate file size (max 10MB)
     if (file.size > 10 * 1024 * 1024) {
       toast({
-        title: "Errore",
-        description: "Il file deve essere inferiore a 10MB",
+        title: "Error",
+        description: "The file must be smaller than 10MB",
         variant: "destructive"
       });
       return;
@@ -435,15 +435,15 @@ export default function AssociateDetail() {
       if (updateError) throw updateError;
 
       toast({
-        title: "Overview caricato",
-        description: "Il file Overview è stato caricato con successo"
+        title: "Overview uploaded",
+        description: "The Overview file has been uploaded successfully"
       });
 
       fetchAssociateData();
     } catch (error: any) {
       toast({
-        title: "Errore",
-        description: error.message || "Impossibile caricare l'Overview",
+        title: "Error",
+        description: error.message || "Unable to upload the Overview",
         variant: "destructive"
       });
     } finally {
@@ -470,15 +470,15 @@ export default function AssociateDetail() {
       if (updateError) throw updateError;
 
       toast({
-        title: "Overview eliminato",
-        description: "Il file Overview è stato rimosso"
+        title: "Overview deleted",
+        description: "The Overview file has been removed"
       });
 
       fetchAssociateData();
     } catch (error: any) {
       toast({
-        title: "Errore",
-        description: error.message || "Impossibile eliminare l'Overview",
+        title: "Error",
+        description: error.message || "Unable to delete the Overview",
         variant: "destructive"
       });
     }
@@ -520,21 +520,21 @@ export default function AssociateDetail() {
         .from("notifications")
         .insert({
           user_id: id,
-          title: "Contratto Caricato",
-          message: "Il tuo contratto è stato caricato dall'amministratore",
+          title: "Contract Uploaded",
+          message: "Your contract has been uploaded by the administrator",
           type: "document"
         });
 
       toast({
-        title: "Successo",
-        description: "Contratto caricato con successo"
+        title: "Success",
+        description: "Contract uploaded successfully"
       });
 
       fetchAssociateData();
     } catch (error: any) {
       toast({
-        title: "Errore",
-        description: error.message || "Impossibile caricare il contratto",
+        title: "Error",
+        description: error.message || "Unable to upload the contract",
         variant: "destructive"
       });
     } finally {
@@ -548,8 +548,8 @@ export default function AssociateDetail() {
       // Verifica che storage_path sia presente
       if (!doc.storage_path) {
         toast({
-          title: "Documento non disponibile",
-          description: "Il documento deve essere ricaricato. L'associate deve caricare una nuova versione.",
+          title: "Document not available",
+          description: "The document needs to be re-uploaded. The associate must upload a new version.",
           variant: "destructive"
         });
         return;
@@ -584,8 +584,8 @@ export default function AssociateDetail() {
     } catch (error: any) {
       console.error("Download error:", error);
       toast({
-        title: "Errore",
-        description: error.message || "Impossibile scaricare il documento",
+        title: "Error",
+        description: error.message || "Unable to download the document",
         variant: "destructive"
       });
     }
@@ -623,7 +623,7 @@ export default function AssociateDetail() {
   if (!associate) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <p>Associate non trovato</p>
+        <p>Associate not found</p>
       </div>
     );
   }
@@ -638,7 +638,7 @@ export default function AssociateDetail() {
             className="mb-4"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Torna all'elenco
+            Back to list
           </Button>
           <div className="flex items-center gap-6">
             <div className="relative group">
@@ -683,36 +683,36 @@ export default function AssociateDetail() {
           <TabsList>
             <TabsTrigger value="profile">
               <User className="h-4 w-4 mr-2" />
-              Profilo
+              Profile
             </TabsTrigger>
             <TabsTrigger value="registration">
               <ClipboardList className="h-4 w-4 mr-2" />
-              Dati Registrazione
+              Registration Data
             </TabsTrigger>
             <TabsTrigger value="availability">
               <Calendar className="h-4 w-4 mr-2" />
-              Disponibilità
+              Availability
             </TabsTrigger>
             <TabsTrigger value="documents">
               <FileText className="h-4 w-4 mr-2" />
-              Documenti
+              Documents
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value="profile">
             <Card>
               <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle>Informazioni Personali</CardTitle>
+                <CardTitle>Personal Information</CardTitle>
                 {!isEditing ? (
                   <Button variant="outline" size="sm" onClick={startEditing}>
                     <Edit className="h-4 w-4 mr-2" />
-                    Modifica
+                    Edit
                   </Button>
                 ) : (
                   <div className="flex gap-2">
                     <Button variant="outline" size="sm" onClick={cancelEditing} disabled={isSaving}>
                       <X className="h-4 w-4 mr-2" />
-                      Annulla
+                      Cancel
                     </Button>
                     <Button size="sm" onClick={saveProfile} disabled={isSaving}>
                       {isSaving ? (
@@ -720,7 +720,7 @@ export default function AssociateDetail() {
                       ) : (
                         <Save className="h-4 w-4 mr-2" />
                       )}
-                      Salva
+                      Save
                     </Button>
                   </div>
                 )}
@@ -729,25 +729,25 @@ export default function AssociateDetail() {
                 {isEditing ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="first_name">Nome</Label>
+                      <Label htmlFor="first_name">Name</Label>
                       <Input
                         id="first_name"
                         value={editForm.first_name}
                         onChange={(e) => setEditForm({ ...editForm, first_name: e.target.value })}
-                        placeholder="Nome"
+                        placeholder="Name"
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="last_name">Cognome</Label>
+                      <Label htmlFor="last_name">Surname</Label>
                       <Input
                         id="last_name"
                         value={editForm.last_name}
                         onChange={(e) => setEditForm({ ...editForm, last_name: e.target.value })}
-                        placeholder="Cognome"
+                        placeholder="Surname"
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="email">Email (non modificabile)</Label>
+                      <Label htmlFor="email">Email (not editable)</Label>
                       <Input
                         id="email"
                         value={associate.email}
@@ -756,75 +756,75 @@ export default function AssociateDetail() {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="phone">Telefono</Label>
+                      <Label htmlFor="phone">Phone</Label>
                       <Input
                         id="phone"
                         value={editForm.phone}
                         onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
-                        placeholder="Telefono"
+                        placeholder="Phone"
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="company_name">Azienda</Label>
+                      <Label htmlFor="company_name">Company</Label>
                       <Input
                         id="company_name"
                         value={editForm.company_name}
                         onChange={(e) => setEditForm({ ...editForm, company_name: e.target.value })}
-                        placeholder="Azienda"
+                        placeholder="Company"
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="university">Università</Label>
+                      <Label htmlFor="university">University</Label>
                       <Input
                         id="university"
                         value={editForm.university}
                         onChange={(e) => setEditForm({ ...editForm, university: e.target.value })}
-                        placeholder="Università"
+                        placeholder="University"
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="university_2">Università II</Label>
+                      <Label htmlFor="university_2">University II</Label>
                       <Input
                         id="university_2"
                         value={editForm.university_2}
                         onChange={(e) => setEditForm({ ...editForm, university_2: e.target.value })}
-                        placeholder="Università precedente (trasferimento)"
+                        placeholder="Previous university (transfer)"
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="master_program">Programma Master</Label>
+                      <Label htmlFor="master_program">Master Program</Label>
                       <Input
                         id="master_program"
                         value={editForm.master_program}
                         onChange={(e) => setEditForm({ ...editForm, master_program: e.target.value })}
-                        placeholder="Programma Master"
+                        placeholder="Master Program"
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="sector">Settore</Label>
+                      <Label htmlFor="sector">Sector</Label>
                       <Input
                         id="sector"
                         value={editForm.sector}
                         onChange={(e) => setEditForm({ ...editForm, sector: e.target.value })}
-                        placeholder="Settore"
+                        placeholder="Sector"
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="sector_2">Settore II</Label>
+                      <Label htmlFor="sector_2">Sector II</Label>
                       <Input
                         id="sector_2"
                         value={editForm.sector_2}
                         onChange={(e) => setEditForm({ ...editForm, sector_2: e.target.value })}
-                        placeholder="Settore secondario"
+                        placeholder="Secondary sector"
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="company_2">Azienda II</Label>
+                      <Label htmlFor="company_2">Company II</Label>
                       <Input
                         id="company_2"
                         value={editForm.company_2}
                         onChange={(e) => setEditForm({ ...editForm, company_2: e.target.value })}
-                        placeholder="Azienda secondaria"
+                        placeholder="Secondary company"
                       />
                     </div>
                     <div className="space-y-2 md:col-span-2">
@@ -840,11 +840,11 @@ export default function AssociateDetail() {
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <p className="text-sm text-muted-foreground">Nome</p>
+                      <p className="text-sm text-muted-foreground">Name</p>
                       <p className="font-medium">{associate.first_name || "-"}</p>
                     </div>
                     <div>
-                      <p className="text-sm text-muted-foreground">Cognome</p>
+                      <p className="text-sm text-muted-foreground">Surname</p>
                       <p className="font-medium">{associate.last_name || "-"}</p>
                     </div>
                     <div>
@@ -852,35 +852,35 @@ export default function AssociateDetail() {
                       <p className="font-medium">{associate.email}</p>
                     </div>
                     <div>
-                      <p className="text-sm text-muted-foreground">Telefono</p>
+                      <p className="text-sm text-muted-foreground">Phone</p>
                       <p className="font-medium">{associate.phone || "-"}</p>
                     </div>
                     <div>
-                      <p className="text-sm text-muted-foreground">Azienda</p>
+                      <p className="text-sm text-muted-foreground">Company</p>
                       <p className="font-medium">{associate.company_name || "-"}</p>
                     </div>
                     <div>
-                      <p className="text-sm text-muted-foreground">Università</p>
+                      <p className="text-sm text-muted-foreground">University</p>
                       <p className="font-medium">{associate.university || "-"}</p>
                     </div>
                     <div>
-                      <p className="text-sm text-muted-foreground">Università II</p>
+                      <p className="text-sm text-muted-foreground">University II</p>
                       <p className="font-medium">{associate.university_2 || "-"}</p>
                     </div>
                     <div>
-                      <p className="text-sm text-muted-foreground">Programma Master</p>
+                      <p className="text-sm text-muted-foreground">Master Program</p>
                       <p className="font-medium">{associate.master_program || "-"}</p>
                     </div>
                     <div>
-                      <p className="text-sm text-muted-foreground">Settore</p>
+                      <p className="text-sm text-muted-foreground">Sector</p>
                       <p className="font-medium">{associate.sector || "-"}</p>
                     </div>
                     <div>
-                      <p className="text-sm text-muted-foreground">Settore II</p>
+                      <p className="text-sm text-muted-foreground">Sector II</p>
                       <p className="font-medium">{associate.sector_2 || "-"}</p>
                     </div>
                     <div>
-                      <p className="text-sm text-muted-foreground">Azienda II</p>
+                      <p className="text-sm text-muted-foreground">Company II</p>
                       <p className="font-medium">{associate.company_2 || "-"}</p>
                     </div>
                     <div>
@@ -894,7 +894,7 @@ export default function AssociateDetail() {
                       </p>
                     </div>
                     <div>
-                      <p className="text-sm text-muted-foreground">Registrato il</p>
+                      <p className="text-sm text-muted-foreground">Registered on</p>
                       <p className="font-medium">
                         {format(new Date(associate.created_at), "dd/MM/yyyy", { locale: it })}
                       </p>
@@ -903,7 +903,7 @@ export default function AssociateDetail() {
                 )}
                 
                 <div className="pt-4 border-t space-y-3">
-                  <h4 className="text-sm font-semibold text-muted-foreground">Azioni Admin</h4>
+                  <h4 className="text-sm font-semibold text-muted-foreground">Admin Actions</h4>
                   <div className="flex flex-wrap gap-2">
                     <Button
                       variant="outline"
@@ -921,7 +921,7 @@ export default function AssociateDetail() {
                           onClick={() => setStatusChangeDialog({ open: true, newStatus: 'approved' })}
                         >
                           <CheckCircle className="h-4 w-4 mr-2" />
-                          Approva
+                          Approve
                         </Button>
                         <Button
                           variant="destructive"
@@ -929,7 +929,7 @@ export default function AssociateDetail() {
                           onClick={() => setStatusChangeDialog({ open: true, newStatus: 'rejected' })}
                         >
                           <XCircle className="h-4 w-4 mr-2" />
-                          Respingi
+                          Reject
                         </Button>
                       </>
                     )}
@@ -940,7 +940,7 @@ export default function AssociateDetail() {
                         onClick={() => setStatusChangeDialog({ open: true, newStatus: 'rejected' })}
                       >
                         <XCircle className="h-4 w-4 mr-2" />
-                        Revoca Approvazione
+                        Revoke Approval
                       </Button>
                     )}
                     {associate.status === 'rejected' && (
@@ -950,7 +950,7 @@ export default function AssociateDetail() {
                         onClick={() => setStatusChangeDialog({ open: true, newStatus: 'approved' })}
                       >
                         <CheckCircle className="h-4 w-4 mr-2" />
-                        Approva
+                        Approve
                       </Button>
                     )}
                   </div>
@@ -972,28 +972,28 @@ export default function AssociateDetail() {
           <TabsContent value="availability">
             <Card>
               <CardHeader>
-                <CardTitle>Disponibilità Settimanale</CardTitle>
+                <CardTitle>Weekly Availability</CardTitle>
                 <div className="flex items-center gap-2 mt-2">
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => setCurrentWeek(addDays(currentWeek, -7))}
                   >
-                    ← Settimana precedente
+                    ← Previous week
                   </Button>
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => setCurrentWeek(new Date())}
                   >
-                    Oggi
+                    Today
                   </Button>
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => setCurrentWeek(addDays(currentWeek, 7))}
                   >
-                    Settimana successiva →
+                    Next week →
                   </Button>
                 </div>
               </CardHeader>
@@ -1020,7 +1020,7 @@ export default function AssociateDetail() {
                             ))}
                           </div>
                         ) : (
-                          <p className="text-xs text-muted-foreground">Non disponibile</p>
+                          <p className="text-xs text-muted-foreground">Not available</p>
                         )}
                       </div>
                     );
@@ -1035,7 +1035,7 @@ export default function AssociateDetail() {
               {/* Overview Section */}
               <Card className="md:col-span-2">
                 <CardHeader>
-                  <CardTitle>Overview (PDF per clienti)</CardTitle>
+                  <CardTitle>Overview (PDF for clients)</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <input
@@ -1051,7 +1051,7 @@ export default function AssociateDetail() {
                         <div>
                           <p className="font-medium text-sm">Overview.pdf</p>
                           <p className="text-xs text-muted-foreground">
-                            PDF visibile ai clienti nel Book Flight Plan
+                            PDF visible to clients in the Book Flight Plan
                           </p>
                         </div>
                         <div className="flex gap-2">
@@ -1087,8 +1087,8 @@ export default function AssociateDetail() {
                   ) : (
                     <div className="space-y-3">
                       <p className="text-muted-foreground text-sm">
-                        Nessun Overview caricato. Carica un PDF che sarà mostrato ai clienti nel Book Flight Plan.
-                        Se non presente, verrà mostrato il CV dell'associate.
+                        No Overview uploaded. Upload a PDF that will be shown to clients in the Book Flight Plan.
+                        If not present, the associate's CV will be shown.
                       </p>
                       <Button
                         variant="outline"
@@ -1100,7 +1100,7 @@ export default function AssociateDetail() {
                         ) : (
                           <Upload className="h-4 w-4 mr-2" />
                         )}
-                        Carica Overview PDF
+                        Upload Overview PDF
                       </Button>
                     </div>
                   )}
@@ -1119,7 +1119,7 @@ export default function AssociateDetail() {
                         <div>
                           <p className="font-medium text-sm">{doc.filename}</p>
                           <p className="text-xs text-muted-foreground">
-                            Versione {doc.version} • {formatFileSize(doc.size_bytes)}
+                            Version {doc.version} • {formatFileSize(doc.size_bytes)}
                           </p>
                         </div>
                         <Button
@@ -1134,7 +1134,7 @@ export default function AssociateDetail() {
                     </div>
                   ))}
                   {documents.filter(d => d.type === "CV").length === 0 && (
-                    <p className="text-muted-foreground text-sm">Nessun CV caricato</p>
+                    <p className="text-muted-foreground text-sm">No CV uploaded</p>
                   )}
                 </CardContent>
               </Card>
@@ -1142,7 +1142,7 @@ export default function AssociateDetail() {
               {/* Contract Section */}
               <Card>
                 <CardHeader>
-                  <CardTitle>Contratto</CardTitle>
+                  <CardTitle>Contract</CardTitle>
                 </CardHeader>
                 <CardContent>
                   {documents.filter(d => d.type === "CONTRACT").map((doc) => (
@@ -1168,9 +1168,9 @@ export default function AssociateDetail() {
                   
                   {documents.filter(d => d.type === "CONTRACT").length === 0 && (
                     <div className="space-y-3">
-                      <p className="text-muted-foreground text-sm">Nessun contratto caricato</p>
+                      <p className="text-muted-foreground text-sm">No contract uploaded</p>
                       <div>
-                        <Label htmlFor="contract-upload">Carica contratto</Label>
+                        <Label htmlFor="contract-upload">Upload contract</Label>
                         <Input
                           id="contract-upload"
                           type="file"
@@ -1194,17 +1194,17 @@ export default function AssociateDetail() {
             <AlertDialogHeader>
               <AlertDialogTitle>Reset Password</AlertDialogTitle>
               <AlertDialogDescription>
-                Verrà inviata un'email di reset password a {associate?.email}. 
-                L'utente riceverà un link per impostare una nuova password.
+                A password reset email will be sent to {associate?.email}.
+                The user will receive a link to set a new password.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel>Annulla</AlertDialogCancel>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
               <AlertDialogAction onClick={handleResetPassword} disabled={isResettingPassword}>
                 {isResettingPassword ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
                 ) : (
-                  "Invia Email"
+                  "Send Email"
                 )}
               </AlertDialogAction>
             </AlertDialogFooter>
@@ -1217,16 +1217,16 @@ export default function AssociateDetail() {
         >
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Conferma Cambio Stato</AlertDialogTitle>
+              <AlertDialogTitle>Confirm Status Change</AlertDialogTitle>
               <AlertDialogDescription>
-                Sei sicuro di voler cambiare lo stato di questo associate a{' '}
+                Are you sure you want to change this associate's status to{' '}
                 <strong>{statusChangeDialog.newStatus}</strong>?
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel>Annulla</AlertDialogCancel>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
               <AlertDialogAction onClick={handleStatusChange}>
-                Conferma
+                Confirm
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>

@@ -8,12 +8,14 @@ import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { toast } from "sonner";
-import { Plane, ArrowLeftRight, Briefcase, GraduationCap, Globe, Info, ShoppingCart, ArrowLeft, User, FileText, Users, BookOpen, MessageCircle, Sparkles, ChevronRight } from "lucide-react";
+import { Plane, ArrowLeftRight, Briefcase, GraduationCap, Globe, Info, ShoppingCart, ArrowLeft, ArrowRight, User, FileText, Users, BookOpen, MessageCircle, Sparkles, ChevronRight } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import bgImage from "@/assets/client-portal-bg.jpeg";
 import GuestAssociateSelector from "@/components/client-portal/GuestAssociateSelector";
 import GuestCart from "@/components/client-portal/GuestCart";
 import PackageExperience, { ClientPackage, PackageComponent } from "@/components/client-portal/PackageExperience";
+import CoveredLogos from "@/components/client-portal/CoveredLogos";
+import IndividualProductsSheet from "@/components/client-portal/IndividualProductsSheet";
 import JobHubFormDialog from "@/components/JobHubFormDialog";
 import PilotAdvisor from "@/components/client-portal/PilotAdvisor";
 import BookingPopup from "@/components/BookingPopup";
@@ -220,6 +222,7 @@ const ClientServicesPage = () => {
   const [loading, setLoading] = useState(true);
   const [selectedService, setSelectedService] = useState<Service | null>(null);
   const [infoService, setInfoService] = useState<Service | null>(null);
+  const [ipOpen, setIpOpen] = useState(false); // mobile "Individual products" flow (Area 3)
   const [cartItems, setCartItems] = useState<GuestCartItem[]>([]);
   const [cartOpen, setCartOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -589,8 +592,11 @@ const ClientServicesPage = () => {
           </Card>
         )}
 
-        {/* Services by Category */}
-        <div className="space-y-4">
+        {/* Services by Category.
+            Desktop: vertical stack (unchanged). Mobile: the package verticals
+            become a horizontal swipe; the à-la-carte accordions are desktop-only
+            (they reappear on mobile via the upcoming "Individual products" flow). */}
+        <div className="md:space-y-4 max-md:-mx-4 max-md:flex max-md:snap-x max-md:snap-mandatory max-md:gap-3 max-md:overflow-x-auto max-md:px-4 max-md:pb-3">
           {sortedCategories.map(category => {
           const Icon = categoryIcons[category] || Globe;
           const categoryServices = orderedGroupedServices[category];
@@ -600,22 +606,23 @@ const ClientServicesPage = () => {
           if (PACKAGE_CATEGORIES.includes(category)) {
             if (!pkg) return null;
             return (
-              <PackageExperience
-                key={category}
-                pkg={pkg}
-                components={packageComponents.filter((c) => c.package_id === pkg.id)}
-                services={categoryServices}
-                associates={associates}
-                onSelectService={(svc) => setSelectedService(svc)}
-                onAddToCart={handleAddToCart}
-                onShowInfo={(svc) => setInfoService(svc)}
-                onDownloadPdf={handleDownloadPdf}
-                getPreviewImage={(name) => getServicePreview(category, name)}
-                hasDemo={(name) => hasDemoPdf(name, category)}
-              />
+              <div key={category} className="max-md:snap-center max-md:shrink-0 max-md:w-[88vw]">
+                <PackageExperience
+                  pkg={pkg}
+                  components={packageComponents.filter((c) => c.package_id === pkg.id)}
+                  services={categoryServices}
+                  associates={associates}
+                  onSelectService={(svc) => setSelectedService(svc)}
+                  onAddToCart={handleAddToCart}
+                  onShowInfo={(svc) => setInfoService(svc)}
+                  onDownloadPdf={handleDownloadPdf}
+                  getPreviewImage={(name) => getServicePreview(category, name)}
+                  hasDemo={(name) => hasDemoPdf(name, category)}
+                />
+              </div>
             );
           }
-          return <Card key={category} className="backdrop-blur-sm bg-background/90 shadow-lg overflow-hidden">
+          return <Card key={category} className="hidden md:block backdrop-blur-sm bg-background/90 shadow-lg overflow-hidden">
                 <Accordion type="single" collapsible defaultValue={highlightCategory === category ? category : undefined}>
                   <AccordionItem value={category} className="border-0">
                     <AccordionTrigger className="px-6 py-5 hover:no-underline bg-gradient-to-r from-primary/10 to-transparent hover:from-primary/20 transition-all">
@@ -878,6 +885,57 @@ const ClientServicesPage = () => {
               </Card>;
         })}
         </div>
+
+        {/* B2b — three animated carousels (mobile only): Associates · Universities · Companies */}
+        <div className="md:hidden mt-6 space-y-5">
+          {associates.length > 0 && (
+            <div>
+              <p className="mb-2 flex items-center gap-1.5 text-sm font-bold text-primary">
+                <Users className="h-4 w-4" /> Meet our mentors
+              </p>
+              <div className="relative -mx-4 overflow-hidden px-4">
+                <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-8 bg-gradient-to-r from-background to-transparent" />
+                <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-8 bg-gradient-to-l from-background to-transparent" />
+                <div className="flex gap-3 animate-scroll-carousel" style={{ width: "max-content", animationDuration: "45s" }}>
+                  {[...associates, ...associates].map((a, i) => (
+                    <div key={`${a.id}-${i}`} className="w-[116px] shrink-0 rounded-xl border border-border/60 bg-card p-2 text-center shadow-sm">
+                      <img
+                        src={a.photo_url || ""}
+                        alt={`${a.first_name} ${a.last_name}`}
+                        loading="lazy"
+                        className="mx-auto h-16 w-16 rounded-full object-cover object-top"
+                      />
+                      <p className="mt-1 truncate text-xs font-semibold text-foreground">{a.first_name} {a.last_name}</p>
+                      <p className="truncate text-[10px] text-muted-foreground">{a.university || a.master_program || a.company_name || ""}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          <CoveredLogos kind="universities" />
+          <CoveredLogos kind="companies" />
+
+          {/* Individual products entry (Area 3) — strategic but not invasive */}
+          <button
+            onClick={() => setIpOpen(true)}
+            className="mt-1 flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-primary/40 bg-card px-4 py-3 text-sm font-semibold text-primary active:scale-[0.98] transition-transform"
+          >
+            Prefer single products? Find yours
+            <ArrowRight className="h-4 w-4" />
+          </button>
+        </div>
+
+        <IndividualProductsSheet
+          open={ipOpen}
+          onOpenChange={setIpOpen}
+          servicesByCategory={orderedGroupedServices as any}
+          onInfo={(s) => setInfoService(s as any)}
+          onChoose={(s) => setSelectedService(s as any)}
+          onDownloadDemo={handleDownloadPdf}
+          hasDemo={hasDemoPdf}
+        />
 
         {/* Floating Cart Button for Mobile */}
         {cartItems.length > 0 && <div className="fixed bottom-6 right-6 md:hidden z-50">

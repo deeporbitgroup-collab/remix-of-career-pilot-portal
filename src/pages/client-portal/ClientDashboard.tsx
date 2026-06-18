@@ -135,7 +135,8 @@ const ClientDashboard = () => {
               <span className="hidden sm:inline">My Projects</span>
               <span className="sm:hidden">Projects</span>
             </TabsTrigger>
-            <TabsTrigger value="services" className="flex items-center gap-2">
+            {/* Browse other services — desktop only (removed from mobile, Area 5) */}
+            <TabsTrigger value="services" className="hidden md:flex items-center gap-2">
               <ShoppingBag className="h-4 w-4" />
               <span className="hidden sm:inline">Book More</span>
               <span className="sm:hidden">Book</span>
@@ -183,7 +184,17 @@ const ClientDashboard = () => {
           </TabsContent>
 
           <TabsContent value="knowledgebase">
-            <KnowledgeBaseSection clientId={clientUser.id} />
+            {/* Knowledge Base: full experience on desktop; a pointer on mobile (Area 5) */}
+            <div className="hidden md:block">
+              <KnowledgeBaseSection clientId={clientUser.id} />
+            </div>
+            <div className="md:hidden rounded-xl border border-primary/20 bg-card p-6 text-center">
+              <BookOpen className="mx-auto mb-3 h-10 w-10 text-primary/40" />
+              <p className="font-semibold text-foreground">Knowledge Base is best on desktop</p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Open your personal area on a computer to browse interview prep material and direct professional contacts.
+              </p>
+            </div>
           </TabsContent>
 
           <TabsContent value="feedback">

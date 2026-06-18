@@ -963,7 +963,8 @@ const ClientCheckout = () => {
                         <p className="text-xs text-muted-foreground">
                           Pick 3 time slots, each on a different day.
                         </p>
-                        <div className="grid grid-cols-3 gap-3">
+                        {/* Mobile: stack the 3 slots full-width for usable pickers; 3-up from sm on (desktop unchanged) */}
+                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                           {[0, 1, 2].map((slotIndex) => {
                             const usedDateKeys = serviceAvail.slots.map(s => s.date ? format(s.date, "yyyy-MM-dd") : null);
                             return (

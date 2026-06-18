@@ -777,6 +777,27 @@ const ServicesSection = () => {
           </div>
         </div>
 
+        {/* Mobile: Talent Pool box under the Flight Plans (Area 4) */}
+        <div className="md:hidden mb-10">
+          <div className="rounded-2xl border-2 border-secondary/40 bg-card p-5 shadow-card-custom">
+            <div className="mb-2 flex items-center gap-3">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gradient-sky text-white">
+                <Users className="h-6 w-6" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-primary">Talent Pool</h3>
+                <p className="text-xs font-semibold text-sky">Get discovered by companies</p>
+              </div>
+            </div>
+            <p className="text-sm leading-relaxed text-steel-gray">
+              Create your profile and let our partner companies review your CV and reach out directly with internship and job opportunities — free for students.
+            </p>
+            <Button className="mt-3 w-full bg-gradient-sky text-white hover:opacity-90" onClick={() => window.location.href = '/talent-pool'}>
+              Go to Talent Pool <ArrowRight className="ml-1 h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+
         {/* Desktop Grid */}
         <div ref={cardsAnimation.ref} className={`hidden md:grid md:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8 mb-12 md:mb-20 ${cardsAnimation.className}`}>
           {services.slice(0, 4).map((service, index) => (
@@ -1073,126 +1094,35 @@ const ServicesSection = () => {
           className={`hidden md:block mb-12 md:mb-20 ${jobHubAnimation.className}`}
         >
           {/* Layout: Platforms (2 cards) + Job Updates Hub */}
-          <div className="flex gap-6 max-w-6xl mx-auto">
-            {/* Knowledge Base & Direct Contacts Card - Standalone */}
-            <Card className="bg-white shadow-card-custom hover:shadow-hover-custom transition-all duration-300 transform hover:-translate-y-1 group flex-shrink-0" style={{ width: '22%' }}>
-              <CardContent className="p-4 flex flex-col h-full">
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="w-10 h-10 bg-gradient-sky rounded-full flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform duration-300">
-                    <BookOpen className="h-5 w-5 text-white" />
+          <div className="flex gap-6 max-w-5xl mx-auto">
+            {/* Talent Pool Card - big, left */}
+            <Card className="bg-white shadow-card-custom hover:shadow-hover-custom transition-all duration-300 transform hover:-translate-y-1 group flex-1">
+              <CardContent className="p-6 flex flex-col h-full">
+                <div className="flex items-center gap-4 mb-4">
+                  <div className="w-14 h-14 bg-gradient-sky rounded-full flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform duration-300">
+                    <Users className="h-7 w-7 text-white" />
                   </div>
-                  <div className="min-w-0">
-                    <h3 className="text-sm font-bold text-primary group-hover:text-sky transition-colors duration-300 leading-tight">
-                      {language === 'it' ? 'Knowledge Base & Contatti Diretti' : 'Knowledge Base & Direct Contacts'}
-                    </h3>
-                    <p className="text-sky font-semibold text-[10px] leading-tight">
-                      {language === 'it' ? 'Preparazione & networking' : 'Prep material & networking'}
+                  <div>
+                    <h3 className="text-xl font-bold text-primary group-hover:text-sky transition-colors duration-300">Talent Pool</h3>
+                    <p className="text-sky font-semibold text-sm">
+                      {language === 'it' ? 'Connettiti con le aziende' : 'Connect with companies'}
                     </p>
                   </div>
                 </div>
-                <p className="text-steel-gray text-xs leading-relaxed flex-1">
+                <p className="text-steel-gray text-sm leading-relaxed flex-1 mb-4">
                   {language === 'it'
-                    ? 'Accedi a materiale di preparazione per interview e ai contatti diretti (email e telefono) di professionisti nel nostro database.'
-                    : 'Access interview prep material and direct contact details (email & phone) of professionals from our exclusive database.'}
+                    ? 'Le aziende esaminano il tuo CV e ti contattano direttamente con opportunità di stage e lavoro.'
+                    : 'Companies review your CV and reach out directly with internship and job opportunities.'}
                 </p>
-                <Button 
-                  className="mt-3 bg-gradient-sky text-white hover:opacity-90 w-full text-xs py-2"
-                  onClick={() => window.location.href = '/knowledge-base'}
+                <Button
+                  className="mt-4 bg-gradient-sky text-white hover:opacity-90 w-full"
+                  onClick={() => window.location.href = '/talent-pool'}
                 >
-                  {language === 'it' ? 'Vai al Knowledge Base' : 'Go to Knowledge Base'}
-                  <ArrowRight className="ml-1 h-3 w-3" />
+                  {language === 'it' ? 'Vai alla Talent Pool' : 'Go to Talent Pool'}
+                  <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               </CardContent>
             </Card>
-
-            {/* Platforms Container with unified border */}
-            <div className="relative flex-shrink-0" style={{ width: '36%' }}>
-              {/* Platforms Label integrated in border */}
-              <div className="absolute -top-3 left-6 bg-background px-3 z-10">
-                <span className="text-xs font-semibold text-primary tracking-wide uppercase">Platforms</span>
-              </div>
-              
-              {/* Border wrapper */}
-              <div className="border border-border/60 rounded-xl p-3 pt-5 h-full">
-                <div className="grid grid-cols-2 gap-3 h-full">
-                  {/* Talent Pool Card */}
-                  <Card className="bg-white shadow-card-custom hover:shadow-hover-custom transition-all duration-300 transform hover:-translate-y-1 group h-full">
-                    <CardContent className="p-4 flex flex-col h-full">
-                      <div className="flex items-center gap-2 mb-2">
-                        <div className="w-10 h-10 bg-gradient-sky rounded-full flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform duration-300">
-                          <Users className="h-5 w-5 text-white" />
-                        </div>
-                        <div className="min-w-0">
-                          <h3 className="text-sm font-bold text-primary group-hover:text-sky transition-colors duration-300 leading-tight">Talent Pool</h3>
-                          <p className="text-sky font-semibold text-[10px] leading-tight">
-                            {language === 'it' ? 'Connettiti con le aziende' : 'Connect with companies'}
-                          </p>
-                        </div>
-                      </div>
-                      <p className="text-steel-gray text-xs leading-relaxed flex-1">
-                        {language === 'it' 
-                          ? 'Le aziende esaminano il tuo CV e ti contattano con opportunità.'
-                          : 'Companies review your CV and reach out with opportunities.'}
-                      </p>
-                      <a
-                        href="https://wa.me/447826932893"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="mt-2 inline-flex items-center justify-center gap-1 text-[11px] font-semibold text-[#25D366] hover:underline"
-                      >
-                        <MessageCircle className="h-3 w-3" />
-                        {language === 'it' ? 'Contattaci' : 'Contact us'} 💬
-                      </a>
-                      <Button 
-                        className="mt-2 bg-gradient-sky text-white hover:opacity-90 w-full text-xs py-2"
-                        onClick={() => window.location.href = '/talent-pool'}
-                      >
-                        {language === 'it' ? 'Vai alla Piattaforma' : 'Go to Platform'}
-                        <ArrowRight className="ml-1 h-3 w-3" />
-                      </Button>
-                    </CardContent>
-                  </Card>
-
-                  {/* Pathways Card */}
-                  <Card className="bg-white shadow-card-custom hover:shadow-hover-custom transition-all duration-300 transform hover:-translate-y-1 group h-full">
-                    <CardContent className="p-4 flex flex-col h-full">
-                      <div className="flex items-center gap-2 mb-2">
-                        <div className="w-10 h-10 bg-gradient-sky rounded-full flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform duration-300">
-                          <GraduationCap className="h-5 w-5 text-white" />
-                        </div>
-                        <div className="min-w-0">
-                          <h3 className="text-sm font-bold text-primary group-hover:text-sky transition-colors duration-300 leading-tight">Pathways</h3>
-                          <p className="text-sky font-semibold text-[10px] leading-tight">
-                            {language === 'it' ? 'Volontariato e lingue' : 'Volunteering & languages'}
-                          </p>
-                        </div>
-                      </div>
-                      <p className="text-steel-gray text-xs leading-relaxed flex-1">
-                        {language === 'it'
-                          ? 'Candidati a volontariato, public speaking e programmi linguistici.'
-                          : 'Apply to volunteering, public speaking and language programs.'}
-                      </p>
-                      <a
-                        href="https://wa.me/447826932893"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="mt-2 inline-flex items-center justify-center gap-1 text-[11px] font-semibold text-[#25D366] hover:underline"
-                      >
-                        <MessageCircle className="h-3 w-3" />
-                        {language === 'it' ? 'Contattaci' : 'Contact us'} 💬
-                      </a>
-                      <Button 
-                        className="mt-2 bg-gradient-sky text-white hover:opacity-90 w-full text-xs py-2"
-                        onClick={() => window.location.href = '/platforms/pathways'}
-                      >
-                        {language === 'it' ? 'Vai alla Piattaforma' : 'Go to Platform'}
-                        <ArrowRight className="ml-1 h-3 w-3" />
-                      </Button>
-                    </CardContent>
-                  </Card>
-                </div>
-              </div>
-            </div>
 
             {/* Job Updates Hub Card - Takes remaining space */}
             {services.slice(4).map((service, index) => (

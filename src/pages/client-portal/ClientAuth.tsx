@@ -211,7 +211,7 @@ const ClientAuth = () => {
                     className="text-sm text-muted-foreground hover:text-primary"
                     onClick={() => setShowForgotPassword(true)}
                   >
-                    Password dimenticata?
+                    Forgot your password?
                   </Button>
                 </div>
               </form>

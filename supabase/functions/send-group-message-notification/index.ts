@@ -35,13 +35,13 @@ const handler = async (req: Request): Promise<Response> => {
         resend.emails.send({
           from: "Career Pilot <noreply@careerpilot.it>",
           to: ["careerpilot2025@gmail.com"],
-          subject: `Nuovo messaggio da ${senderName} nel gruppo ${groupChatName}`,
+          subject: `New message from ${senderName} in group ${groupChatName}`,
           html: `
-            <h2>Nuovo messaggio nella chat di gruppo</h2>
+            <h2>New message in group chat</h2>
             <p><strong>Chat:</strong> ${groupChatName}</p>
-            <p><strong>Da:</strong> ${senderName}</p>
-            <p>Hai ricevuto un nuovo messaggio nella chat di gruppo.</p>
-            <p>Accedi alla tua area admin per visualizzarlo e rispondere.</p>
+            <p><strong>From:</strong> ${senderName}</p>
+            <p>You have received a new message in the group chat.</p>
+            <p>Log in to your admin area to view it and reply.</p>
             <br>
             <p>Career Pilot Team</p>
           `,
@@ -56,14 +56,14 @@ const handler = async (req: Request): Promise<Response> => {
             resend.emails.send({
               from: "Career Pilot <noreply@careerpilot.it>",
               to: [email],
-              subject: `Nuovo messaggio da ${senderName} nel gruppo ${groupChatName}`,
+              subject: `New message from ${senderName} in group ${groupChatName}`,
               html: `
-                <h2>Nuovo messaggio nella chat di gruppo</h2>
-                <p>Ciao ${name},</p>
+                <h2>New message in group chat</h2>
+                <p>Hi ${name},</p>
                 <p><strong>Chat:</strong> ${groupChatName}</p>
-                <p><strong>Da:</strong> ${senderName}</p>
-                <p>Hai ricevuto un nuovo messaggio nella chat di gruppo.</p>
-                <p>Accedi alla tua area personale per visualizzarlo e rispondere.</p>
+                <p><strong>From:</strong> ${senderName}</p>
+                <p>You have received a new message in the group chat.</p>
+                <p>Log in to your personal area to view it and reply.</p>
                 <br>
                 <p>Career Pilot Team</p>
               `,
@@ -97,13 +97,13 @@ const handler = async (req: Request): Promise<Response> => {
         return resend.emails.send({
           from: "Career Pilot <noreply@careerpilot.it>",
           to: [email],
-          subject: `Nuovo messaggio da Career Pilot nel gruppo ${groupChatName}`,
+          subject: `New message from Career Pilot in group ${groupChatName}`,
           html: `
-            <h2>Nuovo messaggio da Career Pilot</h2>
-            <p>Ciao ${name},</p>
+            <h2>New message from Career Pilot</h2>
+            <p>Hi ${name},</p>
             <p><strong>Chat:</strong> ${groupChatName}</p>
-            <p>Hai ricevuto un nuovo messaggio nella chat di gruppo da parte del team Career Pilot.</p>
-            <p>Accedi alla tua area personale per visualizzarlo e rispondere.</p>
+            <p>You have received a new message in the group chat from the Career Pilot team.</p>
+            <p>Log in to your personal area to view it and reply.</p>
             <br>
             <p>Career Pilot Team</p>
           `,

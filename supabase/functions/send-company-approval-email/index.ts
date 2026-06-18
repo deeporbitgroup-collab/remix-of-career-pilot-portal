@@ -35,79 +35,79 @@ const handler = async (req: Request): Promise<Response> => {
     let subject = "";
 
     if (approved) {
-      subject = "Registrazione Approvata - Talent Pool";
+      subject = "Registration Approved - Talent Pool";
       emailHtml = `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
           <div style="background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); padding: 30px; text-align: center; border-radius: 8px 8px 0 0;">
-            <h1 style="color: white; margin: 0; font-size: 28px;">✅ Registrazione Approvata!</h1>
+            <h1 style="color: white; margin: 0; font-size: 28px;">✅ Registration Approved!</h1>
           </div>
-          
+
           <div style="background: white; padding: 30px; border-radius: 0 0 8px 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
             <p style="font-size: 16px; color: #374151; line-height: 1.6;">
-              Gentile <strong>${companyName}</strong>,
+              Dear <strong>${companyName}</strong>,
             </p>
-            
+
             <p style="font-size: 16px; color: #374151; line-height: 1.6;">
-              Siamo lieti di informarvi che la vostra registrazione alla <strong>Talent Pool di CareerPilot</strong> è stata approvata!
+              We are pleased to inform you that your registration with the <strong>CareerPilot Talent Pool</strong> has been approved!
             </p>
-            
+
             <p style="font-size: 16px; color: #374151; line-height: 1.6;">
-              Ora potete accedere alla piattaforma e iniziare a visualizzare i profili degli studenti disponibili.
+              You can now log in to the platform and start browsing the profiles of available students.
             </p>
-            
+
             <div style="background: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
-              <h3 style="color: #16a34a; margin-top: 0;">🎯 Prossimi Passi:</h3>
+              <h3 style="color: #16a34a; margin-top: 0;">🎯 Next Steps:</h3>
               <ul style="color: #4b5563; line-height: 1.8;">
-                <li>Accedete alla piattaforma con le vostre credenziali</li>
-                <li>Esplorate i profili degli studenti</li>
-                <li>Selezionate i candidati di vostro interesse</li>
-                <li>Riceverete notifiche via email per ogni selezione</li>
+                <li>Log in to the platform with your credentials</li>
+                <li>Explore the student profiles</li>
+                <li>Select the candidates you are interested in</li>
+                <li>You will receive an email notification for each selection</li>
               </ul>
             </div>
-            
+
             <div style="text-align: center; margin: 30px 0;">
-              <a href="https://careerpilot.it/talent-pool/company" 
+              <a href="https://careerpilot.it/talent-pool/company"
                  style="display: inline-block; background: #16a34a; color: white; padding: 14px 28px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 16px;">
-                Accedi alla Talent Pool
+                Access the Talent Pool
               </a>
             </div>
-            
+
             <p style="font-size: 14px; color: #6b7280; line-height: 1.6; border-top: 2px solid #e5e7eb; padding-top: 20px; margin-top: 30px;">
-              Benvenuti in CareerPilot!<br>
-              Per qualsiasi domanda o assistenza, non esitate a contattarci.
+              Welcome to CareerPilot!<br>
+              If you have any questions or need assistance, please don't hesitate to contact us.
             </p>
           </div>
         </div>
       `;
     } else {
-      subject = "Registrazione Non Approvata - Talent Pool";
+      subject = "Registration Not Approved - Talent Pool";
       emailHtml = `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
           <div style="background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); padding: 30px; text-align: center; border-radius: 8px 8px 0 0;">
-            <h1 style="color: white; margin: 0; font-size: 28px;">❌ Registrazione Non Approvata</h1>
+            <h1 style="color: white; margin: 0; font-size: 28px;">❌ Registration Not Approved</h1>
           </div>
-          
+
           <div style="background: white; padding: 30px; border-radius: 0 0 8px 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
             <p style="font-size: 16px; color: #374151; line-height: 1.6;">
-              Gentile <strong>${companyName}</strong>,
+              Dear <strong>${companyName}</strong>,
             </p>
-            
+
             <p style="font-size: 16px; color: #374151; line-height: 1.6;">
-              Ci dispiace informarvi che la vostra registrazione alla <strong>Talent Pool di CareerPilot</strong> non è stata approvata in questo momento.
+              We regret to inform you that your registration with the <strong>CareerPilot Talent Pool</strong> has not been approved at this time.
             </p>
-            
+
             <p style="font-size: 16px; color: #374151; line-height: 1.6;">
-              Per ulteriori informazioni o per discutere della vostra richiesta, vi invitiamo a contattarci direttamente.
+              For more information or to discuss your application, we invite you to contact us directly.
             </p>
-            
+
             <div style="background: #fef2f2; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #dc2626;">
               <p style="color: #991b1b; margin: 0; line-height: 1.6;">
-                <strong>📧 Contatto:</strong> careerpilot2025@gmail.com
+                <strong>📧 Contact:</strong> careerpilot2025@gmail.com
               </p>
             </div>
-            
+
             <p style="font-size: 14px; color: #6b7280; line-height: 1.6; border-top: 2px solid #e5e7eb; padding-top: 20px; margin-top: 30px;">
-              Grazie per l'interesse in CareerPilot.
+              Thank you for your interest in CareerPilot.
             </p>
           </div>
         </div>

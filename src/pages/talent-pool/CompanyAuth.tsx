@@ -17,18 +17,18 @@ import { TalentPoolLanguageProvider, useTalentPoolLanguage } from "@/contexts/Ta
 import { ForgotPasswordDialog } from "@/components/talent-pool/ForgotPasswordDialog";
 
 const companySchema = z.object({
-  companyName: z.string().trim().min(1, "Nome azienda richiesto").max(200),
-  sector: z.string().min(1, "Settore richiesto"),
+  companyName: z.string().trim().min(1, "Company name required").max(200),
+  sector: z.string().min(1, "Sector required"),
   size: z.enum(["STARTUP", "BOUTIQUE", "MEDIUM_SIZE", "LARGE_COMPANY"]),
-  referenceEmail: z.string().trim().email("Email non valida").max(255),
-  password: z.string().min(8, "Minimo 8 caratteri")
-    .regex(/[A-Z]/, "Almeno una maiuscola richiesta")
-    .regex(/[0-9]/, "Almeno un numero richiesto"),
+  referenceEmail: z.string().trim().email("Invalid email").max(255),
+  password: z.string().min(8, "Minimum 8 characters")
+    .regex(/[A-Z]/, "At least one uppercase letter required")
+    .regex(/[0-9]/, "At least one number required"),
   confirmPassword: z.string(),
   linkedin: z.string().url().optional().or(z.literal("")),
-  termsAccepted: z.boolean().refine(val => val === true, "Devi accettare i termini")
+  termsAccepted: z.boolean().refine(val => val === true, "You must accept the terms")
 }).refine(data => data.password === data.confirmPassword, {
-  message: "Le password non corrispondono",
+  message: "Passwords do not match",
   path: ["confirmPassword"]
 });
 
@@ -47,7 +47,7 @@ const sectors = [
   "Fashion",
   "Media & Entertainment",
   "Legal",
-  "Altro"
+  "Other"
 ];
 
 const CompanyAuthContent = () => {
@@ -245,13 +245,13 @@ const CompanyAuthContent = () => {
 
       if (error) {
         if (error.code === '28000' || error.message?.includes('INVALID_CREDENTIALS')) {
-          throw new Error("Credenziali non valide");
+          throw new Error("Invalid credentials");
         }
         throw error;
       }
 
       if (!data) {
-        throw new Error("Errore durante l'accesso");
+        throw new Error("Error during login");
       }
 
       // Parse the JSONB response

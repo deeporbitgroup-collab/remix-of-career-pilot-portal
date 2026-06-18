@@ -269,8 +269,8 @@ const UserManagement = ({ roleFilter }: UserManagementProps = {}) => {
 
       if (!cv || !cv.storage_path) {
         toast({
-          title: "CV non disponibile",
-          description: "L'associato non ha ancora caricato il CV",
+          title: "CV not available",
+          description: "The associate has not uploaded a CV yet",
           variant: "destructive"
         });
         return;
@@ -288,11 +288,11 @@ const UserManagement = ({ roleFilter }: UserManagementProps = {}) => {
         }
         lastError = res.error;
       }
-      if (!data) throw lastError || new Error('File non trovato');
+      if (!data) throw lastError || new Error('File not found');
 
       // Download using blob
       const response = await fetch(data.signedUrl);
-      if (!response.ok) throw new Error('Download fallito');
+      if (!response.ok) throw new Error('Download failed');
       
       const blob = await response.blob();
       const url = URL.createObjectURL(blob);
@@ -305,14 +305,14 @@ const UserManagement = ({ roleFilter }: UserManagementProps = {}) => {
       URL.revokeObjectURL(url);
 
       toast({
-        title: "CV scaricato",
-        description: "Il CV è stato scaricato con successo"
+        title: "CV downloaded",
+        description: "The CV was downloaded successfully"
       });
     } catch (error: any) {
       console.error("Errore download CV:", error);
       toast({
-        title: "Errore download",
-        description: error.message || "Impossibile scaricare il CV",
+        title: "Download error",
+        description: error.message || "Unable to download the CV",
         variant: "destructive"
       });
     }
@@ -365,17 +365,17 @@ const UserManagement = ({ roleFilter }: UserManagementProps = {}) => {
       if (dbError) throw dbError;
 
       toast({
-        title: "Contratto caricato",
-        description: existingContract 
-          ? "Il contratto è stato aggiornato con successo"
-          : "Il contratto è stato caricato con successo",
+        title: "Contract uploaded",
+        description: existingContract
+          ? "The contract was updated successfully"
+          : "The contract was uploaded successfully",
       });
 
       // Refresh contracts
       fetchPartnerContracts();
     } catch (error: any) {
       toast({
-        title: "Errore",
+        title: "Error",
         description: error.message,
         variant: "destructive",
       });
@@ -396,8 +396,8 @@ const UserManagement = ({ roleFilter }: UserManagementProps = {}) => {
 
       if (!documents || documents.length === 0) {
         toast({
-          title: "Nessun documento",
-          description: "Il partner non ha caricato documenti",
+          title: "No documents",
+          description: "The partner has not uploaded any documents",
         });
         return;
       }
@@ -424,12 +424,12 @@ const UserManagement = ({ roleFilter }: UserManagementProps = {}) => {
       }
 
       toast({
-        title: "Download completato",
-        description: `Scaricati ${documents.length} documenti`,
+        title: "Download complete",
+        description: `Downloaded ${documents.length} documents`,
       });
     } catch (error: any) {
       toast({
-        title: "Errore",
+        title: "Error",
         description: error.message,
         variant: "destructive",
       });
@@ -474,8 +474,8 @@ const UserManagement = ({ roleFilter }: UserManagementProps = {}) => {
       if (error) throw error;
 
       toast({
-        title: "Associate eliminato",
-        description: "L'Associate è stato eliminato e notificato via email",
+        title: "Associate deleted",
+        description: "The Associate has been deleted and notified via email",
       });
 
       // Refresh the users list
@@ -483,8 +483,8 @@ const UserManagement = ({ roleFilter }: UserManagementProps = {}) => {
       setDeleteDialog({ open: false, user: null, reason: '' });
     } catch (error: any) {
       toast({
-        title: "Errore eliminazione",
-        description: error.message || "Impossibile eliminare l'Associate",
+        title: "Deletion error",
+        description: error.message || "Unable to delete the Associate",
         variant: "destructive",
       });
     } finally {
@@ -504,8 +504,8 @@ const UserManagement = ({ roleFilter }: UserManagementProps = {}) => {
       if (error) throw error;
 
       toast({
-        title: "Partner eliminato",
-        description: "Il Partner è stato eliminato definitivamente dal sistema",
+        title: "Partner deleted",
+        description: "The Partner has been permanently deleted from the system",
       });
 
       // Refresh the users list
@@ -513,8 +513,8 @@ const UserManagement = ({ roleFilter }: UserManagementProps = {}) => {
       setDeleteDialog({ open: false, user: null, reason: '' });
     } catch (error: any) {
       toast({
-        title: "Errore eliminazione",
-        description: error.message || "Impossibile eliminare il Partner",
+        title: "Deletion error",
+        description: error.message || "Unable to delete the Partner",
         variant: "destructive",
       });
     }
@@ -548,17 +548,17 @@ const UserManagement = ({ roleFilter }: UserManagementProps = {}) => {
       if (dbError) throw dbError;
 
       toast({
-        title: "Contratto caricato",
-        description: "Il contratto è stato caricato con successo"
+        title: "Contract uploaded",
+        description: "The contract was uploaded successfully"
       });
-      
+
       // Update the contracts map
       setUserContracts(prev => ({ ...prev, [userId]: true }));
     } catch (error: any) {
       console.error("Errore upload contratto:", error);
       toast({
-        title: "Errore caricamento",
-        description: error.message || "Impossibile caricare il contratto",
+        title: "Upload error",
+        description: error.message || "Unable to upload the contract",
         variant: "destructive"
       });
     }
@@ -578,7 +578,7 @@ const UserManagement = ({ roleFilter }: UserManagementProps = {}) => {
       {/* Filters */}
       <Card>
         <CardHeader>
-          <CardTitle>Gestione Utenti</CardTitle>
+          <CardTitle>User Management</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex flex-col md:flex-row gap-4">
@@ -586,7 +586,7 @@ const UserManagement = ({ roleFilter }: UserManagementProps = {}) => {
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Cerca per nome, email o azienda..."
+                  placeholder="Search by name, email or company..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-10"
@@ -599,7 +599,7 @@ const UserManagement = ({ roleFilter }: UserManagementProps = {}) => {
                 value={filterRole}
                 onChange={(e) => setFilterRole(e.target.value as any)}
               >
-                <option value="all">Tutti i ruoli</option>
+                <option value="all">All roles</option>
                 <option value="ASSOCIATE">Associate</option>
                 <option value="PARTNER">Partner</option>
               </select>
@@ -608,10 +608,10 @@ const UserManagement = ({ roleFilter }: UserManagementProps = {}) => {
                 value={filterStatus}
                 onChange={(e) => setFilterStatus(e.target.value as any)}
               >
-                <option value="all">Tutti gli stati</option>
-                <option value="pending">In attesa</option>
-                <option value="approved">Approvati</option>
-                <option value="rejected">Rifiutati</option>
+                <option value="all">All statuses</option>
+                <option value="pending">Pending</option>
+                <option value="approved">Approved</option>
+                <option value="rejected">Rejected</option>
               </select>
             </div>
           </div>
@@ -651,8 +651,8 @@ const UserManagement = ({ roleFilter }: UserManagementProps = {}) => {
                     <div className="flex items-center gap-1">
                       {getStatusIcon(user.status)}
                       <Badge variant={getStatusVariant(user.status)}>
-                        {user.status === 'pending' ? 'In attesa' : 
-                         user.status === 'approved' ? 'Approvato' : 'Rifiutato'}
+                        {user.status === 'pending' ? 'Pending' :
+                         user.status === 'approved' ? 'Approved' : 'Rejected'}
                       </Badge>
                     </div>
                   </div>
@@ -678,13 +678,13 @@ const UserManagement = ({ roleFilter }: UserManagementProps = {}) => {
                             {user.metadata.status.university_student && (
                               <Badge variant="outline" className="bg-blue-50">
                                 <GraduationCap className="h-3 w-3 mr-1" />
-                                Studente Universitario
+                                University Student
                               </Badge>
                             )}
                             {user.metadata.status.master_student && (
                               <Badge variant="outline" className="bg-purple-50">
                                 <GraduationCap className="h-3 w-3 mr-1" />
-                                Studente Master
+                                Master Student
                               </Badge>
                             )}
                             {user.metadata.status.professional && (
@@ -701,7 +701,7 @@ const UserManagement = ({ roleFilter }: UserManagementProps = {}) => {
                               {user.metadata.university && (
                                 <div className="flex items-center gap-1">
                                   <GraduationCap className="h-3 w-3" />
-                                  <span className="font-medium">Università:</span> {user.metadata.university}
+                                  <span className="font-medium">University:</span> {user.metadata.university}
                                 </div>
                               )}
                               {user.metadata.master_program && (
@@ -713,7 +713,7 @@ const UserManagement = ({ roleFilter }: UserManagementProps = {}) => {
                               {user.metadata.sector && (
                                 <div className="flex items-center gap-1">
                                   <Briefcase className="h-3 w-3" />
-                                  <span className="font-medium">Settore:</span> {user.metadata.sector}
+                                  <span className="font-medium">Sector:</span> {user.metadata.sector}
                                 </div>
                               )}
                             </div>
@@ -733,7 +733,7 @@ const UserManagement = ({ roleFilter }: UserManagementProps = {}) => {
                                 ) : (
                                   <ChevronDown className="h-3 w-3 mr-1" />
                                 )}
-                                {expandedUsers.has(user.id) ? 'Nascondi' : 'Mostra'} {user.metadata.experiences.length} {user.metadata.experiences.length === 1 ? 'esperienza' : 'esperienze'}
+                                {expandedUsers.has(user.id) ? 'Hide' : 'Show'} {user.metadata.experiences.length} {user.metadata.experiences.length === 1 ? 'experience' : 'experiences'}
                               </Button>
                               
                               {expandedUsers.has(user.id) && (
@@ -764,7 +764,7 @@ const UserManagement = ({ roleFilter }: UserManagementProps = {}) => {
                       onClick={() => navigate(`/app/admin/associates/${user.id}`)}
                     >
                       <Edit className="mr-2 h-4 w-4" />
-                      Modifica
+                      Edit
                     </Button>
                     <Button
                       size="sm"
@@ -772,7 +772,7 @@ const UserManagement = ({ roleFilter }: UserManagementProps = {}) => {
                       onClick={() => handleDownloadCV(user.id, `${user.first_name || ''} ${user.last_name || ''}`)}
                     >
                       <Download className="mr-2 h-4 w-4" />
-                      Scarica CV
+                      Download CV
                     </Button>
                     <div>
                       <input
@@ -788,7 +788,7 @@ const UserManagement = ({ roleFilter }: UserManagementProps = {}) => {
                         onClick={() => fileInputRefs.current[user.id]?.click()}
                       >
                         <Upload className="mr-2 h-4 w-4" />
-                        {userContracts[user.id] ? "Sostituisci Contratto" : "Carica Contratto"}
+                        {userContracts[user.id] ? "Replace Contract" : "Upload Contract"}
                       </Button>
                     </div>
                     <Button
@@ -797,7 +797,7 @@ const UserManagement = ({ roleFilter }: UserManagementProps = {}) => {
                       onClick={() => setDeleteDialog({ open: true, user, reason: '' })}
                     >
                       <Trash2 className="mr-2 h-4 w-4" />
-                      Elimina
+                      Delete
                     </Button>
                   </div>
                 )}
@@ -809,7 +809,7 @@ const UserManagement = ({ roleFilter }: UserManagementProps = {}) => {
                       onClick={() => handleDownloadPartnerDocuments(user.id)}
                     >
                       <Download className="mr-2 h-4 w-4" />
-                      Scarica Documenti
+                      Download Documents
                     </Button>
                     <div>
                       <input
@@ -825,7 +825,7 @@ const UserManagement = ({ roleFilter }: UserManagementProps = {}) => {
                         onClick={() => fileInputRefs.current[`partner-${user.id}`]?.click()}
                       >
                         <Upload className="mr-2 h-4 w-4" />
-                        {partnerContracts[user.id] ? "Sostituisci Contratto" : "Carica Contratto"}
+                        {partnerContracts[user.id] ? "Replace Contract" : "Upload Contract"}
                       </Button>
                     </div>
                     <Button
@@ -834,7 +834,7 @@ const UserManagement = ({ roleFilter }: UserManagementProps = {}) => {
                       onClick={() => setDeleteDialog({ open: true, user, reason: '' })}
                     >
                       <Trash2 className="mr-2 h-4 w-4" />
-                      Elimina
+                      Delete
                     </Button>
                   </div>
                 )}
@@ -847,7 +847,7 @@ const UserManagement = ({ roleFilter }: UserManagementProps = {}) => {
       {filteredUsers.length === 0 && (
         <Card>
           <CardContent className="text-center py-8">
-            <p className="text-muted-foreground">Nessun utente trovato</p>
+            <p className="text-muted-foreground">No users found</p>
           </CardContent>
         </Card>
       )}
@@ -856,37 +856,37 @@ const UserManagement = ({ roleFilter }: UserManagementProps = {}) => {
       <AlertDialog open={deleteDialog.open} onOpenChange={(open) => setDeleteDialog({ open, user: null, reason: '' })}>
         <AlertDialogContent className="max-w-md">
           <AlertDialogHeader>
-            <AlertDialogTitle>Conferma eliminazione</AlertDialogTitle>
+            <AlertDialogTitle>Confirm deletion</AlertDialogTitle>
             <AlertDialogDescription asChild>
               <div>
                 <p>
-                  Sei sicuro di voler eliminare definitivamente{' '}
-                  {deleteDialog.user?.role === 'ASSOCIATE' ? "l'Associate" : "il Partner"}{' '}
+                  Are you sure you want to permanently delete{' '}
+                  {deleteDialog.user?.role === 'ASSOCIATE' ? "the Associate" : "the Partner"}{' '}
                   <strong>
                     {deleteDialog.user?.first_name} {deleteDialog.user?.last_name}
                   </strong>
-                  ? Questa azione non può essere annullata.
+                  ? This action cannot be undone.
                 </p>
-                <p className="mt-4">Verranno eliminati:</p>
+                <p className="mt-4">The following will be deleted:</p>
                 <ul className="list-disc list-inside mt-2">
-                  <li>Account e accesso alla piattaforma</li>
-                  <li>Curriculum vitae e documenti</li>
-                  <li>Disponibilità e dati personali</li>
-                  <li>Tutti i dati associati</li>
+                  <li>Account and platform access</li>
+                  <li>Resume and documents</li>
+                  <li>Availability and personal data</li>
+                  <li>All associated data</li>
                 </ul>
                 {deleteDialog.user?.role === 'ASSOCIATE' && (
                   <div className="mt-4">
                     <p className="text-sm font-medium text-foreground mb-2">
-                      Motivazione espulsione (opzionale):
+                      Expulsion reason (optional):
                     </p>
                     <Textarea
-                      placeholder="Inserisci la motivazione dell'espulsione che verrà comunicata via email all'associate..."
+                      placeholder="Enter the expulsion reason that will be communicated via email to the associate..."
                       value={deleteDialog.reason}
                       onChange={(e) => setDeleteDialog(prev => ({ ...prev, reason: e.target.value }))}
                       className="min-h-[80px]"
                     />
                     <p className="text-xs text-muted-foreground mt-1">
-                      L'associate riceverà un'email di notifica all'indirizzo: {deleteDialog.user?.email}
+                      The associate will receive a notification email at: {deleteDialog.user?.email}
                     </p>
                   </div>
                 )}
@@ -894,7 +894,7 @@ const UserManagement = ({ roleFilter }: UserManagementProps = {}) => {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isSendingExpulsion}>Annulla</AlertDialogCancel>
+            <AlertDialogCancel disabled={isSendingExpulsion}>Cancel</AlertDialogCancel>
             <AlertDialogAction 
               onClick={() => {
                 if (deleteDialog.user?.role === 'ASSOCIATE') {
@@ -906,7 +906,7 @@ const UserManagement = ({ roleFilter }: UserManagementProps = {}) => {
               disabled={isSendingExpulsion}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              {isSendingExpulsion ? "Eliminazione..." : "Elimina definitivamente"}
+              {isSendingExpulsion ? "Deleting..." : "Delete permanently"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

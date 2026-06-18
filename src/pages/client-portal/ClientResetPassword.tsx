@@ -31,17 +31,17 @@ const ClientResetPassword = () => {
     e.preventDefault();
 
     if (!token) {
-      toast.error("Link non valido o scaduto");
+      toast.error("Invalid or expired link");
       return;
     }
 
     if (newPassword.length < 6) {
-      toast.error("La password deve essere almeno 6 caratteri");
+      toast.error("Password must be at least 6 characters");
       return;
     }
 
     if (newPassword !== confirmPassword) {
-      toast.error("Le password non corrispondono");
+      toast.error("Passwords do not match");
       return;
     }
 
@@ -56,14 +56,14 @@ const ClientResetPassword = () => {
 
       if (data?.success) {
         setResetComplete(true);
-        toast.success("Password reimpostata con successo!");
+        toast.success("Password reset successfully!");
         setTimeout(() => navigate('/client-portal/auth'), 3000);
       } else {
-        toast.error(data?.error || "Impossibile reimpostare la password");
+        toast.error(data?.error || "Unable to reset password");
       }
     } catch (error: any) {
       console.error("Reset error:", error);
-      toast.error(error.message || "Errore durante il reset della password");
+      toast.error(error.message || "Error resetting password");
     } finally {
       setLoading(false);
     }
@@ -88,17 +88,17 @@ const ClientResetPassword = () => {
                 <CheckCircle className="h-12 w-12 text-green-600" />
               </div>
             </div>
-            <CardTitle className="text-green-600">Password Reimpostata!</CardTitle>
+            <CardTitle className="text-green-600">Password Reset!</CardTitle>
             <CardDescription>
-              La tua password è stata reimpostata con successo. Verrai reindirizzato alla pagina di login...
+              Your password has been reset successfully. You will be redirected to the login page...
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Button 
-              className="w-full" 
+            <Button
+              className="w-full"
               onClick={() => navigate('/client-portal/auth')}
             >
-              Vai al Login
+              Go to Login
             </Button>
           </CardContent>
         </Card>
@@ -125,17 +125,17 @@ const ClientResetPassword = () => {
                 <XCircle className="h-12 w-12 text-red-600" />
               </div>
             </div>
-            <CardTitle className="text-destructive">Link Non Valido</CardTitle>
+            <CardTitle className="text-destructive">Invalid Link</CardTitle>
             <CardDescription>
-              Questo link per reimpostare la password non è valido o è scaduto.
+              This password reset link is invalid or has expired.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <Button 
-              className="w-full" 
+            <Button
+              className="w-full"
               onClick={() => navigate('/client-portal/auth')}
             >
-              Torna al Login
+              Back to Login
             </Button>
           </CardContent>
         </Card>
@@ -162,7 +162,7 @@ const ClientResetPassword = () => {
         onClick={() => navigate('/client-portal/auth')}
       >
         <ArrowLeft className="mr-2 h-4 w-4" />
-        Torna al Login
+        Back to Login
       </Button>
 
       <Card className="w-full max-w-md backdrop-blur-sm bg-background/95 shadow-2xl z-10">
@@ -172,35 +172,35 @@ const ClientResetPassword = () => {
               <Lock className="h-10 w-10 text-primary" />
             </div>
           </div>
-          <CardTitle>Reimposta Password</CardTitle>
+          <CardTitle>Reset Password</CardTitle>
           <CardDescription>
-            Inserisci la tua nuova password qui sotto
+            Enter your new password below
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleResetPassword} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="new-password">Nuova Password</Label>
+              <Label htmlFor="new-password">New Password</Label>
               <Input
                 id="new-password"
                 type="password"
-                placeholder="Inserisci nuova password"
+                placeholder="Enter new password"
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
                 required
                 minLength={6}
               />
               <p className="text-xs text-muted-foreground">
-                Minimo 6 caratteri
+                Minimum 6 characters
               </p>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="confirm-password">Conferma Password</Label>
+              <Label htmlFor="confirm-password">Confirm Password</Label>
               <Input
                 id="confirm-password"
                 type="password"
-                placeholder="Conferma nuova password"
+                placeholder="Confirm new password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 required
@@ -212,10 +212,10 @@ const ClientResetPassword = () => {
               {loading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Reimpostazione...
+                  Resetting...
                 </>
               ) : (
-                "Reimposta Password"
+                "Reset Password"
               )}
             </Button>
           </form>

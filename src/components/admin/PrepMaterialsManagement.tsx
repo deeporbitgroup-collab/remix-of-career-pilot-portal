@@ -47,7 +47,7 @@ const PrepMaterialsManagement = () => {
       .from("prep_materials")
       .select("*")
       .order("created_at", { ascending: false });
-    if (error) toast({ title: "Errore", description: error.message, variant: "destructive" });
+    if (error) toast({ title: "Error", description: error.message, variant: "destructive" });
     setMaterials((data as any) || []);
     setLoading(false);
   };
@@ -60,7 +60,7 @@ const PrepMaterialsManagement = () => {
 
   const handleUpload = async () => {
     if (!form.file || !form.title.trim()) {
-      toast({ title: "Compila titolo e file", variant: "destructive" });
+      toast({ title: "Fill in title and file", variant: "destructive" });
       return;
     }
     setUploading(true);
@@ -82,11 +82,11 @@ const PrepMaterialsManagement = () => {
         uploaded_by: user?.id,
       });
       if (insErr) throw insErr;
-      toast({ title: "Materiale caricato" });
+      toast({ title: "Material uploaded" });
       setDialogOpen(false);
       fetchAll();
     } catch (e: any) {
-      toast({ title: "Errore upload", description: e.message, variant: "destructive" });
+      toast({ title: "Upload error", description: e.message, variant: "destructive" });
     } finally {
       setUploading(false);
     }
@@ -95,21 +95,21 @@ const PrepMaterialsManagement = () => {
   const handleDownload = async (m: Material) => {
     const { data, error } = await supabase.storage.from("prep-materials").createSignedUrl(m.storage_path, 300);
     if (error || !data) {
-      toast({ title: "Errore download", description: error?.message, variant: "destructive" });
+      toast({ title: "Download error", description: error?.message, variant: "destructive" });
       return;
     }
     window.open(data.signedUrl, "_blank");
   };
 
   const handleDelete = async (m: Material) => {
-    if (!confirm(`Eliminare "${m.title}"?`)) return;
+    if (!confirm(`Delete "${m.title}"?`)) return;
     await supabase.storage.from("prep-materials").remove([m.storage_path]);
     const { error } = await supabase.from("prep_materials").delete().eq("id", m.id);
     if (error) {
-      toast({ title: "Errore", description: error.message, variant: "destructive" });
+      toast({ title: "Error", description: error.message, variant: "destructive" });
       return;
     }
-    toast({ title: "Eliminato" });
+    toast({ title: "Deleted" });
     fetchAll();
   };
 
@@ -128,7 +128,7 @@ const PrepMaterialsManagement = () => {
           Onboarding & Prep Materials
         </CardTitle>
         <CardDescription>
-          Carica i materiali di preparazione per ogni servizio. Saranno visibili agli associate nella sezione "Quick Onboarding" della loro dashboard.
+          Upload the preparation materials for each service. They will be visible to associates in the "Quick Onboarding" section of their dashboard.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -161,7 +161,7 @@ const PrepMaterialsManagement = () => {
                     </div>
                   </div>
                   <Button onClick={() => openUpload(s.id)} className="gap-2 shrink-0">
-                    <Plus className="h-4 w-4" /> Carica materiale
+                    <Plus className="h-4 w-4" /> Upload material
                   </Button>
                 </div>
 
@@ -169,7 +169,7 @@ const PrepMaterialsManagement = () => {
                   <div className="flex justify-center py-8"><Loader2 className="h-5 w-5 animate-spin" /></div>
                 ) : list.length === 0 ? (
                   <div className="text-center py-8 text-muted-foreground text-sm">
-                    Nessun materiale caricato per {s.label}.
+                    No material uploaded for {s.label}.
                   </div>
                 ) : (
                   <div className="space-y-2">
@@ -207,15 +207,15 @@ const PrepMaterialsManagement = () => {
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Carica materiale - {SERVICES.find(s => s.id === activeService)?.label}</DialogTitle>
+              <DialogTitle>Upload material - {SERVICES.find(s => s.id === activeService)?.label}</DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
               <div>
-                <Label>Titolo *</Label>
-                <Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="Es. Guida ammissioni 2026" />
+                <Label>Title *</Label>
+                <Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="e.g. Admissions guide 2026" />
               </div>
               <div>
-                <Label>Descrizione</Label>
+                <Label>Description</Label>
                 <Textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} rows={3} />
               </div>
               <div>
@@ -224,10 +224,10 @@ const PrepMaterialsManagement = () => {
               </div>
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={() => setDialogOpen(false)} disabled={uploading}>Annulla</Button>
+              <Button variant="outline" onClick={() => setDialogOpen(false)} disabled={uploading}>Cancel</Button>
               <Button onClick={handleUpload} disabled={uploading} className="gap-2">
                 {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
-                Carica
+                Upload
               </Button>
             </DialogFooter>
           </DialogContent>

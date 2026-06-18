@@ -233,141 +233,65 @@ const HeroSection = () => {
             <div className="absolute top-1/3 right-1/4 w-44 h-44 rounded-full bg-accent/10 blur-2xl" />
           </div>
 
-          {/* Logo — generous and central */}
-          <div className="relative z-10 flex justify-center items-center flex-[1.2] min-h-0 animate-fade-in opacity-0" style={{ animationDelay: '0.1s', animationFillMode: 'forwards' }}>
+          {/* Logo — top */}
+          <div className="relative z-10 flex justify-center pt-2 shrink-0 animate-fade-in opacity-0" style={{ animationDelay: '0.1s', animationFillMode: 'forwards' }}>
             <img
               src="/lovable-uploads/ef00a41f-dd9a-4450-9fd7-a5ca64906fb8.png"
               alt="Career Pilot"
-              className="max-h-[160px] w-auto object-contain drop-shadow-[0_10px_30px_hsla(215,100%,60%,0.25)]"
+              className="max-h-[120px] w-auto object-contain drop-shadow-[0_10px_30px_hsla(215,100%,60%,0.25)]"
             />
             <h1 className="sr-only">Career Pilot</h1>
           </div>
 
-          {/* Primary CTA */}
-          <div className="relative z-10 flex flex-col items-center gap-2.5 animate-fade-in opacity-0 w-full" style={{ animationDelay: '0.3s', animationFillMode: 'forwards' }}>
-            <Button
-              size="lg"
-              onClick={() => setIsBookingOpen(true)}
-              className="bg-gradient-to-r from-primary via-primary to-secondary text-primary-foreground hover:opacity-95 transition-all duration-300 active:scale-95 text-base font-bold px-8 py-6 rounded-2xl w-full max-w-[320px]"
-              style={{ boxShadow: '0 0 36px hsla(215, 100%, 60%, 0.45), 0 10px 24px hsla(223, 83%, 27%, 0.4)' }}
-            >
-              {language === 'it' ? 'Prenota Check-in Gratuito' : 'Book Free Check-in'}
-              <ArrowRight className="ml-2 h-5 w-5" />
-            </Button>
-          </div>
-
-          {/* Pilot AI – alternative path, framed as a "step 2 / undecided" route */}
-          <div className="relative z-10 w-full flex flex-col items-center gap-2 animate-fade-in opacity-0" style={{ animationDelay: '0.4s', animationFillMode: 'forwards' }}>
-            <div className="flex items-center gap-2 w-full max-w-[280px]">
-              <span className="h-px flex-1 bg-border" />
-              <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">
-                {language === 'it' ? 'oppure' : 'or'}
-              </span>
-              <span className="h-px flex-1 bg-border" />
-            </div>
+          {/* Center group: check-in box + two pathways — fills the screen, no scroll */}
+          <div className="relative z-10 flex-1 flex flex-col justify-center gap-4 animate-fade-in opacity-0 w-full max-w-[420px] mx-auto" style={{ animationDelay: '0.3s', animationFillMode: 'forwards' }}>
+            {/* Book free check-in — primary box, opens the same booking modal as desktop */}
             <button
-              onClick={() => navigate('/client-portal/services?advisor=1')}
-              className="group inline-flex items-center gap-2 rounded-full bg-background/70 backdrop-blur border border-secondary/40 hover:border-secondary hover:bg-secondary/10 px-4 py-2 transition-all active:scale-[0.97]"
-              aria-label={language === 'it' ? 'Apri il Pilot Advisor AI' : 'Open Pilot Advisor AI'}
+              onClick={() => setIsBookingOpen(true)}
+              className="group relative w-full overflow-hidden rounded-3xl bg-gradient-to-br from-primary via-primary to-secondary text-primary-foreground px-5 py-6 text-left active:scale-[0.98] transition-transform"
+              style={{ boxShadow: '0 0 36px hsla(215, 100%, 60%, 0.45), 0 12px 28px hsla(223, 83%, 27%, 0.4)' }}
             >
-              <span className="relative inline-flex h-6 w-6 items-center justify-center rounded-full bg-gradient-to-br from-primary to-secondary text-primary-foreground">
-                <Plane className="h-3 w-3 -rotate-12" />
-              </span>
-              <span className="text-[12px] font-bold text-primary">
-                {language === 'it' ? 'Non sai quale scegliere? Lascia che il Co-Pilot ti guidi' : "Not sure which to pick? Let your Co-Pilot guide you"}
-              </span>
-              <ArrowRight className="h-3.5 w-3.5 text-secondary group-hover:translate-x-0.5 transition-transform" />
-            </button>
-          </div>
-
-
-          {/* Pathway label */}
-          <p className="relative z-10 text-center text-[10px] text-muted-foreground font-bold uppercase tracking-[0.25em] mt-5">
-            {language === 'it' ? '— Scegli il tuo percorso —' : '— Choose your pathway —'}
-          </p>
-
-          {/* 4 Pathway buttons */}
-          <div className="relative z-10 grid grid-cols-2 gap-2.5 mt-2.5 animate-fade-in opacity-0" style={{ animationDelay: '0.5s', animationFillMode: 'forwards' }}>
-            {[
-              { icon: Plane, label: language === 'it' ? 'Liceo → Uni' : 'Highschool → Uni', href: '/client-portal/services?category=Take+Off' },
-              { icon: GraduationCap, label: language === 'it' ? 'Uni → Master' : 'Uni → Master', href: '/client-portal/services?category=Summit' },
-              { icon: Building, label: 'Internship', href: '/client-portal/services?category=Altitude' },
-              { icon: ArrowLeftRight, label: language === 'it' ? 'Trasferimento' : 'Uni Transfer', href: '/client-portal/services?category=Layover' },
-            ].map(({ icon: Icon, label, href }) => (
-              <button
-                key={label}
-                onClick={() => window.location.href = href}
-                className="group relative flex flex-col items-center justify-center gap-2 bg-gradient-to-br from-primary via-primary to-secondary text-primary-foreground rounded-2xl px-1 py-4 transition-all duration-300 active:scale-95 overflow-hidden min-h-[78px]"
-                style={{ boxShadow: '0 6px 18px hsla(223, 83%, 27%, 0.4), 0 2px 6px hsla(215, 100%, 60%, 0.25)' }}
-              >
-                <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/15 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
-                <Icon className="h-6 w-6 text-primary-foreground relative z-10" />
-                <span className="text-[11px] font-bold text-primary-foreground text-center leading-tight relative z-10 px-1">
-                  {label}
+              <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/15 to-transparent -translate-x-full group-active:translate-x-full transition-transform duration-700" />
+              <div className="relative z-10 flex items-center gap-4">
+                <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white/20">
+                  <Star className="h-6 w-6" />
                 </span>
+                <div className="min-w-0 flex-1">
+                  <p className="text-lg font-extrabold leading-tight">Book free check-in</p>
+                  <p className="text-xs font-medium text-primary-foreground/85">A free 1:1 call to map out your plan</p>
+                </div>
+                <ArrowRight className="h-6 w-6 shrink-0" />
+              </div>
+            </button>
+
+            {/* Two pathways: Mentoring + Talent Pool */}
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                onClick={() => { window.location.href = '/client-portal/services'; }}
+                className="group relative flex flex-col items-start gap-1.5 overflow-hidden rounded-2xl bg-card/90 backdrop-blur border-2 border-primary/30 px-4 py-4 text-left active:scale-95 transition-transform"
+                style={{ boxShadow: '0 6px 18px hsla(223, 83%, 27%, 0.18)' }}
+              >
+                <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                  <GraduationCap className="h-5 w-5" />
+                </span>
+                <span className="text-sm font-extrabold text-primary leading-tight">Mentoring</span>
+                <span className="text-[10px] font-medium text-muted-foreground leading-tight">University · Master · Internship · Transfer</span>
               </button>
-            ))}
-          </div>
-
-          {/* Mentor avatars strip */}
-          {associatePhotos.length > 0 && (
-            <div className="relative z-10 flex flex-col items-center gap-1.5 mt-5 animate-fade-in opacity-0" style={{ animationDelay: '0.7s', animationFillMode: 'forwards' }}>
-              <div className="flex -space-x-2">
-                {associatePhotos.slice(0, 8).map((a, i) => (
-                  <img
-                    key={i}
-                    src={a.photo_url}
-                    alt={`${a.first_name} ${a.last_name}`}
-                    className="h-9 w-9 rounded-full ring-2 ring-background object-cover shadow-md"
-                  />
-                ))}
-                <div className="h-9 w-9 rounded-full ring-2 ring-background bg-primary text-primary-foreground flex items-center justify-center text-[9px] font-bold shadow-md">
-                  +more
-                </div>
-              </div>
-              <span className="text-[10px] text-muted-foreground font-semibold tracking-wide">
-                {language === 'it' ? 'Mentor verificati' : 'Verified mentors'}
-              </span>
-            </div>
-          )}
-
-          {/* Companies marquee */}
-          <div className="relative z-10 overflow-hidden mt-4 py-2 border-y border-border/40 bg-card/40 -mx-4">
-            <div className="pointer-events-none absolute inset-y-0 left-0 w-10 bg-gradient-to-r from-background to-transparent z-10" />
-            <div className="pointer-events-none absolute inset-y-0 right-0 w-10 bg-gradient-to-l from-background to-transparent z-10" />
-            <div className="flex gap-6 animate-scroll-carousel" style={{ animationDuration: '30s', width: 'max-content' }}>
-              {[...companies, ...companies, ...companies].map((c, i) => (
-                <div key={`c-${i}`} className="flex-shrink-0 flex items-center justify-center h-8" title={c.name}>
-                  <img src={c.logo} alt={c.name} className="h-full w-auto max-w-[70px] object-contain grayscale opacity-75" loading="lazy" />
-                </div>
-              ))}
+              <button
+                onClick={() => { window.location.href = '/talent-pool'; }}
+                className="group relative flex flex-col items-start gap-1.5 overflow-hidden rounded-2xl bg-card/90 backdrop-blur border-2 border-secondary/40 px-4 py-4 text-left active:scale-95 transition-transform"
+                style={{ boxShadow: '0 6px 18px hsla(215, 100%, 60%, 0.18)' }}
+              >
+                <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-secondary/10 text-secondary">
+                  <Building className="h-5 w-5" />
+                </span>
+                <span className="text-sm font-extrabold text-secondary leading-tight">Talent Pool</span>
+                <span className="text-[10px] font-medium text-muted-foreground leading-tight">Get discovered by companies</span>
+              </button>
             </div>
           </div>
 
-          {/* Stat chips */}
-          <div className="relative z-10 grid grid-cols-3 gap-2 mt-3 animate-fade-in opacity-0" style={{ animationDelay: '0.9s', animationFillMode: 'forwards' }}>
-            <button onClick={() => document.getElementById('testimonials')?.scrollIntoView({ behavior: 'smooth', block: 'start' })} className="flex items-center justify-center gap-1.5 bg-card/80 backdrop-blur-sm border border-primary/25 rounded-xl px-1 py-2 active:scale-95 transition-transform">
-              <Star className="h-3.5 w-3.5 text-primary flex-shrink-0" />
-              <div className="flex flex-col items-start leading-none">
-                <span className="text-[13px] font-bold text-primary">{satisfactionCount}%</span>
-                <span className="text-[8px] text-muted-foreground font-medium">{language === 'it' ? 'Soddisf.' : 'Satisf.'}</span>
-              </div>
-            </button>
-            <button onClick={handleUniversitiesClick} className="flex items-center justify-center gap-1.5 bg-card/80 backdrop-blur-sm border border-secondary/25 rounded-xl px-1 py-2 active:scale-95 transition-transform">
-              <GraduationCap className="h-3.5 w-3.5 text-secondary flex-shrink-0" />
-              <div className="flex flex-col items-start leading-none">
-                <span className="text-[13px] font-bold text-secondary">{universitiesCount}+</span>
-                <span className="text-[8px] text-muted-foreground font-medium">{language === 'it' ? 'Università' : 'Universit.'}</span>
-              </div>
-            </button>
-            <button onClick={handleCompaniesClick} className="flex items-center justify-center gap-1.5 bg-card/80 backdrop-blur-sm border border-accent/25 rounded-xl px-1 py-2 active:scale-95 transition-transform">
-              <Building className="h-3.5 w-3.5 text-accent flex-shrink-0" />
-              <div className="flex flex-col items-start leading-none">
-                <span className="text-[13px] font-bold text-accent">{companiesCount}+</span>
-                <span className="text-[8px] text-muted-foreground font-medium">{language === 'it' ? 'Aziende' : 'Companies'}</span>
-              </div>
-            </button>
-          </div>
+
         </div>
 
         {/* ============== DESKTOP LAYOUT ============== */}

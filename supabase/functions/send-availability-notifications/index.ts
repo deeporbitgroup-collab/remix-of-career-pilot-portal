@@ -43,13 +43,13 @@ const handler = async (req: Request): Promise<Response> => {
     await resend.emails.send({
       from: "Career Pilot <noreply@careerpilot.it>",
       to: [associate.email],
-      subject: "Disponibilità Inviata con Successo",
+      subject: "Availability Sent Successfully",
       html: `
-        <h2>Disponibilità Confermata</h2>
-        <p>Ciao ${associate.first_name},</p>
-        <p>La tua disponibilità per <strong>${serviceName}</strong> è stata inviata con successo.</p>
-        <p>Il cliente <strong>${client.first_name} ${client.last_name}</strong> riceverà una notifica e potrà selezionare uno degli slot orari proposti.</p>
-        <p>Ti aggiorneremo non appena il cliente farà la sua scelta.</p>
+        <h2>Availability Confirmed</h2>
+        <p>Hi ${associate.first_name},</p>
+        <p>Your availability for <strong>${serviceName}</strong> has been sent successfully.</p>
+        <p>The client <strong>${client.first_name} ${client.last_name}</strong> will receive a notification and will be able to select one of the proposed time slots.</p>
+        <p>We will keep you updated as soon as the client makes their choice.</p>
         <br>
         <p>Career Pilot Team</p>
       `,
@@ -59,13 +59,13 @@ const handler = async (req: Request): Promise<Response> => {
     await resend.emails.send({
       from: "Career Pilot <noreply@careerpilot.it>",
       to: [client.email],
-      subject: "Nuova Disponibilità Ricevuta",
+      subject: "New Availability Received",
       html: `
-        <h2>Disponibilità Ricevuta</h2>
-        <p>Ciao ${client.first_name},</p>
-        <p><strong>${associate.first_name} ${associate.last_name}</strong> ha fornito la sua disponibilità per il servizio <strong>${serviceName}</strong>.</p>
-        <p>Accedi alla tua area personale per visualizzare gli slot disponibili e confermare la tua scelta.</p>
-        <p>Dopo la conferma, potrai procedere con il pagamento.</p>
+        <h2>Availability Received</h2>
+        <p>Hi ${client.first_name},</p>
+        <p><strong>${associate.first_name} ${associate.last_name}</strong> has provided their availability for the service <strong>${serviceName}</strong>.</p>
+        <p>Log in to your personal area to view the available slots and confirm your choice.</p>
+        <p>Once confirmed, you will be able to proceed with the payment.</p>
         <br>
         <p>Career Pilot Team</p>
       `,
@@ -75,14 +75,14 @@ const handler = async (req: Request): Promise<Response> => {
     await resend.emails.send({
       from: "Career Pilot <noreply@careerpilot.it>",
       to: ["careerpilot2025@gmail.com"],
-      subject: "Nuova Disponibilità Fornita",
+      subject: "New Availability Provided",
       html: `
-        <h2>Disponibilità Fornita</h2>
+        <h2>Availability Provided</h2>
         <p><strong>Associate:</strong> ${associate.first_name} ${associate.last_name}</p>
-        <p><strong>Cliente:</strong> ${client.first_name} ${client.last_name}</p>
-        <p><strong>Servizio:</strong> ${serviceName}</p>
-        <p><strong>Slot proposti:</strong> ${timeslots.length}</p>
-        <p>Il cliente deve ora confermare uno slot e procedere con il pagamento.</p>
+        <p><strong>Client:</strong> ${client.first_name} ${client.last_name}</p>
+        <p><strong>Service:</strong> ${serviceName}</p>
+        <p><strong>Proposed slots:</strong> ${timeslots.length}</p>
+        <p>The client must now confirm a slot and proceed with the payment.</p>
       `,
     });
 

@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/carousel";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { Building2, Check, GraduationCap, Briefcase, MousePointerClick } from "lucide-react";
+import { Building2, Check, GraduationCap, Award, Briefcase, MousePointerClick } from "lucide-react";
 
 /**
  * Minimal shape an associate needs to be displayed inside the choice carousel.
@@ -164,7 +164,7 @@ const AssociateChoiceCarousel = ({
                     <div className={cn("flex flex-col", fillHeight ? "gap-1.5" : "gap-2.5")}>
                       {(associate.university || associate.university_2) && (
                         <div className="flex items-start gap-2">
-                          <GraduationCap className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                          <GraduationCap className="mt-0.5 h-4 w-4 shrink-0 text-primary" aria-label="University" />
                           <div className="flex flex-wrap gap-1.5">
                             {associate.university && (
                               <Badge variant="secondary">{associate.university}</Badge>
@@ -180,8 +180,10 @@ const AssociateChoiceCarousel = ({
 
                       {associate.master_program && (
                         <div className="flex items-start gap-2">
-                          <GraduationCap className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-                          <Badge variant="secondary">{associate.master_program}</Badge>
+                          <Award className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" aria-label="Master" />
+                          <Badge variant="secondary" className="border border-amber-200 bg-amber-50 text-amber-700">
+                            {associate.master_program}
+                          </Badge>
                         </div>
                       )}
 

@@ -13,23 +13,23 @@ const VisionSection = () => {
   const goals = [
     {
       icon: Globe,
-      title: "Piattaforma Globale",
-      description: "Espandere la nostra rete a livello internazionale per connettere studenti di tutto il mondo"
+      title: "Global Platform",
+      description: "Expanding our network internationally to connect students from all over the world"
     },
     {
       icon: Users,
-      title: "Matching Automatico", 
-      description: "Algoritmi avanzati per collegare automaticamente ogni studente con il miglior specialista"
+      title: "Automatic Matching",
+      description: "Advanced algorithms to automatically connect every student with the best specialist"
     },
     {
       icon: Target,
-      title: "Personalizzazione AI",
-      description: "Intelligenza artificiale per creare percorsi di studio e carriera completamente personalizzati"
+      title: "AI Personalization",
+      description: "Artificial intelligence to create fully personalized study and career paths"
     },
     {
       icon: Rocket,
       title: "Success Guarantee",
-      description: "Garanzia di successo basata su metriche concrete e risultati misurabili"
+      description: "Success guarantee based on concrete metrics and measurable results"
     }
   ];
 
@@ -38,12 +38,12 @@ const VisionSection = () => {
       <div className="container mx-auto px-4">
         <div ref={titleAnimation.ref} className={`text-center mb-12 md:mb-16 ${titleAnimation.className}`}>
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-primary mb-4 md:mb-6">
-            Visione e Obiettivi
+            Vision and Goals
           </h2>
           <p className="text-base md:text-xl text-steel-gray max-w-4xl mx-auto leading-relaxed px-2">
-            Il nostro obiettivo a lungo termine è rivoluzionare il modo in cui gli studenti 
-            accedono al supporto accademico e professionale, creando un ecosistema digitale 
-            che semplifichi e ottimizzi ogni fase del percorso educativo.
+            Our long-term goal is to revolutionize the way students
+            access academic and professional support, creating a digital ecosystem
+            that simplifies and optimizes every stage of the educational journey.
           </p>
         </div>
 
@@ -52,12 +52,12 @@ const VisionSection = () => {
           <CardContent className="p-12 text-center">
             <Rocket className="h-16 w-16 mx-auto mb-6 animate-float" />
             <h3 className="text-3xl md:text-4xl font-bold mb-6">
-              La Nostra Visione
+              Our Vision
             </h3>
             <p className="text-xl md:text-2xl leading-relaxed max-w-4xl mx-auto opacity-95">
-              "Creare una piattaforma digitale che colleghi automaticamente ogni studente 
-              con il miglior specialista disponibile, trasformando il supporto accademico 
-              in un servizio accessibile, personalizzato e di alta qualità."
+              "To create a digital platform that automatically connects every student
+              with the best available specialist, transforming academic support
+              into an accessible, personalized, and high-quality service."
             </p>
           </CardContent>
         </Card>
@@ -80,7 +80,7 @@ const VisionSection = () => {
         {/* Timeline */}
         <div ref={timelineAnimation.ref} className={`bg-white rounded-2xl p-8 md:p-12 shadow-card-custom ${timelineAnimation.className}`}>
           <h3 className="text-3xl font-bold text-primary text-center mb-12">
-            Roadmap del Futuro
+            Future Roadmap
           </h3>
           
           <div className="space-y-8">
@@ -89,8 +89,8 @@ const VisionSection = () => {
                 2024
               </div>
               <div>
-                <h4 className="text-xl font-bold text-primary mb-2">Espansione Nazionale</h4>
-                <p className="text-steel-gray">Raggiungere 1000+ studenti supportati e 100+ esperti nella rete</p>
+                <h4 className="text-xl font-bold text-primary mb-2">National Expansion</h4>
+                <p className="text-steel-gray">Reach 1000+ supported students and 100+ experts in the network</p>
               </div>
             </div>
 
@@ -99,8 +99,8 @@ const VisionSection = () => {
                 2025
               </div>
               <div>
-                <h4 className="text-xl font-bold text-primary mb-2">Piattaforma Digitale</h4>
-                <p className="text-steel-gray">Lancio della piattaforma web con matching automatico e dashboard personalizzate</p>
+                <h4 className="text-xl font-bold text-primary mb-2">Digital Platform</h4>
+                <p className="text-steel-gray">Launch of the web platform with automatic matching and personalized dashboards</p>
               </div>
             </div>
 
@@ -109,8 +109,8 @@ const VisionSection = () => {
                 2026
               </div>
               <div>
-                <h4 className="text-xl font-bold text-primary mb-2">Espansione Europea</h4>
-                <p className="text-steel-gray">Apertura in Francia, Germania e Spagna con supporto multilingua</p>
+                <h4 className="text-xl font-bold text-primary mb-2">European Expansion</h4>
+                <p className="text-steel-gray">Opening in France, Germany, and Spain with multilingual support</p>
               </div>
             </div>
 
@@ -120,7 +120,7 @@ const VisionSection = () => {
               </div>
               <div>
                 <h4 className="text-xl font-bold text-primary mb-2">AI Integration</h4>
-                <p className="text-steel-gray">Implementazione di AI per raccomandazioni personalizzate e supporto predittivo</p>
+                <p className="text-steel-gray">Implementation of AI for personalized recommendations and predictive support</p>
               </div>
             </div>
           </div>
@@ -129,16 +129,16 @@ const VisionSection = () => {
         {/* Call to Action */}
         <div className="text-center mt-16">
           <h3 className="text-2xl font-bold text-primary mb-6">
-            Unisciti alla Rivoluzione del Supporto Accademico
+            Join the Academic Support Revolution
           </h3>
           <p className="text-steel-gray mb-8 max-w-2xl mx-auto">
-            Fai parte della comunità che sta ridefinendo il futuro dell'educazione e della carriera professionale
+            Be part of the community that is redefining the future of education and professional careers
           </p>
           <Button 
             size="lg"
             className="bg-gradient-sky text-white hover:opacity-90 shadow-aviation transition-all duration-300 transform hover:scale-105"
           >
-            Scopri Come Partecipare
+            Discover How to Join
           </Button>
         </div>
       </div>

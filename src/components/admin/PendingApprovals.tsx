@@ -76,8 +76,8 @@ const PendingApprovals = ({ onUpdate, roleFilter }: PendingApprovalsProps) => {
       console.error('Error fetching pending users:', error);
       toast({
         variant: "destructive",
-        title: "Errore",
-        description: "Impossibile caricare le richieste in attesa"
+        title: "Error",
+        description: "Unable to load pending requests"
       });
     } finally {
       setIsLoading(false);
@@ -140,16 +140,16 @@ const PendingApprovals = ({ onUpdate, roleFilter }: PendingApprovalsProps) => {
         .from('notifications')
         .insert({
           user_id: userId,
-          title: 'Account Approvato',
-          message: 'Il tuo account è stato approvato. Ora puoi accedere alla tua area riservata.',
+          title: 'Account Approved',
+          message: 'Your account has been approved. You can now access your dashboard.',
           type: 'approval'
         });
 
       if (notifError) console.error('Error creating notification:', notifError);
 
       toast({
-        title: "Utente approvato",
-        description: "L'utente può ora accedere alla piattaforma"
+        title: "User approved",
+        description: "The user can now access the platform"
       });
 
       fetchPendingUsers();
@@ -157,7 +157,7 @@ const PendingApprovals = ({ onUpdate, roleFilter }: PendingApprovalsProps) => {
     } catch (error: any) {
       toast({
         variant: "destructive",
-        title: "Errore",
+        title: "Error",
         description: error.message
       });
     } finally {
@@ -217,8 +217,8 @@ const PendingApprovals = ({ onUpdate, roleFilter }: PendingApprovalsProps) => {
       if (logError) console.error('Error logging activity:', logError);
 
       toast({
-        title: "Richiesta rifiutata",
-        description: "L'utente è stato informato del rifiuto"
+        title: "Request rejected",
+        description: "The user has been notified of the rejection"
       });
 
       fetchPendingUsers();
@@ -226,7 +226,7 @@ const PendingApprovals = ({ onUpdate, roleFilter }: PendingApprovalsProps) => {
     } catch (error: any) {
       toast({
         variant: "destructive",
-        title: "Errore",
+        title: "Error",
         description: error.message
       });
     } finally {
@@ -249,7 +249,7 @@ const PendingApprovals = ({ onUpdate, roleFilter }: PendingApprovalsProps) => {
       <Card>
         <CardContent className="text-center py-8">
           <CheckCircle className="h-12 w-12 text-green-500 mx-auto mb-4" />
-          <p className="text-muted-foreground">Nessuna richiesta in attesa</p>
+          <p className="text-muted-foreground">No pending requests</p>
         </CardContent>
       </Card>
     );
@@ -307,7 +307,7 @@ const PendingApprovals = ({ onUpdate, roleFilter }: PendingApprovalsProps) => {
                 ) : (
                   <CheckCircle className="mr-2 h-4 w-4" />
                 )}
-                Approva
+                Approve
               </Button>
               <Button 
                 variant="destructive" 
@@ -320,7 +320,7 @@ const PendingApprovals = ({ onUpdate, roleFilter }: PendingApprovalsProps) => {
                 ) : (
                   <XCircle className="mr-2 h-4 w-4" />
                 )}
-                Rifiuta
+                Reject
               </Button>
             </div>
           </CardContent>

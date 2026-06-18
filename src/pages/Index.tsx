@@ -35,16 +35,25 @@ const Index = () => {
       <div id="partnerships">
         <PartnershipsSection />
       </div>
-      <WhyChooseUsSection />
-      <div id="value-drivers">
+      {/* Mobile redesign: these sections are desktop-only ("Fly higher with us",
+          "Value drivers", and the standalone "Book free check-in" — the check-in
+          lives in the hero on mobile). Desktop is unchanged. */}
+      <div className="hidden md:block">
+        <WhyChooseUsSection />
+      </div>
+      <div id="value-drivers" className="hidden md:block">
         <ValueDriversSection />
       </div>
-      <div id="contact">
-        <ContactSection 
-          isBookingOpen={isBookingOpen} 
-          setIsBookingOpen={setIsBookingOpen} 
+      <div id="contact" className="hidden md:block">
+        <ContactSection
+          isBookingOpen={isBookingOpen}
+          setIsBookingOpen={setIsBookingOpen}
         />
       </div>
+      {/* Discreet hint — mobile only */}
+      <p className="md:hidden px-4 py-4 text-center text-[11px] text-muted-foreground">
+        For the full experience, the team recommends viewing on desktop.
+      </p>
       <Footer />
       <BookingPopup 
         isOpen={isBookingOpen} 

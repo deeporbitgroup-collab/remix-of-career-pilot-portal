@@ -156,25 +156,25 @@ const handler = async (req: Request): Promise<Response> => {
         const emailResponse = await resend.emails.send({
           from: `Career Pilot <${fromEmail}>`,
           to: [recipient.email],
-          subject: `Nuova Comunicazione: ${title}`,
+          subject: `New Announcement: ${title}`,
           html: `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-              <h1 style="color: #333;">Ciao ${recipient.first_name || ''},</h1>
-              <p style="color: #666;">L'amministratore ha caricato un nuovo documento per te.</p>
-              
+              <h1 style="color: #333;">Hi ${recipient.first_name || ''},</h1>
+              <p style="color: #666;">The administrator has uploaded a new document for you.</p>
+
               <div style="background-color: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
-                <h2 style="color: #333; margin-top: 0;">Oggetto: ${title}</h2>
+                <h2 style="color: #333; margin-top: 0;">Subject: ${title}</h2>
                 <p style="color: #666; white-space: pre-wrap;">${content}</p>
               </div>
-              
+
               <p style="color: #666;">
-                ${emailAttachments.length > 0 
-                  ? `I documenti sono allegati a questa email e puoi scaricarli direttamente.` 
-                  : `Accedi alla tua area riservata per visualizzare i dettagli.`}
+                ${emailAttachments.length > 0
+                  ? `The documents are attached to this email and you can download them directly.`
+                  : `Log in to your private area to view the details.`}
               </p>
-              
+
               <p style="color: #999; font-size: 12px; margin-top: 30px;">
-                Questa è una email automatica, per favore non rispondere.
+                This is an automated email, please do not reply.
               </p>
             </div>
           `,

@@ -368,7 +368,7 @@ function StudentsTab({ language, toast }: any) {
                             <Button 
                               size="sm" 
                               variant="outline"
-                              onClick={() => downloadReceipt(receipt.file_url, `ricevuta-${student.first_name}-${student.last_name}.pdf`)}
+                              onClick={() => downloadReceipt(receipt.file_url, `receipt-${student.first_name}-${student.last_name}.pdf`)}
                             >
                               {language === 'it' ? 'Scarica' : 'Download'}
                             </Button>
@@ -568,10 +568,10 @@ function CatalogTab({ language, toast }: any) {
   });
 
   const subcategoryOptions: Record<string, string[]> = {
-    VOLUNTEERING: ['Sociale', 'Educativo', 'Ambientale', 'Sanitario', 'Animali', 'Culturale'],
-    LANGUAGE_COURSE: ['Inglese', 'Francese', 'Italiano', 'Spagnolo', 'Tedesco', 'Cinese', 'Russo'],
-    PUBLIC_SPEAKING: ['Comunicazione Efficace', 'Presentazioni Professionali', 'Debate', 'Public Speaking Avanzato'],
-    EXCHANGE: ['Culturale', 'Accademico', 'Professionale', 'Linguistico'],
+    VOLUNTEERING: ['Social', 'Educational', 'Environmental', 'Healthcare', 'Animals', 'Cultural'],
+    LANGUAGE_COURSE: ['English', 'French', 'Italian', 'Spanish', 'German', 'Chinese', 'Russian'],
+    PUBLIC_SPEAKING: ['Effective Communication', 'Professional Presentations', 'Debate', 'Advanced Public Speaking'],
+    EXCHANGE: ['Cultural', 'Academic', 'Professional', 'Linguistic'],
   };
 
   useEffect(() => {

@@ -63,11 +63,11 @@ serve(async (req: Request) => {
       <body>
         <div class="container">
           <div class="header">
-            <h2>⚠️ ${role === 'STUDENT' ? 'Studente' : 'Azienda'} ha lasciato la Talent Pool</h2>
+            <h2>⚠️ ${role === 'STUDENT' ? 'Student' : 'Company'} has left the Talent Pool</h2>
           </div>
           <div class="content">
             <div class="field">
-              <span class="label">Nome:</span>
+              <span class="label">Name:</span>
               <span class="value">${name}</span>
             </div>
             <div class="field">
@@ -75,11 +75,11 @@ serve(async (req: Request) => {
               <span class="value">${email}</span>
             </div>
             <div class="field">
-              <span class="label">Ruolo:</span>
-              <span class="value">${role === 'STUDENT' ? 'Studente' : 'Azienda'}</span>
+              <span class="label">Role:</span>
+              <span class="value">${role === 'STUDENT' ? 'Student' : 'Company'}</span>
             </div>
             <div class="field">
-              <span class="label">Data:</span>
+              <span class="label">Date:</span>
               <span class="value">${timestamp}</span>
             </div>
           </div>
@@ -91,7 +91,7 @@ serve(async (req: Request) => {
     const { error: adminEmailError } = await resend.emails.send({
       from: "Talent Pool <noreply@careerpilot.it>",
       to: ["careerpilot2025@gmail.com"],
-      subject: `${role === 'STUDENT' ? 'Studente' : 'Azienda'} ha lasciato la Talent Pool: ${name}`,
+      subject: `${role === 'STUDENT' ? 'Student' : 'Company'} has left the Talent Pool: ${name}`,
       html: adminEmailHtml,
     });
 

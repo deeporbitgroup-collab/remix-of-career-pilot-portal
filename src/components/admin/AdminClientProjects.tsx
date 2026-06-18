@@ -204,7 +204,7 @@ const AdminClientProjects = () => {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Progetti Totali</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">Total Projects</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-between">
@@ -216,7 +216,7 @@ const AdminClientProjects = () => {
 
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Con Associate</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">With Associate</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-between">
@@ -228,7 +228,7 @@ const AdminClientProjects = () => {
 
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Pagamenti Verificati</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">Verified Payments</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-between">
@@ -240,7 +240,7 @@ const AdminClientProjects = () => {
 
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Meeting Schedulati</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">Scheduled Meetings</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-between">
@@ -254,22 +254,22 @@ const AdminClientProjects = () => {
       {/* Projects Table */}
       <Card>
         <CardHeader>
-          <CardTitle>Tutti i Progetti Clienti</CardTitle>
+          <CardTitle>All Client Projects</CardTitle>
           <CardDescription>
-            Visualizza tutte le richieste dei clienti, gli associate selezionati e lo stato dei pagamenti
+            View all client requests, selected associates, and payment status
           </CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Cliente</TableHead>
-                <TableHead>Servizio</TableHead>
+                <TableHead>Client</TableHead>
+                <TableHead>Service</TableHead>
                 <TableHead>Associate</TableHead>
-                <TableHead>Stato</TableHead>
-                <TableHead>Pagamento</TableHead>
-                <TableHead>Data</TableHead>
-                <TableHead>Azioni</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Payment</TableHead>
+                <TableHead>Date</TableHead>
+                <TableHead>Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -298,7 +298,7 @@ const AdminClientProjects = () => {
                           <p className="text-sm text-muted-foreground">{project.associate.email}</p>
                         </div>
                       ) : (
-                        <span className="text-muted-foreground">Non selezionato</span>
+                        <span className="text-muted-foreground">Not selected</span>
                       )}
                     </TableCell>
                     <TableCell>
@@ -351,16 +351,16 @@ const AdminClientProjects = () => {
       <Dialog open={!!selectedProject} onOpenChange={() => setSelectedProject(null)}>
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Dettaglio Progetto</DialogTitle>
+            <DialogTitle>Project Detail</DialogTitle>
           </DialogHeader>
           {selectedProject && (
             <div className="space-y-6">
               {/* Client Info */}
               <div>
-                <h4 className="text-sm font-semibold mb-2">Cliente</h4>
+                <h4 className="text-sm font-semibold mb-2">Client</h4>
                 <div className="bg-muted p-4 rounded-lg grid grid-cols-2 gap-2 text-sm">
                   <div>
-                    <span className="text-muted-foreground">Nome:</span>
+                    <span className="text-muted-foreground">Name:</span>
                     <span className="ml-2 font-medium">{selectedProject.client?.first_name} {selectedProject.client?.last_name}</span>
                   </div>
                   <div>
@@ -368,7 +368,7 @@ const AdminClientProjects = () => {
                     <span className="ml-2">{selectedProject.client?.email}</span>
                   </div>
                   <div>
-                    <span className="text-muted-foreground">Telefono:</span>
+                    <span className="text-muted-foreground">Phone:</span>
                     <span className="ml-2">{selectedProject.client?.phone || 'N/A'}</span>
                   </div>
                 </div>
@@ -376,18 +376,18 @@ const AdminClientProjects = () => {
 
               {/* Service Info */}
               <div>
-                <h4 className="text-sm font-semibold mb-2">Servizio</h4>
+                <h4 className="text-sm font-semibold mb-2">Service</h4>
                 <div className="bg-muted p-4 rounded-lg">
                   <p className="font-medium">{selectedProject.service?.name}</p>
                   <p className="text-sm text-muted-foreground">{selectedProject.service?.category}</p>
-                  <p className="text-sm mt-2">Prezzo: €{selectedProject.service?.price}</p>
+                  <p className="text-sm mt-2">Price: €{selectedProject.service?.price}</p>
                 </div>
               </div>
 
               {/* Additional Call Reason */}
               {selectedProject.additional_call_reason && (
                 <div>
-                  <h4 className="text-sm font-semibold mb-2">Motivo Chiamata Aggiuntiva</h4>
+                  <h4 className="text-sm font-semibold mb-2">Additional Call Reason</h4>
                   <div className="bg-muted border border-border p-4 rounded-lg">
                     <p className="text-sm italic">{selectedProject.additional_call_reason}</p>
                   </div>
@@ -510,7 +510,7 @@ const AdminClientProjects = () => {
 
               {selectedProject.associate && (
                 <div>
-                  <h4 className="text-sm font-semibold mb-2">Associate Assegnato</h4>
+                  <h4 className="text-sm font-semibold mb-2">Assigned Associate</h4>
                   <div className="bg-muted p-4 rounded-lg">
                     <p className="font-medium">{selectedProject.associate.first_name} {selectedProject.associate.last_name}</p>
                     <p className="text-sm text-muted-foreground">{selectedProject.associate.email}</p>
@@ -521,13 +521,13 @@ const AdminClientProjects = () => {
               {/* Meeting Slots */}
               {selectedProject.meetingSlots.length > 0 && (
                 <div>
-                  <h4 className="text-sm font-semibold mb-2">Orari Proposti</h4>
+                  <h4 className="text-sm font-semibold mb-2">Proposed Times</h4>
                   <div className="space-y-2">
                     {selectedProject.meetingSlots.map((slot: any) => (
                       <div key={slot.id} className="flex items-center justify-between p-3 bg-muted rounded-lg">
                         <span>{slot.proposed_time}</span>
                         <Badge variant={slot.status === 'selected' ? 'default' : 'secondary'}>
-                          {slot.status === 'selected' ? 'Confermato' : 'Proposto'}
+                          {slot.status === 'selected' ? 'Confirmed' : 'Proposed'}
                         </Badge>
                       </div>
                     ))}
@@ -540,7 +540,7 @@ const AdminClientProjects = () => {
                 <div>
                   <h4 className="text-sm font-semibold mb-2 flex items-center gap-2">
                     <Video className="h-4 w-4" />
-                    Link Google Meet
+                    Google Meet Link
                   </h4>
                   <div className="bg-muted p-4 rounded-lg space-y-3">
                     {selectedProject.google_meet_link ? (
@@ -560,26 +560,26 @@ const AdminClientProjects = () => {
                       <Button 
                         onClick={async () => {
                           if (!meetingLinkInput) {
-                            toast.error("Inserisci un link valido");
+                            toast.error("Enter a valid link");
                             return;
                           }
                           setSavingLink(true);
                           try {
                             await sb.from('client_projects').update({ google_meet_link: meetingLinkInput }).eq('id', selectedProject.id);
                             await sb.functions.invoke('generate-google-meet-link', { body: { projectId: selectedProject.id, meetingLink: meetingLinkInput } });
-                            toast.success("Link salvato e notifiche inviate!");
+                            toast.success("Link saved and notifications sent!");
                             setMeetingLinkInput("");
                             fetchProjects();
                             setSelectedProject({ ...selectedProject, google_meet_link: meetingLinkInput });
                           } catch (e: any) {
-                            toast.error("Errore nel salvataggio");
+                            toast.error("Error while saving");
                           } finally {
                             setSavingLink(false);
                           }
                         }}
                         disabled={savingLink}
                       >
-                        {savingLink ? "Salvo..." : "Salva"}
+                        {savingLink ? "Saving..." : "Save"}
                       </Button>
                     </div>
                   </div>
@@ -588,10 +588,10 @@ const AdminClientProjects = () => {
 
               {/* Payment Info */}
               <div>
-                <h4 className="text-sm font-semibold mb-2">Pagamento</h4>
+                <h4 className="text-sm font-semibold mb-2">Payment</h4>
                 <div className="bg-muted p-4 rounded-lg">
                   <div className="flex justify-between items-center">
-                    <span>Stato:</span>
+                    <span>Status:</span>
                     <Badge variant={paymentLabels[selectedProject.order?.payment_status]?.variant || 'outline'}>
                       {paymentLabels[selectedProject.order?.payment_status]?.label || selectedProject.order?.payment_status}
                     </Badge>
@@ -634,7 +634,7 @@ const AdminClientProjects = () => {
 
               {/* Shared Documents (Admin View) */}
               <div>
-                <h4 className="text-sm font-semibold mb-2">Documenti Condivisi</h4>
+                <h4 className="text-sm font-semibold mb-2">Shared Documents</h4>
                 <SharedDocuments 
                   projectId={selectedProject.id}
                   uploaderId="admin"

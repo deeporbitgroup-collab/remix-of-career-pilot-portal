@@ -34,32 +34,32 @@ serve(async (req) => {
 
     // Send email to admin
     const adminEmailHtml = `
-      <h2>Nuova Candidatura Pathways</h2>
-      <p><strong>Studente:</strong> ${studentName} (${studentEmail})</p>
+      <h2>New Pathways Application</h2>
+      <p><strong>Student:</strong> ${studentName} (${studentEmail})</p>
       <p><strong>Provider:</strong> ${providerName}</p>
-      <p><strong>Categoria:</strong> ${category}</p>
-      <p><strong>Sottocategoria:</strong> ${subcategory}</p>
-      <p><strong>Scuola:</strong> ${school}</p>
-      <p><strong>Telefono:</strong> ${phone}</p>
-      <p><strong>Periodo:</strong> ${periodFrom} - ${periodTo}</p>
-      <h3>Motivazione:</h3>
+      <p><strong>Category:</strong> ${category}</p>
+      <p><strong>Subcategory:</strong> ${subcategory}</p>
+      <p><strong>School:</strong> ${school}</p>
+      <p><strong>Phone:</strong> ${phone}</p>
+      <p><strong>Period:</strong> ${periodFrom} - ${periodTo}</p>
+      <h3>Motivation:</h3>
       <p>${motivation}</p>
       <p><small>Timestamp: ${new Date().toISOString()}</small></p>
     `;
 
     // Send email to student
     const studentEmailHtml = `
-      <h2>Conferma Candidatura - Pathways</h2>
-      <p>Gentile ${studentName},</p>
-      <p>Abbiamo ricevuto la tua candidatura per <strong>${providerName}</strong>.</p>
-      <p><strong>Dettagli:</strong></p>
+      <h2>Application Confirmation - Pathways</h2>
+      <p>Dear ${studentName},</p>
+      <p>We have received your application for <strong>${providerName}</strong>.</p>
+      <p><strong>Details:</strong></p>
       <ul>
-        <li>Categoria: ${category}</li>
-        <li>Sottocategoria: ${subcategory}</li>
-        <li>Periodo: ${periodFrom} - ${periodTo}</li>
+        <li>Category: ${category}</li>
+        <li>Subcategory: ${subcategory}</li>
+        <li>Period: ${periodFrom} - ${periodTo}</li>
       </ul>
-      <p>Ti contatteremo presto con aggiornamenti.</p>
-      <p>Cordiali saluti,<br>Team Pathways</p>
+      <p>We will be in touch soon with updates.</p>
+      <p>Best regards,<br>The Pathways Team</p>
     `;
 
     // Send to admin
@@ -72,7 +72,7 @@ serve(async (req) => {
       body: JSON.stringify({
         from: `Pathways <${fromEmail}>`,
         to: isTestMode ? [allowedTestRecipient] : [ADMIN_EMAIL],
-        subject: `Nuova candidatura – ${category} – ${studentName} – ${providerName}`,
+        subject: `New application – ${category} – ${studentName} – ${providerName}`,
         html: adminEmailHtml,
       }),
     });
@@ -91,7 +91,7 @@ serve(async (req) => {
       body: JSON.stringify({
         from: `Pathways <${fromEmail}>`,
         to: isTestMode ? [allowedTestRecipient] : [studentEmail],
-        subject: 'Conferma candidatura - Pathways',
+        subject: 'Application Confirmation - Pathways',
         html: studentEmailHtml,
       }),
     });

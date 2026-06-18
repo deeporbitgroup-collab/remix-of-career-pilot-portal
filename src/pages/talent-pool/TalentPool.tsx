@@ -25,7 +25,7 @@ const TalentPoolContent = () => {
   };
 
   return (
-    <div className="min-h-screen relative flex flex-col animate-fade-in">
+    <div className="h-[100svh] overflow-hidden relative flex flex-col animate-fade-in">
       {/* Background Image with Overlay */}
       <div 
         className="fixed inset-0 z-0 animate-scale-in"
@@ -65,9 +65,9 @@ const TalentPoolContent = () => {
       </nav>
 
       {/* Main Content */}
-      <div ref={containerRef} className="relative z-10 flex-1 flex flex-col container mx-auto px-4 md:px-6 py-6 md:py-8 pb-4">
+      <div ref={containerRef} className="relative z-10 flex-1 min-h-0 flex flex-col justify-center container mx-auto px-4 md:px-6 py-3 md:py-4">
         {/* WIP / Expansion Banner */}
-        <div className="max-w-4xl mx-auto w-full mb-6 md:mb-8">
+        <div className="max-w-4xl mx-auto w-full mb-3 md:mb-4">
           <div className="relative overflow-hidden rounded-xl border-2 border-amber-400/60 bg-gradient-to-r from-amber-500/15 via-amber-400/10 to-amber-500/15 backdrop-blur-md shadow-xl shadow-amber-500/10 p-4 md:p-5">
             <div className="absolute -top-10 -right-10 w-32 h-32 bg-amber-400/20 rounded-full blur-2xl" />
             <div className="relative flex items-start gap-3 md:gap-4">
@@ -92,13 +92,13 @@ const TalentPoolContent = () => {
         </div>
 
         {/* Hero Section */}
-        <div className="text-center mb-6 md:mb-8">
+        <div className="text-center mb-3 md:mb-4">
           <div {...getItemProps(0)} className="inline-flex items-center gap-2 bg-slate-900/70 border border-sky-500/40 text-sky-100 px-4 py-2 rounded text-xs font-bold mb-4 backdrop-blur-sm shadow-lg">
             <Shield className="h-3.5 w-3.5 text-sky-400" />
             {t('landing.hero.badge')}
           </div>
           
-          <h1 {...getItemProps(1)} className="text-3xl md:text-4xl lg:text-5xl font-bold text-sky-50 mb-3 tracking-tight drop-shadow-lg px-4">
+          <h1 {...getItemProps(1)} className="text-2xl md:text-3xl lg:text-4xl font-bold text-sky-50 mb-2 tracking-tight drop-shadow-lg px-4">
             {t('landing.hero.title')}
           </h1>
           <div {...getItemProps(2)} className="w-24 h-0.5 bg-gradient-to-r from-transparent via-sky-500 to-transparent mx-auto mb-3"></div>
@@ -110,8 +110,8 @@ const TalentPoolContent = () => {
           </p>
         </div>
         
-        {/* Value Proposition - Elite Style */}
-        <div className="grid md:grid-cols-2 gap-4 max-w-4xl mx-auto mb-6 md:mb-8">
+        {/* Value Proposition - Elite Style (desktop only; mobile keeps the screen to the access cards) */}
+        <div className="hidden md:grid md:grid-cols-2 gap-4 max-w-4xl mx-auto mb-4">
           <div {...getItemProps(5)} className="bg-slate-900/50 border border-emerald-500/30 rounded-lg p-5 backdrop-blur-md hover:border-emerald-500/50 transition-all shadow-lg">
             <div className="flex items-center gap-4">
               <div className="h-12 w-12 rounded bg-gradient-to-br from-emerald-500/20 to-emerald-600/10 border border-emerald-500/30 flex items-center justify-center flex-shrink-0">
@@ -152,22 +152,23 @@ const TalentPoolContent = () => {
         </div>
 
         {/* Role Selection - Premium Cards */}
-        <div className="flex items-center justify-center mb-6">
+        <div className="flex items-center justify-center">
           <div className="w-full max-w-5xl">
-            <h2 className="text-xl md:text-2xl font-bold text-sky-50 text-center mb-4 md:mb-6 tracking-tight">
+            <h2 className="text-lg md:text-2xl font-bold text-sky-50 text-center mb-3 md:mb-4 tracking-tight">
               {t('landing.roleSelection.title')}
             </h2>
-            
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+
+            {/* Desktop: 3-up grid. Mobile: swipe the access cards horizontally. */}
+            <div className="grid md:grid-cols-3 gap-5 max-md:-mx-4 max-md:flex max-md:snap-x max-md:snap-mandatory max-md:gap-3 max-md:overflow-x-auto max-md:px-4 max-md:pb-2">
               {/* Admin Card */}
               <Card 
                 {...getItemProps(7)}
-                className="group relative overflow-hidden border border-slate-700/50 hover:border-sky-500/50 transition-all duration-500 cursor-pointer bg-slate-900/70 backdrop-blur-xl hover:shadow-2xl hover:shadow-sky-500/10 hover:-translate-y-2 hover:scale-105"
+                className="group relative overflow-hidden border border-slate-700/50 hover:border-sky-500/50 transition-all duration-500 cursor-pointer bg-slate-900/70 backdrop-blur-xl hover:shadow-2xl hover:shadow-sky-500/10 hover:-translate-y-2 hover:scale-105 max-md:snap-center max-md:shrink-0 max-md:w-[80vw]"
                 onClick={() => handleRoleSelect('admin')}
               >
                 <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-sky-500/5 to-transparent rounded-full -mr-16 -mt-16 group-hover:scale-150 transition-transform duration-700" />
-                <div className="relative p-6">
-                  <div className="mb-5 flex justify-center">
+                <div className="relative p-5">
+                  <div className="mb-3 flex justify-center">
                     <div className="h-16 w-16 rounded bg-gradient-to-br from-sky-500 to-sky-600 border border-sky-400/20 flex items-center justify-center shadow-xl shadow-sky-500/20 group-hover:scale-105 transition-transform duration-500">
                       <Shield className="h-8 w-8 text-slate-950" />
                     </div>
@@ -175,7 +176,7 @@ const TalentPoolContent = () => {
                   <h3 className="text-xl font-bold text-sky-50 text-center mb-2 tracking-tight">
                     {t('landing.roleSelection.admin.title')}
                   </h3>
-                  <p className="text-slate-400 text-center mb-6 text-xs leading-relaxed">
+                  <p className="text-slate-400 text-center mb-4 text-xs leading-relaxed">
                     {t('landing.roleSelection.admin.description')}
                   </p>
                   <Button className="w-full bg-gradient-to-r from-sky-500 to-sky-600 hover:from-sky-600 hover:to-sky-700 text-slate-950 shadow-lg font-bold text-sm tracking-wide">
@@ -187,12 +188,12 @@ const TalentPoolContent = () => {
               {/* Student Card */}
               <Card 
                 {...getItemProps(8)}
-                className="group relative overflow-hidden border border-slate-700/50 hover:border-sky-500/50 transition-all duration-500 cursor-pointer bg-slate-900/70 backdrop-blur-xl hover:shadow-2xl hover:shadow-sky-500/10 hover:-translate-y-2 hover:scale-105"
+                className="group relative overflow-hidden border border-slate-700/50 hover:border-sky-500/50 transition-all duration-500 cursor-pointer bg-slate-900/70 backdrop-blur-xl hover:shadow-2xl hover:shadow-sky-500/10 hover:-translate-y-2 hover:scale-105 max-md:snap-center max-md:shrink-0 max-md:w-[80vw]"
                 onClick={() => handleRoleSelect('student')}
               >
                 <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-sky-500/5 to-transparent rounded-full -mr-16 -mt-16 group-hover:scale-150 transition-transform duration-700" />
-                <div className="relative p-6">
-                  <div className="mb-5 flex justify-center">
+                <div className="relative p-5">
+                  <div className="mb-3 flex justify-center">
                     <div className="h-16 w-16 rounded bg-gradient-to-br from-slate-700 to-slate-800 border border-sky-500/20 flex items-center justify-center shadow-xl shadow-sky-500/10 group-hover:scale-105 transition-transform duration-500">
                       <Users className="h-8 w-8 text-sky-400" />
                     </div>
@@ -200,7 +201,7 @@ const TalentPoolContent = () => {
                   <h3 className="text-xl font-bold text-sky-50 text-center mb-2 tracking-tight">
                     {t('landing.roleSelection.student.title')}
                   </h3>
-                  <p className="text-slate-400 text-center mb-6 text-xs leading-relaxed">
+                  <p className="text-slate-400 text-center mb-4 text-xs leading-relaxed">
                     {t('landing.roleSelection.student.description')}
                   </p>
                   <Button className="w-full bg-slate-800 hover:bg-slate-700 border border-sky-500/30 hover:border-sky-500/50 text-sky-100 shadow-lg font-bold text-sm tracking-wide">
@@ -212,12 +213,12 @@ const TalentPoolContent = () => {
               {/* Company Card */}
               <Card 
                 {...getItemProps(9)}
-                className="group relative overflow-hidden border border-slate-700/50 hover:border-emerald-500/50 transition-all duration-500 cursor-pointer bg-slate-900/70 backdrop-blur-xl hover:shadow-2xl hover:shadow-emerald-500/10 hover:-translate-y-2 hover:scale-105"
+                className="group relative overflow-hidden border border-slate-700/50 hover:border-emerald-500/50 transition-all duration-500 cursor-pointer bg-slate-900/70 backdrop-blur-xl hover:shadow-2xl hover:shadow-emerald-500/10 hover:-translate-y-2 hover:scale-105 max-md:snap-center max-md:shrink-0 max-md:w-[80vw]"
                 onClick={() => handleRoleSelect('company')}
               >
                 <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-emerald-500/5 to-transparent rounded-full -mr-16 -mt-16 group-hover:scale-150 transition-transform duration-700" />
-                <div className="relative p-6">
-                  <div className="mb-5 flex justify-center">
+                <div className="relative p-5">
+                  <div className="mb-3 flex justify-center">
                     <div className="h-16 w-16 rounded bg-gradient-to-br from-emerald-600 to-emerald-700 border border-emerald-400/20 flex items-center justify-center shadow-xl shadow-emerald-500/20 group-hover:scale-105 transition-transform duration-500">
                       <Building className="h-8 w-8 text-white" />
                     </div>
@@ -225,7 +226,7 @@ const TalentPoolContent = () => {
                   <h3 className="text-xl font-bold text-sky-50 text-center mb-2 tracking-tight">
                     {t('landing.roleSelection.company.title')}
                   </h3>
-                  <p className="text-slate-400 text-center mb-6 text-xs leading-relaxed">
+                  <p className="text-slate-400 text-center mb-4 text-xs leading-relaxed">
                     {t('landing.roleSelection.company.description')}
                   </p>
                   <Button className="w-full bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white shadow-lg font-bold text-sm tracking-wide">

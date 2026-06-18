@@ -19,13 +19,13 @@ const handler = async (req: Request): Promise<Response> => {
     await resend.emails.send({
       from: "Career Pilot <noreply@careerpilot.it>",
       to: [associateEmail],
-      subject: `Nuova richiesta da ${clientName}`,
+      subject: `New request from ${clientName}`,
       html: `
-        <h2>Nuova Richiesta Cliente</h2>
-        <p>Ciao ${associateName},</p>
-        <p>Hai ricevuto una nuova richiesta da <strong>${clientName}</strong>.</p>
-        <p><strong>Servizio:</strong> ${serviceName}</p>
-        <p>Accedi alla tua dashboard per visualizzare i dettagli e proporre le tue disponibilità orarie.</p>
+        <h2>New Client Request</h2>
+        <p>Hi ${associateName},</p>
+        <p>You have received a new request from <strong>${clientName}</strong>.</p>
+        <p><strong>Service:</strong> ${serviceName}</p>
+        <p>Log in to your dashboard to view the details and propose your available time slots.</p>
         <br>
         <p>Career Pilot Team</p>
       `,

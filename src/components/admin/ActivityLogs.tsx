@@ -65,11 +65,11 @@ const ActivityLogs = () => {
   const getActionLabel = (action: string) => {
     switch(action) {
       case 'USER_APPROVED':
-        return 'Utente Approvato';
+        return 'User Approved';
       case 'USER_REJECTED':
-        return 'Utente Rifiutato';
+        return 'User Rejected';
       case 'KPI_UPDATED':
-        return 'KPI Aggiornato';
+        return 'KPI Updated';
       default:
         return action;
     }
@@ -90,13 +90,13 @@ const ActivityLogs = () => {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <FileText className="h-5 w-5" />
-          Log Attività Recenti
+          Recent Activity Log
         </CardTitle>
       </CardHeader>
       <CardContent>
         {logs.length === 0 ? (
           <p className="text-center py-8 text-muted-foreground">
-            Nessuna attività registrata
+            No activity recorded
           </p>
         ) : (
           <div className="space-y-3">
@@ -112,7 +112,7 @@ const ActivityLogs = () => {
                   </div>
                   {log.actor && (
                     <p className="text-sm text-muted-foreground mt-1">
-                      Eseguito da: {log.actor.first_name} {log.actor.last_name} ({log.actor.email})
+                      Performed by: {log.actor.first_name} {log.actor.last_name} ({log.actor.email})
                     </p>
                   )}
                   {log.meta && Object.keys(log.meta).length > 0 && (

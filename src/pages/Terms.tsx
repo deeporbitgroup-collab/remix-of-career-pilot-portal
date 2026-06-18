@@ -15,126 +15,126 @@ const Terms = () => {
           className="mb-6"
         >
           <ArrowLeft className="h-4 w-4 mr-2" />
-          Torna Indietro
+          Back
         </Button>
 
         <Card>
           <CardHeader>
             <CardTitle className="text-3xl text-center text-primary">
-              Termini e Condizioni
+              Terms and Conditions
             </CardTitle>
           </CardHeader>
           <CardContent className="prose prose-sm max-w-none space-y-6">
             <section>
-              <h2 className="text-xl font-semibold text-primary mb-3">1. Introduzione</h2>
+              <h2 className="text-xl font-semibold text-primary mb-3">1. Introduction</h2>
               <p className="text-steel-gray leading-relaxed">
-                Benvenuto su Career Pilot. Utilizzando i nostri servizi, accetti di essere vincolato dai presenti Termini e Condizioni. 
-                Ti preghiamo di leggerli attentamente prima di utilizzare la piattaforma.
+                Welcome to Career Pilot. By using our services, you agree to be bound by these Terms and Conditions.
+                Please read them carefully before using the platform.
               </p>
             </section>
 
             <section>
-              <h2 className="text-xl font-semibold text-primary mb-3">2. Servizi Offerti</h2>
+              <h2 className="text-xl font-semibold text-primary mb-3">2. Services Offered</h2>
               <p className="text-steel-gray leading-relaxed">
-                Career Pilot offre servizi di consulenza per studenti e intermediazione tra studenti e aziende attraverso la Talent Pool. 
-                I nostri servizi includono:
+                Career Pilot offers consulting services for students and intermediation between students and companies through the Talent Pool.
+                Our services include:
               </p>
               <ul className="list-disc pl-6 text-steel-gray space-y-2">
-                <li>Consulenze personalizzate per percorsi accademici e professionali</li>
-                <li>Accesso alla Talent Pool per studenti verificati</li>
-                <li>Connessione diretta con aziende partner</li>
-                <li>Supporto nella ricerca di opportunità di stage e lavoro</li>
+                <li>Personalized consulting for academic and professional pathways</li>
+                <li>Access to the Talent Pool for verified students</li>
+                <li>Direct connection with partner companies</li>
+                <li>Support in the search for internship and job opportunities</li>
               </ul>
             </section>
 
             <section>
-              <h2 className="text-xl font-semibold text-primary mb-3">3. Registrazione e Account</h2>
+              <h2 className="text-xl font-semibold text-primary mb-3">3. Registration and Account</h2>
               <p className="text-steel-gray leading-relaxed">
-                Per utilizzare alcuni servizi della piattaforma, è necessario creare un account. Ti impegni a:
+                To use certain platform services, you need to create an account. You agree to:
               </p>
               <ul className="list-disc pl-6 text-steel-gray space-y-2">
-                <li>Fornire informazioni accurate, complete e aggiornate</li>
-                <li>Mantenere la sicurezza della password del tuo account</li>
-                <li>Notificarci immediatamente in caso di uso non autorizzato del tuo account</li>
-                <li>Essere responsabile di tutte le attività che avvengono tramite il tuo account</li>
+                <li>Provide accurate, complete, and up-to-date information</li>
+                <li>Maintain the security of your account password</li>
+                <li>Notify us immediately in case of unauthorized use of your account</li>
+                <li>Be responsible for all activities that occur through your account</li>
               </ul>
             </section>
 
             <section>
-              <h2 className="text-xl font-semibold text-primary mb-3">4. Talent Pool - Studenti</h2>
+              <h2 className="text-xl font-semibold text-primary mb-3">4. Talent Pool - Students</h2>
               <p className="text-steel-gray leading-relaxed">
-                L'accesso alla Talent Pool per studenti è soggetto alle seguenti condizioni:
+                Access to the Talent Pool for students is subject to the following conditions:
               </p>
               <ul className="list-disc pl-6 text-steel-gray space-y-2">
-                <li>Approvazione della registrazione da parte di Career Pilot</li>
-                <li>Pagamento di un abbonamento mensile di €5</li>
-                <li>In caso di selezione da parte di un'azienda, pagamento di €85 (inclusi i mesi di abbonamento già pagati)</li>
-                <li>Mantenimento di un profilo aggiornato e professionale</li>
+                <li>Approval of registration by Career Pilot</li>
+                <li>Payment of a monthly subscription of €5</li>
+                <li>If selected by a company, payment of €85 (including the subscription months already paid)</li>
+                <li>Maintaining an up-to-date and professional profile</li>
               </ul>
             </section>
 
             <section>
-              <h2 className="text-xl font-semibold text-primary mb-3">5. Talent Pool - Aziende</h2>
+              <h2 className="text-xl font-semibold text-primary mb-3">5. Talent Pool - Companies</h2>
               <p className="text-steel-gray leading-relaxed">
-                L'accesso alla Talent Pool per le aziende è gratuito e soggetto alle seguenti condizioni:
+                Access to the Talent Pool for companies is free and subject to the following conditions:
               </p>
               <ul className="list-disc pl-6 text-steel-gray space-y-2">
-                <li>Registrazione e approvazione da parte di Career Pilot</li>
-                <li>Utilizzo responsabile delle informazioni degli studenti</li>
-                <li>Rispetto delle normative sul lavoro e sugli stage</li>
+                <li>Registration and approval by Career Pilot</li>
+                <li>Responsible use of students' information</li>
+                <li>Compliance with employment and internship regulations</li>
               </ul>
             </section>
 
             <section>
-              <h2 className="text-xl font-semibold text-primary mb-3">6. Pagamenti e Rimborsi</h2>
+              <h2 className="text-xl font-semibold text-primary mb-3">6. Payments and Refunds</h2>
               <p className="text-steel-gray leading-relaxed">
-                Tutti i pagamenti sono processati in modo sicuro. I pagamenti per l'abbonamento mensile alla Talent Pool non sono rimborsabili. 
-                In caso di selezione da parte di un'azienda, il pagamento finale di €85 include gli abbonamenti già versati.
+                All payments are processed securely. Payments for the monthly Talent Pool subscription are non-refundable.
+                If selected by a company, the final payment of €85 includes the subscriptions already paid.
               </p>
             </section>
 
             <section>
-              <h2 className="text-xl font-semibold text-primary mb-3">7. Proprietà Intellettuale</h2>
+              <h2 className="text-xl font-semibold text-primary mb-3">7. Intellectual Property</h2>
               <p className="text-steel-gray leading-relaxed">
-                Tutti i contenuti presenti sulla piattaforma Career Pilot, inclusi testi, grafiche, loghi, icone e software, 
-                sono di proprietà di Career Pilot o dei suoi fornitori di contenuti e sono protetti dalle leggi italiane e internazionali 
-                sul diritto d'autore.
+                All content on the Career Pilot platform, including text, graphics, logos, icons, and software,
+                is the property of Career Pilot or its content providers and is protected by Italian and international
+                copyright laws.
               </p>
             </section>
 
             <section>
-              <h2 className="text-xl font-semibold text-primary mb-3">8. Limitazione di Responsabilità</h2>
+              <h2 className="text-xl font-semibold text-primary mb-3">8. Limitation of Liability</h2>
               <p className="text-steel-gray leading-relaxed">
-                Career Pilot si impegna a fornire servizi di alta qualità, tuttavia:
+                Career Pilot is committed to providing high-quality services; however:
               </p>
               <ul className="list-disc pl-6 text-steel-gray space-y-2">
-                <li>Non garantiamo il successo nella ricerca di opportunità di lavoro o stage</li>
-                <li>Non siamo responsabili per eventuali danni derivanti dall'utilizzo della piattaforma</li>
-                <li>Non siamo responsabili per il comportamento di studenti o aziende registrate</li>
+                <li>We do not guarantee success in the search for job or internship opportunities</li>
+                <li>We are not responsible for any damages arising from the use of the platform</li>
+                <li>We are not responsible for the conduct of registered students or companies</li>
               </ul>
             </section>
 
             <section>
-              <h2 className="text-xl font-semibold text-primary mb-3">9. Modifiche ai Termini</h2>
+              <h2 className="text-xl font-semibold text-primary mb-3">9. Changes to the Terms</h2>
               <p className="text-steel-gray leading-relaxed">
-                Ci riserviamo il diritto di modificare questi Termini e Condizioni in qualsiasi momento. 
-                Le modifiche saranno efficaci immediatamente dopo la loro pubblicazione sulla piattaforma. 
-                Continuando a utilizzare i nostri servizi dopo tali modifiche, accetti i nuovi termini.
+                We reserve the right to modify these Terms and Conditions at any time.
+                Changes will be effective immediately upon their publication on the platform.
+                By continuing to use our services after such changes, you accept the new terms.
               </p>
             </section>
 
             <section>
-              <h2 className="text-xl font-semibold text-primary mb-3">10. Legge Applicabile</h2>
+              <h2 className="text-xl font-semibold text-primary mb-3">10. Applicable Law</h2>
               <p className="text-steel-gray leading-relaxed">
-                Questi Termini e Condizioni sono regolati dalla legge italiana. Qualsiasi controversia sarà sottoposta 
-                alla giurisdizione esclusiva dei tribunali italiani.
+                These Terms and Conditions are governed by Italian law. Any dispute will be subject
+                to the exclusive jurisdiction of the Italian courts.
               </p>
             </section>
 
             <section>
-              <h2 className="text-xl font-semibold text-primary mb-3">11. Contatti</h2>
+              <h2 className="text-xl font-semibold text-primary mb-3">11. Contact</h2>
               <p className="text-steel-gray leading-relaxed">
-                Per qualsiasi domanda riguardo a questi Termini e Condizioni, puoi contattarci all'indirizzo: 
+                For any questions regarding these Terms and Conditions, you can contact us at:
                 <a href="mailto:Careerpilot2025@gmail.com" className="text-primary hover:underline ml-1">
                   Careerpilot2025@gmail.com
                 </a>
@@ -143,7 +143,7 @@ const Terms = () => {
 
             <div className="mt-8 pt-6 border-t border-gray-200">
               <p className="text-sm text-steel-gray text-center">
-                Ultimo aggiornamento: Ottobre 2025
+                Last updated: October 2025
               </p>
             </div>
           </CardContent>

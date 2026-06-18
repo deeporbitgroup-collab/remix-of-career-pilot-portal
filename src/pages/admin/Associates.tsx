@@ -71,8 +71,8 @@ export default function Associates() {
     } catch (error) {
       console.error("Error fetching associates:", error);
       toast({
-        title: "Errore",
-        description: "Impossibile caricare gli associate",
+        title: "Error",
+        description: "Unable to load associates",
         variant: "destructive"
       });
     } finally {
@@ -111,7 +111,7 @@ export default function Associates() {
     };
     return (
       <Badge variant={variants[status] || "outline"}>
-        {status === 'approved' ? 'Approvato' : status === 'pending' ? 'In attesa' : status === 'rejected' ? 'Rifiutato' : status}
+        {status === 'approved' ? 'Approved' : status === 'pending' ? 'Pending' : status === 'rejected' ? 'Rejected' : status}
       </Badge>
     );
   };
@@ -143,10 +143,10 @@ export default function Associates() {
         const fullUrl = signed?.signedUrl?.startsWith('http') 
           ? signed.signedUrl 
           : `https://gqmmgyoviwhgqvzqbbja.supabase.co/storage/v1${signed?.signedUrl}`;
-        if (!fullUrl) throw new Error('URL non generato');
+        if (!fullUrl) throw new Error('URL not generated');
 
         const response = await fetch(fullUrl);
-        if (!response.ok) throw new Error('Download non riuscito');
+        if (!response.ok) throw new Error('Download failed');
         const blob = await response.blob();
         const objectUrl = URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -158,16 +158,16 @@ export default function Associates() {
         URL.revokeObjectURL(objectUrl);
       } else {
         toast({
-          title: "CV non disponibile",
-          description: `${userName} non ha ancora caricato un CV`,
+          title: "CV not available",
+          description: `${userName} has not uploaded a CV yet`,
           variant: "default"
         });
       }
     } catch (error: any) {
       console.error("Error downloading CV:", error);
       toast({
-        title: "Errore",
-        description: error.message || "Impossibile scaricare il CV",
+        title: "Error",
+        description: error.message || "Unable to download the CV",
         variant: "destructive"
       });
     }
@@ -194,8 +194,8 @@ export default function Associates() {
     } catch (error) {
       console.error("Error fetching availability:", error);
       toast({
-        title: "Errore",
-        description: "Impossibile caricare la disponibilità",
+        title: "Error",
+        description: "Unable to load availability",
         variant: "destructive"
       });
     } finally {
@@ -233,7 +233,7 @@ export default function Associates() {
                     ))}
                   </div>
                 ) : (
-                  <p className="text-sm text-muted-foreground">Non disponibile</p>
+                  <p className="text-sm text-muted-foreground">Not available</p>
                 )}
               </div>
             );
@@ -261,11 +261,11 @@ export default function Associates() {
             className="mb-4"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Torna alla Dashboard
+            Back to Dashboard
           </Button>
-          <h1 className="text-3xl font-bold text-foreground">Gestione Associates</h1>
+          <h1 className="text-3xl font-bold text-foreground">Associates Management</h1>
           <p className="text-muted-foreground mt-2">
-            Visualizza e gestisci tutti gli associate registrati
+            View and manage all registered associates
           </p>
         </div>
 
@@ -273,7 +273,7 @@ export default function Associates() {
           <div className="flex-1 relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Cerca per nome, email o azienda..."
+              placeholder="Search by name, email, or company..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10"
@@ -282,13 +282,13 @@ export default function Associates() {
           <Select value={filterStatus} onValueChange={setFilterStatus}>
             <SelectTrigger className="w-[180px]">
               <Filter className="h-4 w-4 mr-2" />
-              <SelectValue placeholder="Filtra per stato" />
+              <SelectValue placeholder="Filter by status" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Tutti gli stati</SelectItem>
-              <SelectItem value="approved">Approvati</SelectItem>
-              <SelectItem value="pending">In attesa</SelectItem>
-              <SelectItem value="rejected">Rifiutati</SelectItem>
+              <SelectItem value="all">All statuses</SelectItem>
+              <SelectItem value="approved">Approved</SelectItem>
+              <SelectItem value="pending">Pending</SelectItem>
+              <SelectItem value="rejected">Rejected</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -298,7 +298,7 @@ export default function Associates() {
             <CardContent className="text-center py-12">
               <User className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
               <p className="text-muted-foreground">
-                Nessun associate trovato con i criteri di ricerca specificati
+                No associates found matching the specified search criteria
               </p>
             </CardContent>
           </Card>
@@ -353,7 +353,7 @@ export default function Associates() {
                       onClick={(e) => handleOpenProfile(e, associate.id)}
                     >
                       <Eye className="h-4 w-4 mr-1" />
-                      Profilo
+                      Profile
                     </Button>
                     <Button
                       size="sm"
@@ -371,7 +371,7 @@ export default function Associates() {
                       onClick={(e) => handleViewAvailability(e, associate.id)}
                     >
                       <Calendar className="h-4 w-4 mr-1" />
-                      Disp.
+                      Avail.
                     </Button>
                   </div>
                 </CardFooter>
@@ -384,7 +384,7 @@ export default function Associates() {
       <Sheet open={availabilitySheet.open} onOpenChange={(open) => setAvailabilitySheet({ open, userId: null })}>
         <SheetContent className="w-[400px] sm:w-[540px]">
           <SheetHeader>
-            <SheetTitle>Disponibilità settimanale</SheetTitle>
+            <SheetTitle>Weekly availability</SheetTitle>
           </SheetHeader>
           <div className="mt-6">
             {loadingAvailability ? (
@@ -395,7 +395,7 @@ export default function Associates() {
               renderAvailabilityCalendar()
             ) : (
               <p className="text-center text-muted-foreground py-8">
-                Nessuna disponibilità registrata
+                No availability recorded
               </p>
             )}
           </div>

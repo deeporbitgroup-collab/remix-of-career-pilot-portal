@@ -177,6 +177,33 @@
       "rejectedDesc": "La tua registrazione è stata rifiutata"
     }
   },
+  "companyDashboard": {
+    "partner": {
+      "title": "Azienda Convenzionata",
+      "subtitle": "Accesso completo al pool di candidati selezionati e approvati da Career Pilot.",
+      "active": "Attiva",
+      "since": "Partner dal",
+      "verified": "Verificata da Career Pilot",
+      "visibilityNote": "Vedi solo i profili dei candidati ammessi dall'admin e resi visibili al pool.",
+      "statsCandidates": "Candidati",
+      "statsSelected": "Selezionati"
+    },
+    "profile": {
+      "partnershipStatus": "Stato partnership",
+      "partnershipDesc": "La tua azienda è approvata e può esplorare i profili del Talent Pool.",
+      "approved": "Approvata",
+      "companyName": "Nome azienda",
+      "sector": "Settore",
+      "size": "Dimensione",
+      "email": "Email di riferimento",
+      "description": "Descrizione",
+      "viewLinkedin": "Profilo LinkedIn"
+    },
+    "students": {
+      "emptyTitle": "Nessun candidato disponibile al momento",
+      "emptyDesc": "Qui compariranno i profili dei candidati registrati al Talent Pool e approvati dall'admin con accesso attivo."
+    }
+  },
   "adminLogin": {
     "title": "Accesso Admin",
     "subtitle": "Area riservata Career Pilot",

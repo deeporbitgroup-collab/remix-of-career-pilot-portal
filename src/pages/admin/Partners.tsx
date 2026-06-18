@@ -92,7 +92,7 @@ export default function Partners() {
       }
     } catch (error: any) {
       toast({
-        title: "Errore",
+        title: "Error",
         description: error.message,
         variant: "destructive",
       });
@@ -129,9 +129,9 @@ export default function Partners() {
     };
     
     const labels: Record<string, string> = {
-      approved: "Approvato",
-      pending: "In attesa",
-      rejected: "Rifiutato",
+      approved: "Approved",
+      pending: "Pending",
+      rejected: "Rejected",
     };
 
     return (
@@ -191,10 +191,10 @@ export default function Partners() {
       if (dbError) throw dbError;
 
       toast({
-        title: "Contratto caricato",
-        description: existingContract 
-          ? "Il contratto è stato aggiornato con successo"
-          : "Il contratto è stato caricato con successo",
+        title: "Contract uploaded",
+        description: existingContract
+          ? "The contract has been updated successfully"
+          : "The contract has been uploaded successfully",
       });
 
       // Refresh partners and contracts
@@ -203,7 +203,7 @@ export default function Partners() {
       setContractFile(null);
     } catch (error: any) {
       toast({
-        title: "Errore",
+        title: "Error",
         description: error.message,
         variant: "destructive",
       });
@@ -216,8 +216,8 @@ export default function Partners() {
     const contract = partnerContracts[partner.id];
     if (!contract || !contract.storage_path) {
       toast({
-        title: "Errore",
-        description: "Nessun contratto trovato",
+        title: "Error",
+        description: "No contract found",
         variant: "destructive",
       });
       return;
@@ -241,7 +241,7 @@ export default function Partners() {
       URL.revokeObjectURL(url);
     } catch (error: any) {
       toast({
-        title: "Errore download",
+        title: "Download error",
         description: error.message,
         variant: "destructive",
       });
@@ -262,8 +262,8 @@ export default function Partners() {
 
       if (!documents || documents.length === 0) {
         toast({
-          title: "Nessun documento",
-          description: "Il partner non ha caricato documenti",
+          title: "No documents",
+          description: "The partner has not uploaded any documents",
         });
         return;
       }
@@ -290,8 +290,8 @@ export default function Partners() {
       }
 
       toast({
-        title: "Download completato",
-        description: `Scaricati ${documents.length} documenti`,
+        title: "Download complete",
+        description: `Downloaded ${documents.length} documents`,
       });
     } catch (error: any) {
       toast({
@@ -320,14 +320,14 @@ export default function Partners() {
             className="mb-4"
           >
             <ArrowLeft className="mr-2 h-4 w-4" />
-            Torna alla Dashboard
+            Back to Dashboard
           </Button>
           <h1 className="text-3xl font-bold flex items-center gap-3">
             <Building className="h-8 w-8 text-primary" />
-            Gestione Partner
+            Partner Management
           </h1>
           <p className="text-muted-foreground mt-2">
-            Visualizza e gestisci tutti i partner aziendali
+            View and manage all company partners
           </p>
         </div>
 
@@ -338,7 +338,7 @@ export default function Partners() {
               <div className="flex-1 relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
                 <Input
-                  placeholder="Cerca per nome, email o azienda..."
+                  placeholder="Search by name, email or company..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-10"
@@ -347,13 +347,13 @@ export default function Partners() {
               <Select value={filterStatus} onValueChange={setFilterStatus}>
                 <SelectTrigger className="w-full md:w-[200px]">
                   <Filter className="mr-2 h-4 w-4" />
-                  <SelectValue placeholder="Filtra per stato" />
+                  <SelectValue placeholder="Filter by status" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Tutti gli stati</SelectItem>
-                  <SelectItem value="pending">In attesa</SelectItem>
-                  <SelectItem value="approved">Approvati</SelectItem>
-                  <SelectItem value="rejected">Rifiutati</SelectItem>
+                  <SelectItem value="all">All statuses</SelectItem>
+                  <SelectItem value="pending">Pending</SelectItem>
+                  <SelectItem value="approved">Approved</SelectItem>
+                  <SelectItem value="rejected">Rejected</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -390,7 +390,7 @@ export default function Partners() {
                       </div>
                     )}
                     <div className="text-xs text-muted-foreground">
-                      Registrato il {format(new Date(partner.created_at), "dd MMM yyyy", { locale: it })}
+                      Registered on {format(new Date(partner.created_at), "dd MMM yyyy", { locale: it })}
                     </div>
                   </div>
                 </CardContent>
@@ -406,7 +406,7 @@ export default function Partners() {
                       }}
                     >
                       <Upload className="h-4 w-4 mr-1" />
-                      {hasContract ? "Sostituisci" : "Carica"} Contratto
+                      {hasContract ? "Replace" : "Upload"} Contract
                     </Button>
                     {hasContract && (
                       <Button
@@ -425,7 +425,7 @@ export default function Partners() {
                     onClick={() => handleDownloadPartnerDocuments(partner)}
                   >
                     <FileText className="h-4 w-4 mr-2" />
-                    Scarica Documenti Partner
+                    Download Partner Documents
                   </Button>
                 </CardFooter>
               </Card>
@@ -439,8 +439,8 @@ export default function Partners() {
               <Building className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
               <p className="text-muted-foreground">
                 {searchQuery || filterStatus !== "all"
-                  ? "Nessun partner trovato con i filtri applicati"
-                  : "Nessun partner registrato"}
+                  ? "No partners found with the applied filters"
+                  : "No partners registered"}
               </p>
             </CardContent>
           </Card>
@@ -452,15 +452,15 @@ export default function Partners() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
-              {partnerContracts[uploadDialog.partner?.id || ''] ? 'Sostituisci' : 'Carica'} Contratto per {uploadDialog.partner?.company_name}
+              {partnerContracts[uploadDialog.partner?.id || ''] ? 'Replace' : 'Upload'} Contract for {uploadDialog.partner?.company_name}
             </DialogTitle>
             <DialogDescription>
-              Seleziona il file del contratto da caricare per questo partner
+              Select the contract file to upload for this partner
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <Label htmlFor="contract-file">File Contratto</Label>
+              <Label htmlFor="contract-file">Contract File</Label>
               <Input
                 id="contract-file"
                 type="file"
@@ -469,7 +469,7 @@ export default function Partners() {
                 disabled={uploadingContract}
               />
               <p className="text-xs text-muted-foreground mt-1">
-                PDF o DOCX, massimo 10MB
+                PDF or DOCX, maximum 10MB
               </p>
             </div>
             <div className="flex gap-3 justify-end">
@@ -478,14 +478,14 @@ export default function Partners() {
                 onClick={() => setUploadDialog({ open: false, partner: null })}
                 disabled={uploadingContract}
               >
-                Annulla
+                Cancel
               </Button>
               <Button
                 onClick={handleUploadContract}
                 disabled={!contractFile || uploadingContract}
               >
                 {uploadingContract && <RefreshCw className="h-4 w-4 mr-2 animate-spin" />}
-                {uploadingContract ? 'Caricamento...' : 'Carica Contratto'}
+                {uploadingContract ? 'Uploading...' : 'Upload Contract'}
               </Button>
             </div>
           </div>

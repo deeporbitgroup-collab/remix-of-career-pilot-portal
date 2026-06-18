@@ -85,7 +85,7 @@ serve(async (req: Request) => {
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
           <div style="background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%); padding: 30px; text-align: center;">
             <h1 style="color: white; margin: 0;">CareerPilot</h1>
-            <p style="color: #e0e7ff; margin-top: 10px;">Nuovo Messaggio dall'Admin</p>
+            <p style="color: #e0e7ff; margin-top: 10px;">New Message from the Admin</p>
           </div>
           
           <div style="background: white; padding: 30px; border: 1px solid #e5e7eb;">
@@ -96,16 +96,16 @@ serve(async (req: Request) => {
             </div>
             
             <p style="color: #6b7280; font-size: 14px;">
-              <strong>Inviato:</strong> ${timestamp}
+              <strong>Sent:</strong> ${timestamp}
             </p>
-            
+
             <p style="color: #4b5563; line-height: 1.6; margin-top: 20px;">
-              Puoi rispondere a questo messaggio dalla tua dashboard.
+              You can reply to this message from your dashboard.
             </p>
-            
+
             <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb; text-align: center;">
               <p style="color: #6b7280; font-size: 14px; margin: 0;">
-                CareerPilot - Costruiamo Carriere Insieme
+                CareerPilot - Building Careers Together
               </p>
             </div>
           </div>
@@ -115,7 +115,7 @@ serve(async (req: Request) => {
       const { error: emailError } = await resend.emails.send({
         from: "CareerPilot <noreply@careerpilot.it>",
         to: [studentEmail],
-        subject: "Nuovo messaggio da CareerPilot Admin",
+        subject: "New message from CareerPilot Admin",
         html: emailHtml,
       });
 
@@ -128,15 +128,15 @@ serve(async (req: Request) => {
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
           <div style="background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%); padding: 30px; text-align: center;">
             <h1 style="color: white; margin: 0;">CareerPilot</h1>
-            <p style="color: #e0e7ff; margin-top: 10px;">Risposta Studente</p>
+            <p style="color: #e0e7ff; margin-top: 10px;">Student Reply</p>
           </div>
           
           <div style="background: white; padding: 30px; border: 1px solid #e5e7eb;">
-            <h2 style="color: #1e3a8a; margin-top: 0;">Risposta da ${studentName}</h2>
-            
+            <h2 style="color: #1e3a8a; margin-top: 0;">Reply from ${studentName}</h2>
+
             <div style="background: #f3f4f6; padding: 15px; border-radius: 8px; margin: 20px 0;">
-              <p style="margin: 4px 0;"><strong>Oggetto:</strong> ${subject}</p>
-              <p style="margin: 4px 0;"><strong>Studente:</strong> ${studentName}</p>
+              <p style="margin: 4px 0;"><strong>Subject:</strong> ${subject}</p>
+              <p style="margin: 4px 0;"><strong>Student:</strong> ${studentName}</p>
               <p style="margin: 4px 0;"><strong>Email:</strong> ${studentEmail}</p>
             </div>
             
@@ -145,9 +145,9 @@ serve(async (req: Request) => {
             </div>
             
             <p style="color: #6b7280; font-size: 14px;">
-              <strong>Inviato:</strong> ${timestamp}
+              <strong>Sent:</strong> ${timestamp}
             </p>
-            
+
             <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb; text-align: center;">
               <p style="color: #6b7280; font-size: 14px; margin: 0;">
                 CareerPilot Admin
@@ -160,7 +160,7 @@ serve(async (req: Request) => {
       const { error: emailError } = await resend.emails.send({
         from: "CareerPilot <noreply@careerpilot.it>",
         to: ["careerpilot2025@gmail.com"],
-        subject: `Risposta da ${studentName}: ${subject}`,
+        subject: `Reply from ${studentName}: ${subject}`,
         html: emailHtml,
         reply_to: studentEmail
       });
