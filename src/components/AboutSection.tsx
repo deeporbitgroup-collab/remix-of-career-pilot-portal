@@ -4,11 +4,11 @@ import { MapPin, Linkedin, ExternalLink } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useScrollAnimation } from "@/hooks/useScrollAnimation";
 import leoneFassioImg from "@/assets/team/leone-fassio.jpeg";
-import andreaAsset from "@/assets/team/andrea-alivernini.jpg.asset.json";
-import riccardoAsset from "@/assets/team/riccardo-pizzo.jpg.asset.json";
-import lucaAsset from "@/assets/team/luca-spedo.jpg.asset.json";
-import enricoAsset from "@/assets/team/enrico-lutea.jpg.asset.json";
-import elisabettaAsset from "@/assets/team/elisabetta-fabris.jpeg.asset.json";
+import andreaImg from "@/assets/team/andrea-alivernini.jpg";
+import riccardoImg from "@/assets/team/riccardo-pizzo.jpg";
+import lucaImg from "@/assets/team/luca-spedo.jpg";
+import enricoImg from "@/assets/team/enrico-lutea.jpg";
+import elisabettaImg from "@/assets/team/elisabetta-fabris.jpeg";
 
 type Member = {
   name: string;
@@ -51,7 +51,7 @@ const AboutSection = () => {
       location: "Cambridge, MA, USA",
       bio:
         "First year Master in Finance Student at MIT, Head of Ventures at Innovis VC, Investment Research at ISF, Junior Consultant Project Manager at Ohla Group, ESCP Dean's list.",
-      image: andreaAsset.url,
+      image: andreaImg,
       linkedin: "https://www.linkedin.com/in/andrea-alivernini/",
       bw: true,
     },
@@ -61,7 +61,7 @@ const AboutSection = () => {
       location: "Milan, Italy",
       bio:
         "First year Master Bocconi · Senior Rep. Western Europe AmplifyME · Former Board Member Minerva IMS · Programs: Goldman Sachs Trader Academy, J.P. Morgan Winning Women, Deutsche Bank Women in Finance, UBS, HSBC, BlackRock, Pimco & more · 3° place EMEA – Citadel European Datathon · Nova 111.",
-      image: elisabettaAsset.url,
+      image: elisabettaImg,
       linkedin: "https://www.linkedin.com/in/elisabetta-fabris/",
       bw: true,
     },
@@ -73,7 +73,7 @@ const AboutSection = () => {
       role: "Co-Founder",
       location: "Skale Studio",
       bio: "",
-      image: riccardoAsset.url,
+      image: riccardoImg,
       linkedin: "https://skalestudio.online",
       bw: true,
     },
@@ -82,7 +82,7 @@ const AboutSection = () => {
       role: "Co-Founder",
       location: "Skale Studio",
       bio: "",
-      image: enricoAsset.url,
+      image: enricoImg,
       linkedin: "https://skalestudio.online",
       bw: true,
     },
@@ -91,7 +91,7 @@ const AboutSection = () => {
       role: "Partner",
       location: "Skale Studio",
       bio: "",
-      image: lucaAsset.url,
+      image: lucaImg,
       linkedin: "https://skalestudio.online",
       bw: true,
     },
