@@ -21,6 +21,7 @@ import { BriefOverviewForm, BriefOverviewData } from "@/components/client-portal
 import OutreachDocumentsUpload from "@/components/client-portal/OutreachDocumentsUpload";
 import BackupAssociateBlock, { BackupSelection } from "@/components/client-portal/BackupAssociateBlock";
 import CheckoutAssociateProfiles, { CheckoutProfilesEntry } from "@/components/client-portal/CheckoutAssociateProfiles";
+import { type PendingClientOrder, type PendingOrderItem, type PendingMeetingSlot, type PendingSharedDoc } from "@/lib/fulfillClientOrder";
 
 const sb = supabase as any;
 
@@ -427,77 +428,52 @@ const ClientCheckout = () => {
     try {
       const { subtotal, discountPercentage, total } = calculateTotals();
 
-      // Upload receipt if provided
-      let receiptUrl = null;
+      // ── Upload files to storage NOW (File objects can't survive the Stripe
+      //    redirect), but DO NOT create any order / project / slot yet. Those are
+      //    created only after the payment is confirmed (see PaymentSuccess), so
+      //    nothing reaches the Associate until the client has actually paid.
+
+      // Receipt (optional manual upload)
+      let receiptUrl: string | null = null;
       if (receiptFile) {
         const fileExt = receiptFile.name.split('.').pop();
         const fileName = `${clientUser.id}-${Date.now()}.${fileExt}`;
         const { data: uploadData, error: uploadError } = await sb.storage
           .from('documents')
           .upload(`client-receipts/${fileName}`, receiptFile);
-
         if (uploadError) throw uploadError;
         receiptUrl = uploadData.path;
       }
 
-      // Upload Outreach Power Pack documents if applicable
-      let outreachCvUrl = null;
-      let outreachCoverLetterUrl = null;
+      // Outreach Power Pack documents
+      let outreachCvUrl: string | null = null;
+      let outreachCoverLetterUrl: string | null = null;
       const hasOutreachPowerPackService = cartItems.some(item => item.service.name?.startsWith('Outreach Power Pack'));
-      
+
       if (hasOutreachPowerPackService && outreachCvFile) {
         const cvExt = outreachCvFile.name.split('.').pop();
         const cvFileName = `${clientUser.id}-outreach-cv-${Date.now()}.${cvExt}`;
         const { data: cvUpload, error: cvUploadError } = await sb.storage
           .from('documents')
           .upload(`outreach-documents/${cvFileName}`, outreachCvFile);
-        
         if (cvUploadError) throw cvUploadError;
         outreachCvUrl = cvUpload.path;
       }
-      
+
       if (hasOutreachPowerPackService && outreachCoverLetterFile) {
         const clExt = outreachCoverLetterFile.name.split('.').pop();
         const clFileName = `${clientUser.id}-outreach-cover-${Date.now()}.${clExt}`;
         const { data: clUpload, error: clUploadError } = await sb.storage
           .from('documents')
           .upload(`outreach-documents/${clFileName}`, outreachCoverLetterFile);
-        
         if (clUploadError) throw clUploadError;
         outreachCoverLetterUrl = clUpload.path;
       }
 
-      // Create order
-      const { data: order, error: orderError } = await sb
-        .from('client_orders')
-        .insert({
-          client_id: clientUser.id,
-          total_amount: subtotal,
-          discount_percentage: discountPercentage,
-          payment_status: receiptUrl ? 'uploaded' : 'pending',
-          payment_receipt_url: receiptUrl,
-          outreach_cv_url: outreachCvUrl,
-          outreach_cover_letter_url: outreachCoverLetterUrl,
-          outreach_custom_email: hasOutreachPowerPackService && useCustomEmail ? outreachCustomEmail : null,
-        })
-        .select()
-        .single();
-
-      if (orderError) throw orderError;
-
-      // Create order items
+      // Build the per-item fulfillment payload (resolved associate, slots, backup,
+      // and any CV-rewrite documents uploaded to a pre-payment path).
+      const pendingItems: PendingOrderItem[] = [];
       for (const item of cartItems) {
-        const { error: itemError } = await sb
-          .from('client_order_items')
-          .insert({
-            order_id: order.id,
-            service_id: item.service.id,
-            price: Number(item.service.price),
-          });
-
-        if (itemError) throw itemError;
-
-        // Determine backup (only for items with a single primary associate AND candidates available)
         const backupSel = backupSelections[item.id];
         const backupCount = backupCandidatesCount[item.id] ?? 0;
         const hasBackup = !!(item.associate?.id && backupCount > 0 && backupSel?.associateId);
@@ -505,116 +481,89 @@ const ClientCheckout = () => {
 
         const isCvRewriteNoMeeting = isCvRewriteItem(item) && !!cvRewriteSkipMeeting[item.id];
 
-        // Resolve the working associate UUID. For Comparative items the cart stores
-        // a comma-joined display id; the deliverable is produced by the 2nd associate
-        // (from the other university), so the project is assigned to them.
+        // For Comparative items the deliverable is produced by the 2nd associate.
         const resolvedAssociateId =
           item.associates && item.associates.length === 2
             ? item.associates[1].id
             : (item.associate?.id || null);
 
-        // Create project for each item
-        const { data: project, error: projectError } = await sb
-          .from('client_projects')
-          .insert({
-            client_id: clientUser.id,
-            order_id: order.id,
-            service_id: item.service.id,
-            associate_id: resolvedAssociateId,
-            backup_associate_id: isCvRewriteNoMeeting ? null : backupAssociateId,
-            active_associate_id: resolvedAssociateId,
-            scheduling_status: isCvRewriteNoMeeting
-              ? 'no_meeting_requested'
-              : (resolvedAssociateId ? 'awaiting_primary' : null),
-            status: isCvRewriteNoMeeting ? 'documents_uploaded' : 'pending',
-            additional_call_reason: (item as any).additionalCallReason || null,
-            specific_request: item.specificRequest || null,
-            package_name: item.packageName || null,
-          })
-          .select()
-          .single();
-
-        if (projectError) throw projectError;
-
-        // CV / Cover Letter Rewrite (no-meeting): upload provided documents to shared documents
-        if (isCvRewriteNoMeeting && project) {
+        // Upload CV-rewrite docs now (no project id yet → use a pending path; the
+        // stored path is what client_shared_documents references, prefix is irrelevant).
+        const cvRewriteDocs: PendingSharedDoc[] = [];
+        if (isCvRewriteNoMeeting) {
           const uploads: Array<{ file: File; label: string }> = [];
           const cv = cvRewriteCvFile[item.id];
           const cl = cvRewriteCoverLetterFile[item.id];
           if (cv) uploads.push({ file: cv, label: 'CV' });
           if (cl) uploads.push({ file: cl, label: 'CoverLetter' });
-
           for (const u of uploads) {
             const safeName = u.file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
-            const path = `${project.id}/${Date.now()}_${u.label}_${safeName}`;
+            const path = `pending/${clientUser.id}/${Date.now()}_${u.label}_${safeName}`;
             const { error: upErr } = await sb.storage
               .from('client-project-documents')
               .upload(path, u.file);
             if (upErr) throw upErr;
-            const { error: dbErr } = await sb
-              .from('client_shared_documents')
-              .insert({
-                project_id: project.id,
-                filename: u.file.name,
-                storage_path: path,
-                uploaded_by_type: 'client',
-                uploaded_by_id: clientUser.id,
-                file_size: u.file.size,
-                mime_type: u.file.type || 'application/octet-stream',
-              });
-            if (dbErr) throw dbErr;
+            cvRewriteDocs.push({
+              path,
+              filename: u.file.name,
+              fileSize: u.file.size,
+              mimeType: u.file.type || 'application/octet-stream',
+            });
           }
         }
 
-        // If an associate was selected AND a meeting is required, create the meeting slots for the project
-        if (resolvedAssociateId && project && !isCvRewriteNoMeeting) {
+        // Primary meeting slots
+        const slots: PendingMeetingSlot[] = [];
+        if (resolvedAssociateId && !isCvRewriteNoMeeting) {
           const serviceAvail = serviceAvailabilities.find(sa => sa.serviceItemId === item.id);
-          if (serviceAvail) {
-            const validSlots = serviceAvail.slots.filter(slot => slot.date && slot.timeSlot);
-            for (const slot of validSlots) {
-              const dateStr = format(slot.date!, "yyyy-MM-dd");
-              const proposedTime = `${dateStr} ${slot.timeSlot}`;
-              await sb
-                .from('client_meeting_slots')
-                .insert({
-                  project_id: project.id,
-                  associate_id: resolvedAssociateId,
-                  slot_role: 'client_for_primary',
-                  proposed_date: dateStr,
-                  proposed_time: proposedTime,
-                  status: 'proposed'
-                });
+          for (const slot of serviceAvail?.slots ?? []) {
+            if (slot.date && slot.timeSlot) {
+              const dateStr = format(slot.date, "yyyy-MM-dd");
+              slots.push({ proposedDate: dateStr, proposedTime: `${dateStr} ${slot.timeSlot}` });
             }
           }
-
-          // Backup slots (only if backup selected)
-          if (hasBackup) {
-            const validBackupSlots = backupSel!.slots.filter(s => s.date && s.timeSlot);
-            for (const slot of validBackupSlots) {
-              const dateStr = format(slot.date!, "yyyy-MM-dd");
-              const proposedTime = `${dateStr} ${slot.timeSlot}`;
-              await sb
-                .from('client_meeting_slots')
-                .insert({
-                  project_id: project.id,
-                  associate_id: backupAssociateId,
-                  slot_role: 'client_for_backup',
-                  proposed_date: dateStr,
-                  proposed_time: proposedTime,
-                  status: 'proposed'
-                });
-            }
-          }
-
-          // Update project status to indicate slots have been proposed by client
-          await sb
-            .from('client_projects')
-            .update({ status: 'slots_proposed' })
-            .eq('id', project.id);
         }
+
+        // Backup meeting slots
+        const backupSlots: PendingMeetingSlot[] = [];
+        if (resolvedAssociateId && !isCvRewriteNoMeeting && hasBackup) {
+          for (const slot of backupSel!.slots) {
+            if (slot.date && slot.timeSlot) {
+              const dateStr = format(slot.date, "yyyy-MM-dd");
+              backupSlots.push({ proposedDate: dateStr, proposedTime: `${dateStr} ${slot.timeSlot}` });
+            }
+          }
+        }
+
+        pendingItems.push({
+          serviceId: item.service.id,
+          price: Number(item.service.price),
+          resolvedAssociateId,
+          isCvRewriteNoMeeting,
+          specificRequest: item.specificRequest || null,
+          additionalCallReason: (item as any).additionalCallReason || null,
+          packageName: item.packageName || null,
+          slots,
+          backupAssociateId,
+          backupSlots,
+          cvRewriteDocs,
+        });
       }
 
-      // Create Stripe Checkout session and redirect
+      const pendingOrder: PendingClientOrder = {
+        clientId: clientUser.id,
+        totalAmount: subtotal,
+        discountPercentage,
+        receiptUrl,
+        outreachCvUrl,
+        outreachCoverLetterUrl,
+        outreachCustomEmail: hasOutreachPowerPackService && useCustomEmail ? outreachCustomEmail : null,
+        items: pendingItems,
+      };
+
+      // Create Stripe Checkout session and redirect. No order_id is passed: the
+      // order doesn't exist yet, so verify-payment's client_order branch is a
+      // no-op and won't send premature emails.
       const origin = window.location.origin;
       const lineItems = cartItems.map((item) => ({
         name: item.service.name,
@@ -625,8 +574,6 @@ const ClientCheckout = () => {
         quantity: 1,
       }));
 
-      // Apply discount as a separate negative-style adjustment by scaling line items
-      // Stripe doesn't support negative line items, so we scale all amounts proportionally
       if (discountPercentage > 0) {
         const factor = 1 - discountPercentage / 100;
         lineItems.forEach((li) => {
@@ -644,7 +591,6 @@ const ClientCheckout = () => {
             items: lineItems,
             metadata: {
               kind: 'client_order',
-              order_id: order.id,
               client_id: clientUser.id,
             },
           },
@@ -653,6 +599,16 @@ const ClientCheckout = () => {
 
       if (stripeError) throw stripeError;
       if (!stripeSession?.url) throw new Error('Stripe session URL missing');
+
+      // Stage the fulfillment payload keyed by the Stripe session id, so the order
+      // can be created AFTER payment by either the payment-success page or the
+      // Stripe webhook (whichever runs first) — making it tab-close proof.
+      const sessionId = stripeSession.session_id || stripeSession.id;
+      if (!sessionId) throw new Error('Stripe session id missing');
+      const { error: pendingError } = await sb
+        .from('pending_orders')
+        .insert({ session_id: sessionId, client_id: clientUser.id, payload: pendingOrder });
+      if (pendingError) throw pendingError;
 
       // Redirect to Stripe Checkout — break out of any iframe (Lovable preview, etc.)
       // Stripe Checkout sets X-Frame-Options: DENY and won't render inside iframes.

@@ -253,6 +253,11 @@ verify_jwt = false
 [functions.verify-payment]
 verify_jwt = false
 
+# Stripe webhook: called by Stripe (no Supabase JWT). It verifies the Stripe
+# signature internally with STRIPE_WEBHOOK_SECRET.
+[functions.stripe-webhook]
+verify_jwt = false
+
 [functions.handle-primary-response]
 verify_jwt = false
 

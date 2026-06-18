@@ -130,6 +130,16 @@ const categoryIcon: Record<string, typeof Plane> = {
   Layover: ArrowLeftRight,
 };
 
+// Per-package blue ramp (HSL triplets, no hsl() wrapper — matches index.css).
+// Take Off = lightest sky blue, deepening to Altitude = deep navy. `secondary`
+// is a lighter partner used for gradients and the title underline.
+const PACKAGE_ACCENTS: Record<string, { primary: string; secondary: string }> = {
+  "Take Off": { primary: "205 92% 58%", secondary: "195 95% 68%" },
+  Layover: { primary: "212 88% 46%", secondary: "205 90% 60%" },
+  Summit: { primary: "219 85% 34%", secondary: "214 88% 52%" },
+  Altitude: { primary: "226 88% 22%", secondary: "218 85% 42%" },
+};
+
 // Join a list into natural English: "A", "A and B", "A, B and C".
 const joinNatural = (items: string[]): string => {
   const list = items.map((s) => s.trim()).filter(Boolean);
@@ -221,8 +231,18 @@ const PackageExperience = ({
   const Icon = categoryIcon[pkg.category] || Plane;
   const packageName = `${pkg.code_name} — ${pkg.subtitle}`;
 
-  // All verticals use the default blue theme (Take Off look) for buttons & text.
-  const accentStyle: React.CSSProperties | undefined = undefined;
+  // Per-package blue ramp: lightest for Take Off, deepening through Layover →
+  // Summit → Altitude (darkest navy). Each vertical overrides --primary/--secondary
+  // locally, so the whole package view (title, icons, buttons, borders) recolors
+  // automatically while the rest of the site keeps the brand blue.
+  const accent = PACKAGE_ACCENTS[pkg.category];
+  const accentStyle = accent
+    ? ({
+        "--primary": accent.primary,
+        "--secondary": accent.secondary,
+        "--accent": accent.secondary,
+      } as React.CSSProperties)
+    : undefined;
 
   // How associates are matched for this vertical.
   const filterMode: "university" | "master" | "sector" =
@@ -420,7 +440,9 @@ const PackageExperience = ({
           <Icon className="h-5 w-5" />
         </div>
         <div className="min-w-0">
-          <h2 className="text-lg font-bold leading-tight text-primary">{pkg.code_name}</h2>
+          <h2 className="text-2xl font-extrabold uppercase leading-tight tracking-wide text-primary">
+            <span className="inline-block border-b-[3px] border-secondary pb-0.5">{pkg.code_name}</span>
+          </h2>
           <p className="truncate text-xs text-foreground/70">{pkg.subtitle}</p>
         </div>
         <p className="ml-auto hidden items-center gap-1.5 text-xs text-muted-foreground lg:flex">
@@ -435,7 +457,12 @@ const PackageExperience = ({
         <Card className="relative flex flex-col overflow-hidden border-primary/30 bg-card shadow-xl">
           <CardHeader className="space-y-0.5 pb-2 pt-3">
             <div className="flex items-center justify-between gap-2">
-              <CardTitle className="text-lg">{pkg.code_name} Package</CardTitle>
+              <CardTitle className="text-xl">
+                <span className="inline-block border-b-[3px] border-secondary pb-0.5 font-extrabold uppercase tracking-wide text-primary">
+                  {pkg.code_name}
+                </span>{" "}
+                <span className="text-foreground/80">Package</span>
+              </CardTitle>
               <Badge className="shrink-0 gap-1 bg-gradient-to-r from-primary to-secondary text-primary-foreground shadow">
                 <Sparkles className="h-3 w-3" />
                 Best value

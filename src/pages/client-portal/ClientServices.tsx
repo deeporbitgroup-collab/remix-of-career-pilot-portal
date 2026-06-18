@@ -898,7 +898,7 @@ const ClientServicesPage = () => {
             <DialogDescription className="text-lg font-semibold text-primary">
               {infoService?.name === 'Masterclass Managed by CareerBoost'
                 ? 'Price on request'
-                : `€${infoService?.price.toFixed(2)}`}
+                : `€${Number(infoService?.price ?? 0).toFixed(2)}`}
             </DialogDescription>
           </DialogHeader>
           <div className="mt-4">
@@ -1011,6 +1011,32 @@ const ClientServicesPage = () => {
           if (svc) handleDirectAddToCart(svc, true);
         }}
         onDownloadPdf={(name, category) => handleDownloadPdf(name, category)}
+        packages={packages.map((p) => ({
+          code_name: p.code_name,
+          subtitle: p.subtitle,
+          category: p.category,
+          price: Number(p.price),
+          description: p.description || undefined,
+          components: packageComponents
+            .filter((c) => c.package_id === p.id && !c.is_addon)
+            .sort((a, b) => a.sort_order - b.sort_order)
+            .map((c) => ({
+              label: c.label || c.service?.name || "Component",
+              is_removable: c.is_removable,
+            })),
+        }))}
+        onSelectPackage={(category) => {
+          setAdvisorOpen(false);
+          navigate(`/client-portal/services?category=${encodeURIComponent(category)}`);
+        }}
+        onCustomizePackage={(category) => {
+          setAdvisorOpen(false);
+          navigate(`/client-portal/services?category=${encodeURIComponent(category)}`);
+        }}
+        onGoTalentPool={() => {
+          setAdvisorOpen(false);
+          navigate('/talent-pool');
+        }}
         onExit={() => navigate('/')}
       />
 

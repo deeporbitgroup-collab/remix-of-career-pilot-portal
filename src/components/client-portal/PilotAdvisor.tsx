@@ -19,6 +19,11 @@ import {
   Loader2,
   Download,
   Info,
+  Package,
+  Users,
+  ArrowRight,
+  SlidersHorizontal,
+  Star,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -35,17 +40,35 @@ export interface PilotService {
   requiresAssociate?: boolean;
 }
 
+export interface PilotPackage {
+  code_name: string;
+  subtitle: string;
+  category: string;
+  price: number;
+  description?: string;
+  /** Included components (non add-on). is_removable marks the optional ones. */
+  components: { label: string; is_removable: boolean }[];
+}
+
 interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   services: PilotService[];
+  /** Real fixed-price packages, one per category. */
+  packages: PilotPackage[];
   onBookFreeCall: () => void;
-  /** Called when user clicks "Select Associate" on a recommended service */
+  /** Called when user clicks "Select Associate" on a recommended single service */
   onSelectAssociate: (serviceName: string, category: string) => void;
   onDirectAddToCart?: (serviceName: string, category: string) => void;
   onViewDetails?: (serviceName: string, category: string) => void;
   /** Called when user clicks "Download PDF overview" */
   onDownloadPdf?: (serviceName: string, category: string) => void;
+  /** Get the full package → opens that package's view. */
+  onSelectPackage?: (category: string) => void;
+  /** Customize / lighten the package → opens that package's view to deselect. */
+  onCustomizePackage?: (category: string) => void;
+  /** Internship seekers → Talent Pool. */
+  onGoTalentPool?: () => void;
   /** Called when the user closes/exits the advisor (X button). Should navigate away. */
   onExit?: () => void;
 }
@@ -59,6 +82,9 @@ type AssistantPayload = {
   service_names?: string[];
   services?: PilotService[];
   reasoning?: string;
+  /** Recommendation routing: package category + talent-pool flag. */
+  category?: string;
+  talent_pool?: boolean;
 };
 
 const categoryIcon: Record<string, any> = {
@@ -72,11 +98,15 @@ const PilotAdvisor = ({
   open,
   onOpenChange,
   services,
+  packages,
   onBookFreeCall,
   onSelectAssociate,
   onDirectAddToCart,
   onViewDetails,
   onDownloadPdf,
+  onSelectPackage,
+  onCustomizePackage,
+  onGoTalentPool,
   onExit,
 }: Props) => {
   const [history, setHistory] = useState<{ role: "user" | "assistant"; content: string }[]>([]);
@@ -323,9 +353,10 @@ const PilotAdvisor = ({
               />
             )}
 
-            {current?.type === "recommendation" && current.services && (
+            {current?.type === "recommendation" && (
               <RecommendationStep
                 payload={current}
+                pkg={packages.find((p) => p.category === current.category) || null}
                 onSelectAssociate={(name) => {
                   const service = current.services?.find((s) => s.name === name);
                   // Keep advisor mounted — parent opens GuestAssociateSelector on top
@@ -335,6 +366,9 @@ const PilotAdvisor = ({
                 onDownloadPdf={onDownloadPdf}
                 onViewDetails={onViewDetails}
                 onDirectAddToCart={onDirectAddToCart}
+                onSelectPackage={onSelectPackage}
+                onCustomizePackage={onCustomizePackage}
+                onGoTalentPool={onGoTalentPool}
                 onBookCall={onBookFreeCall}
                 onReset={handleReset}
                 onBack={handleBack}
@@ -490,29 +524,40 @@ const QuestionStep = ({
 
 const RecommendationStep = ({
   payload,
+  pkg,
   onSelectAssociate,
   onDirectAddToCart,
   onDownloadPdf,
   onViewDetails,
+  onSelectPackage,
+  onCustomizePackage,
+  onGoTalentPool,
   onBookCall,
   onReset,
   onBack,
 }: {
   payload: AssistantPayload;
+  pkg: PilotPackage | null;
   onSelectAssociate: (name: string) => void;
   onDirectAddToCart?: (serviceName: string, category: string) => void;
   onDownloadPdf?: (serviceName: string, category: string) => void;
   onViewDetails?: (serviceName: string, category: string) => void;
+  onSelectPackage?: (category: string) => void;
+  onCustomizePackage?: (category: string) => void;
+  onGoTalentPool?: () => void;
   onBookCall: () => void;
   onReset: () => void;
   onBack: () => void;
 }) => {
   const list = payload.services || [];
+  const PkgIcon = (pkg && categoryIcon[pkg.category]) || Plane;
+  const includedCount = pkg?.components.filter((c) => !c.is_removable).length ?? 0;
+  const optionalCount = pkg?.components.filter((c) => c.is_removable).length ?? 0;
   return (
     <div className="animate-fade-in">
       <div className="flex items-center gap-2 mb-3">
         <span className="inline-flex items-center gap-1.5 rounded-full bg-white text-[hsl(223,83%,18%)] text-[11px] font-extrabold px-3 py-1.5 shadow">
-          <CheckCircle2 className="h-3.5 w-3.5" /> YOUR MATCH{list.length > 1 ? "ES" : ""}
+          <CheckCircle2 className="h-3.5 w-3.5" /> YOUR BEST FIT
         </span>
       </div>
       <h3 className="text-3xl sm:text-5xl font-extrabold text-white tracking-tight leading-tight">
@@ -522,90 +567,231 @@ const RecommendationStep = ({
         {payload.reasoning || payload.message}
       </p>
 
-      <div className="mt-8 grid gap-5 md:grid-cols-2">
-        {list.map((s, idx) => {
-          const Icon = categoryIcon[s.category] || Plane;
-          return (
-            <Card
-              key={`${s.category}-${s.name}-${idx}`}
-              className="group relative overflow-hidden flex flex-col border-primary/20 bg-card shadow-2xl transition-all duration-300 hover:-translate-y-1 hover:border-primary/40 hover:shadow-primary/20"
+      {/* ---------- (a) Recommended: the full package ---------- */}
+      {pkg && (
+        <Card className="mt-8 overflow-hidden border-0 bg-card shadow-2xl ring-1 ring-primary/20">
+          <div className="relative bg-gradient-to-br from-primary via-primary to-secondary px-6 py-5 text-primary-foreground">
+            <span className="absolute right-4 top-4 inline-flex items-center gap-1.5 rounded-full bg-white/20 px-3 py-1 text-[11px] font-extrabold uppercase tracking-wide ring-1 ring-white/40 backdrop-blur">
+              <Star className="h-3 w-3" /> Recommended
+            </span>
+            <div className="flex items-center gap-3">
+              <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-white/15 ring-1 ring-white/30">
+                <PkgIcon className="h-6 w-6" />
+              </span>
+              <div className="min-w-0">
+                <h4 className="text-2xl font-extrabold uppercase tracking-wide leading-none">
+                  {pkg.code_name}
+                </h4>
+                <p className="text-sm text-primary-foreground/80">{pkg.subtitle}</p>
+              </div>
+            </div>
+            <div className="mt-4 flex items-end gap-2">
+              <span className="text-3xl font-extrabold">€{Number(pkg.price).toFixed(0)}</span>
+              <span className="pb-1 text-sm text-primary-foreground/80">
+                one fixed price · one Associate · live 1:1
+              </span>
+            </div>
+          </div>
+
+          <CardContent className="space-y-4 p-6">
+            <div className="flex items-start gap-2.5 rounded-xl bg-primary/5 px-4 py-3 ring-1 ring-primary/15">
+              <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+              <p className="text-sm font-medium text-foreground">
+                {pkg.category === "Altitude"
+                  ? "We do everything for you. Your dedicated Associate — a professional already in your target field — builds your plan, fixes your CV and opens doors, all the way to the internship."
+                  : "We handle everything for you. One dedicated Associate manages your whole journey, live and 1:1 — you just show up."}
+              </p>
+            </div>
+            {pkg.description && (
+              <p className="text-sm text-muted-foreground">{pkg.description}</p>
+            )}
+            {pkg.components.length > 0 && (
+              <ul className="grid gap-1.5 sm:grid-cols-2">
+                {pkg.components.map((c, i) => (
+                  <li key={i} className="flex items-start gap-2 text-sm">
+                    <Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                    <span className={c.is_removable ? "text-muted-foreground" : "font-medium text-foreground"}>
+                      {c.label}
+                      {c.is_removable && <span className="text-muted-foreground/70"> · optional</span>}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
+
+            <Button
+              onClick={() => onSelectPackage?.(pkg.category)}
+              className="w-full bg-gradient-to-r from-primary to-secondary text-base font-bold shadow-md hover:opacity-90"
             >
-              <div className="relative h-44 w-full overflow-hidden bg-gradient-to-br from-primary/15 via-primary/10 to-secondary/15">
-                {s.image ? (
-                  <>
-                    <img
-                      src={s.image}
-                      alt={`${s.name} preview`}
-                      className="absolute inset-0 h-full w-full object-cover object-top transition-transform duration-500 group-hover:scale-105"
-                      loading="lazy"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-card via-card/30 to-transparent" />
-                  </>
-                ) : (
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <Icon className="h-20 w-20 text-primary/30" />
-                  </div>
-                )}
-                <div className="absolute top-3 left-3 z-10">
-                  <Badge variant="secondary" className="backdrop-blur-md bg-background/80 border border-primary/20 text-foreground font-semibold gap-1.5 shadow-sm">
-                    <Icon className="h-3.5 w-3.5 text-primary" /> {s.category}
-                  </Badge>
-                </div>
-                <div className="absolute bottom-3 right-3 z-10">
-                  <Badge className="text-base font-bold whitespace-nowrap bg-primary text-primary-foreground shadow-lg px-3 py-1.5">
-                    {s.price > 0 ? `€${s.price.toFixed(2)}` : "On request"}
-                  </Badge>
+              <Package className="h-5 w-5 mr-2" /> Get the full {pkg.code_name} package
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </Button>
+
+            {/* (b) Lighter version */}
+            <button
+              onClick={() => (onCustomizePackage || onSelectPackage)?.(pkg.category)}
+              className="flex w-full items-center justify-center gap-2 rounded-lg border border-primary/20 bg-primary/5 px-4 py-2.5 text-sm font-semibold text-primary transition-colors hover:bg-primary/10"
+            >
+              <SlidersHorizontal className="h-4 w-4" />
+              Prefer it lighter? Customize and remove what you don't need
+              {optionalCount > 0 && (
+                <span className="text-muted-foreground/70">({optionalCount} optional)</span>
+              )}
+            </button>
+            <p className="text-center text-[11px] text-muted-foreground">
+              {includedCount > 0
+                ? `${includedCount} core deliverable${includedCount > 1 ? "s" : ""} always included`
+                : "Built around one core deliverable"}
+            </p>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* ---------- Talent Pool: co-primary path for internship seekers ---------- */}
+      {payload.talent_pool && onGoTalentPool && (
+        <>
+          <div className="my-6 flex items-center gap-3">
+            <span className="h-px flex-1 bg-white/20" />
+            <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-white/60">or get seen by companies</span>
+            <span className="h-px flex-1 bg-white/20" />
+          </div>
+
+          <Card className="overflow-hidden border-0 bg-card shadow-2xl ring-1 ring-secondary/30">
+            <div className="relative bg-gradient-to-br from-secondary via-secondary to-primary px-6 py-5 text-primary-foreground">
+              <span className="absolute right-4 top-4 inline-flex items-center gap-1.5 rounded-full bg-white/20 px-3 py-1 text-[11px] font-extrabold uppercase tracking-wide ring-1 ring-white/40 backdrop-blur">
+                <Sparkles className="h-3 w-3" /> Fast-track
+              </span>
+              <div className="flex items-center gap-3">
+                <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-white/15 ring-1 ring-white/30">
+                  <Users className="h-6 w-6" />
+                </span>
+                <div className="min-w-0">
+                  <h4 className="text-2xl font-extrabold uppercase tracking-wide leading-none">Talent Pool</h4>
+                  <p className="text-sm text-primary-foreground/80">Put your profile in front of partner companies</p>
                 </div>
               </div>
+            </div>
 
-              <CardHeader className="pb-3">
-                <CardTitle className="text-lg leading-snug group-hover:text-primary transition-colors">
-                  {s.name}
-                </CardTitle>
-                <CardDescription className="text-sm line-clamp-3 mt-1">
-                  {s.description}
-                </CardDescription>
-              </CardHeader>
+            <CardContent className="space-y-4 p-6">
+              <p className="text-sm font-medium text-foreground">
+                The most direct route to an internship: partner companies browse selected students' profiles and reach out to you directly.
+              </p>
+              <ul className="grid gap-1.5">
+                {[
+                  "Your profile seen directly by hiring companies in our network",
+                  "Companies contact you — no cold applications",
+                  "A curated pool of selected students only",
+                ].map((b, i) => (
+                  <li key={i} className="flex items-start gap-2 text-sm text-foreground">
+                    <Check className="mt-0.5 h-4 w-4 shrink-0 text-secondary" />
+                    {b}
+                  </li>
+                ))}
+              </ul>
+              <Button
+                onClick={onGoTalentPool}
+                className="w-full bg-gradient-to-r from-secondary to-primary text-base font-bold shadow-md hover:opacity-90"
+              >
+                <Users className="h-5 w-5 mr-2" /> Explore the Talent Pool
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </CardContent>
+          </Card>
+        </>
+      )}
 
-              <CardContent className="space-y-2 mt-auto pt-0">
-                <div className="flex gap-2">
-                  {s.pdfPath && onDownloadPdf && (
-                    <Button
-                      variant="outline"
-                      onClick={() => onDownloadPdf(s.name, s.category)}
-                      className="flex-1 border-primary/20 hover:border-primary/50 hover:bg-primary/5"
-                    >
-                      <Download className="h-4 w-4 mr-2" /> PDF overview
-                    </Button>
-                  )}
-                  <Button
-                    variant="outline"
-                    onClick={() => onViewDetails?.(s.name, s.category)}
-                    className="flex-1 border-primary/20 hover:border-primary/50 hover:bg-primary/5"
-                  >
-                    <Info className="h-4 w-4 mr-2" /> Full Details
-                  </Button>
-                </div>
-                {s.requiresAssociate === false ? (
-                  <Button
-                    onClick={() => onDirectAddToCart?.(s.name, s.category)}
-                    className="w-full bg-gradient-to-r from-primary to-secondary hover:opacity-90 shadow-md font-bold text-base"
-                  >
-                    <ShoppingCart className="h-5 w-5 mr-2" /> Add to Cart
-                  </Button>
-                ) : (
-                  <Button
-                    onClick={() => onSelectAssociate(s.name)}
-                    className="w-full bg-gradient-to-r from-primary to-secondary hover:opacity-90 shadow-md font-bold text-base"
-                  >
-                    <ShoppingCart className="h-5 w-5 mr-2" /> Select Associate
-                  </Button>
-                )}
-              </CardContent>
-            </Card>
-          );
-        })}
-      </div>
+      {/* ---------- (c) Just one thing: single à-la-carte product ---------- */}
+      {list.length > 0 && (
+        <div className="mt-8">
+          <p className="mb-3 text-sm font-semibold uppercase tracking-wider text-white/60">
+            Only need one thing? Start with a single service
+          </p>
+          <div className="grid gap-5 md:grid-cols-2">
+            {list.map((s, idx) => {
+              const Icon = categoryIcon[s.category] || Plane;
+              return (
+                <Card
+                  key={`${s.category}-${s.name}-${idx}`}
+                  className="group relative overflow-hidden flex flex-col border-primary/20 bg-card shadow-2xl transition-all duration-300 hover:-translate-y-1 hover:border-primary/40 hover:shadow-primary/20"
+                >
+                  <div className="relative h-44 w-full overflow-hidden bg-gradient-to-br from-primary/15 via-primary/10 to-secondary/15">
+                    {s.image ? (
+                      <>
+                        <img
+                          src={s.image}
+                          alt={`${s.name} preview`}
+                          className="absolute inset-0 h-full w-full object-cover object-top transition-transform duration-500 group-hover:scale-105"
+                          loading="lazy"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-card via-card/30 to-transparent" />
+                      </>
+                    ) : (
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <Icon className="h-20 w-20 text-primary/30" />
+                      </div>
+                    )}
+                    <div className="absolute top-3 left-3 z-10">
+                      <Badge variant="secondary" className="backdrop-blur-md bg-background/80 border border-primary/20 text-foreground font-semibold gap-1.5 shadow-sm">
+                        <Icon className="h-3.5 w-3.5 text-primary" /> {s.category}
+                      </Badge>
+                    </div>
+                    <div className="absolute bottom-3 right-3 z-10">
+                      <Badge className="text-base font-bold whitespace-nowrap bg-primary text-primary-foreground shadow-lg px-3 py-1.5">
+                        {s.price > 0 ? `€${s.price.toFixed(2)}` : "On request"}
+                      </Badge>
+                    </div>
+                  </div>
+
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-lg leading-snug group-hover:text-primary transition-colors">
+                      {s.name}
+                    </CardTitle>
+                    <CardDescription className="text-sm line-clamp-3 mt-1">
+                      {s.description}
+                    </CardDescription>
+                  </CardHeader>
+
+                  <CardContent className="space-y-2 mt-auto pt-0">
+                    <div className="flex gap-2">
+                      {s.pdfPath && onDownloadPdf && (
+                        <Button
+                          variant="outline"
+                          onClick={() => onDownloadPdf(s.name, s.category)}
+                          className="flex-1 border-primary/20 hover:border-primary/50 hover:bg-primary/5"
+                        >
+                          <Download className="h-4 w-4 mr-2" /> PDF overview
+                        </Button>
+                      )}
+                      <Button
+                        variant="outline"
+                        onClick={() => onViewDetails?.(s.name, s.category)}
+                        className="flex-1 border-primary/20 hover:border-primary/50 hover:bg-primary/5"
+                      >
+                        <Info className="h-4 w-4 mr-2" /> Full Details
+                      </Button>
+                    </div>
+                    {s.requiresAssociate === false ? (
+                      <Button
+                        onClick={() => onDirectAddToCart?.(s.name, s.category)}
+                        className="w-full bg-gradient-to-r from-primary to-secondary hover:opacity-90 shadow-md font-bold text-base"
+                      >
+                        <ShoppingCart className="h-5 w-5 mr-2" /> Add to Cart
+                      </Button>
+                    ) : (
+                      <Button
+                        onClick={() => onSelectAssociate(s.name)}
+                        className="w-full bg-gradient-to-r from-primary to-secondary hover:opacity-90 shadow-md font-bold text-base"
+                      >
+                        <ShoppingCart className="h-5 w-5 mr-2" /> Select Associate
+                      </Button>
+                    )}
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       <div className="mt-10 flex flex-wrap items-center gap-3">
         <Button

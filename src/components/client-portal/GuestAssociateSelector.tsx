@@ -383,6 +383,13 @@ const GuestAssociateSelector = ({ service, onClose, onAddToCart }: GuestAssociat
 
   const handleAddToCart = () => {
     if (isComparativeService) {
+      // A comparative service/add-on always compares two options, so it REQUIRES a
+      // second associate (from the other university). Hard-guard the cart so it can
+      // never be added with fewer than two, regardless of UI state.
+      if (selectedAssociates.length !== 2) {
+        toast.info("Comparative requires exactly 2 associates — please pick a second one.");
+        return;
+      }
       // For Comparative services: add as single item with both associates stored correctly
       const cartItem: GuestCartItem = {
         id: `${service.id}-comparative-${Date.now()}`,

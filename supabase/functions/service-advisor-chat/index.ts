@@ -1,4 +1,12 @@
 // Pilot Advisor: deterministic guided matcher for the verified CareerPilot catalog.
+//
+// Flow (2 targeted questions, no LLM):
+//   Q1 — journey phase  → maps to a package category (+ talent_pool flag for internships)
+//   Q2 — main focus     → picks the single à-la-carte product to surface as the
+//                          "just one thing" option
+// The recommendation always pushes the full PACKAGE for the category (the front-end
+// assembles the real package from `category`), while making the lighter / single-product
+// alternatives explicit. Internships also get routed to the Talent Pool.
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -29,81 +37,79 @@ interface RequestBody {
 
 const norm = (v: string) => v.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
 
-// ----- Journey question -----
+// ----- Q1: journey phase -----
 const JOURNEY_OPTIONS = {
-  takeoff: "I'm finishing high school and want to go to university",
+  takeoff: "I'm finishing high school and heading to university",
   layover: "I'm at university and want to transfer or change degree program",
   summit: "I'm finishing university and want to do a Master or MBA",
-  altitude: "I'm looking for an internship or my first job",
+  altitude: "I'm looking for an internship or starting my career",
 };
 
 const journeyToCategory = (answer: string): string | null => {
   const a = norm(answer);
-  if (a.includes("transfer") || a.includes("change degree")) return "Layover";
+  if (a.includes("transfer") || a.includes("change degree") || a.includes("change degree program")) return "Layover";
   if (a.includes("high school")) return "Take Off";
   if (a.includes("master") || a.includes("mba")) return "Summit";
-  if (a.includes("internship") || a.includes("first job")) return "Altitude";
+  if (a.includes("internship") || a.includes("starting my career") || a.includes("first job")) return "Altitude";
   return null;
 };
 
-// ----- Need options by category -----
-// Each option maps to one or more candidate service-name patterns (lowercase substrings).
-type NeedOption = { label: string; targets: string[] };
+// ----- Q2: main focus → single à-la-carte product (option c) -----
+type FocusOption = { label: string; targets: string[] };
 
-const academicNeeds = (category: "Take Off" | "Layover" | "Summit"): NeedOption[] => {
-  const isMaster = category === "Summit";
-  const subject = isMaster ? "Master / MBA program" : "university";
-  const base: NeedOption[] = [
+const academicFocus = (category: "Take Off" | "Layover" | "Summit"): FocusOption[] => {
+  const subject = category === "Summit" ? "Master / MBA" : "university";
+  const opts: FocusOption[] = [
     {
-      label: `I already know my target ${subject} — I need a plan for entrance tests, deadlines and prep`,
+      label: `A clear plan — deadlines, entrance tests and what to prepare for my target ${subject}`,
       targets: ["personalized timeline"],
     },
     {
-      label: `I'm undecided — I want to compare different ${subject}s side by side`,
+      label: "Compare several options side by side before I decide",
       targets: ["comparative"],
     },
     {
-      label: `I want a deep dive into one specific ${subject} (curriculum, life, career outcomes)`,
+      label: "Go deep on one specific option (program, campus life, outcomes)",
       targets: ["in-depth", "in depth"],
     },
     {
-      label: `I have specific questions (test prep, SAT/GMAT, application tips) — I just want to talk to a student/expert`,
+      label: "Just talk 1:1 with a student who's already there",
       targets: ["associate office hours", "office hours"],
     },
   ];
   if (category === "Layover") {
-    base.push({
-      label: "I want to verify if my transfer is actually possible (credits / eligibility)",
-      targets: ["university eligibility", "eligibility verification"],
+    opts.unshift({
+      label: "First check if my transfer is even possible (credits / eligibility)",
+      targets: ["university eligibility", "eligibility verification", "eligibility"],
     });
   }
-  return base;
+  return opts;
 };
 
-const careerNeeds = (): NeedOption[] => [
+const careerFocus = (): FocusOption[] => [
   {
-    label: "I want a complete career roadmap for a specific sector",
+    label: "A complete plan to break into my target sector",
     targets: ["personalized career roadmap", "career roadmap"],
   },
   {
-    label: "I need my CV and / or cover letter rewritten for real applications",
+    label: "Get my CV / cover letter ready for real applications",
     targets: ["cv", "cover letter"],
   },
   {
-    label: "I want to talk to an expert about a sector, role or company",
-    targets: ["expert career session", "career insights", "associate office hours"],
+    label: "Talk 1:1 with a professional in my target field",
+    targets: ["expert career session", "career insights"],
   },
   {
-    label: "I want direct outreach to companies (interviews generated for me)",
+    label: "Get interviews generated for me (direct outreach to companies)",
     targets: ["outreach", "pay per interview"],
   },
 ];
 
-const needOptionsFor = (category: string | null): NeedOption[] => {
-  if (category === "Layover") return academicNeeds("Layover");
-  if (category === "Summit") return academicNeeds("Summit");
-  if (category === "Altitude") return careerNeeds();
-  return academicNeeds("Take Off");
+const focusOptionsFor = (category: string | null): FocusOption[] => {
+  if (category === "Layover") return academicFocus("Layover");
+  if (category === "Summit") return academicFocus("Summit");
+  if (category === "Altitude") return careerFocus();
+  return academicFocus("Take Off");
 };
 
 const matchService = (catalog: ServiceInfo[], category: string, targets: string[]): ServiceInfo | null => {
@@ -112,12 +118,19 @@ const matchService = (catalog: ServiceInfo[], category: string, targets: string[
     const hit = pool.find((s) => norm(s.name).includes(norm(target)));
     if (hit) return hit;
   }
-  // fallback: search any category for the target (e.g. CV may live in Additional)
+  // fallback: search any category (e.g. CV may live elsewhere)
   for (const target of targets) {
     const hit = catalog.find((s) => norm(s.name).includes(norm(target)));
     if (hit) return hit;
   }
   return null;
+};
+
+const PACKAGE_LABEL: Record<string, string> = {
+  "Take Off": "Take Off",
+  Layover: "Layover",
+  Summit: "Summit",
+  Altitude: "Altitude",
 };
 
 Deno.serve(async (req) => {
@@ -138,12 +151,12 @@ Deno.serve(async (req) => {
       });
     }
 
-    // ----- Step 1: journey question -----
+    // ----- Q1: journey phase -----
     if (userAnswers.length === 0) {
       return new Response(JSON.stringify({
         type: "question",
         title: "Where are you in your journey?",
-        message: "Pick the option that best describes you right now.",
+        message: "Pick the option that best describes you right now — it's how we find your fit.",
         multi_select: false,
         options: [
           JOURNEY_OPTIONS.takeoff,
@@ -156,16 +169,16 @@ Deno.serve(async (req) => {
 
     const category = journeyToCategory(userAnswers[0]);
 
-    // ----- Step 2: needs (multi-select) -----
+    // ----- Q2: main focus -----
     if (userAnswers.length === 1) {
-      const needs = needOptionsFor(category);
-      const isAcademic = category !== "Altitude";
+      const focus = focusOptionsFor(category);
+      const isCareer = category === "Altitude";
       return new Response(JSON.stringify({
         type: "question",
-        title: isAcademic ? "What kind of support do you need?" : "What career support do you need?",
-        message: "Select everything that applies — we'll combine them into the right services.",
-        multi_select: true,
-        options: needs.map((n) => n.label),
+        title: isCareer ? "What matters most right now?" : "What would help you most right now?",
+        message: "This just helps us tailor the recommendation — you'll see the full options next.",
+        multi_select: false,
+        options: focus.map((f) => f.label),
       }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
@@ -174,64 +187,37 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({
         type: "book_call",
         title: "Let's talk it through",
-        message: "Your situation needs a quick call with our team to recommend the right path.",
+        message: "Your situation deserves a quick free call with our team so we can point you to the right path.",
       }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    const selectedLabels = userAnswers[1].split(" • ").map((s) => s.trim()).filter(Boolean);
-    const allNeeds = needOptionsFor(category);
-    const matchedNeeds = allNeeds.filter((n) => selectedLabels.some((l) => norm(l) === norm(n.label)));
+    const isCareer = category === "Altitude";
+    const talentPool = isCareer;
+    const pkgLabel = PACKAGE_LABEL[category] || category;
 
-    const picked: ServiceInfo[] = [];
-    const seen = new Set<string>();
-    for (const need of matchedNeeds) {
-      const svc = matchService(catalog, category, need.targets);
-      if (svc && !seen.has(svc.name + svc.category)) {
-        picked.push(svc);
-        seen.add(svc.name + svc.category);
-      }
-    }
+    // Resolve the single à-la-carte product matching the user's focus answer (option c).
+    const focusAnswer = userAnswers[1] || "";
+    const allFocus = focusOptionsFor(category);
+    const chosen = allFocus.find((f) => norm(f.label) === norm(focusAnswer)) || allFocus[0];
 
-    // Always offer transfer eligibility verification at the end for Layover
-    if (category === "Layover") {
-      const elig = catalog.find((s) => norm(s.name).includes("eligibility"));
-      if (elig && !seen.has(elig.name + elig.category)) {
-        picked.push(elig);
-        seen.add(elig.name + elig.category);
-      }
-    }
+    const singleNames: string[] = [];
+    const single = matchService(catalog, category, chosen.targets);
+    if (single) singleNames.push(single.name);
 
-    // Fallback if nothing matched: top 3 from category
-    if (picked.length === 0) {
-      const defaults: Record<string, string[]> = {
-        "Take Off": ["Personalized Timeline", "Comparative Presentations", "In-Depth Presentations"],
-        "Layover": ["Personalized Timeline", "University Eligibility Verification", "Comparative Presentations"],
-        "Summit": ["Personalized Timeline", "Comparative Analysis", "In-Depth Presentations"],
-        "Altitude": ["Personalized Career Roadmap", "CV / Cover Letter Rewrite", "Expert Career Session"],
-      };
-      for (const name of (defaults[category] || [])) {
-        const svc = catalog.find((s) => s.category === category && norm(s.name) === norm(name)) ||
-                    catalog.find((s) => s.category === category && norm(s.name).includes(norm(name)));
-        if (svc && !seen.has(svc.name + svc.category)) {
-          picked.push(svc);
-          seen.add(svc.name + svc.category);
-        }
-      }
-    }
-
-    const final = picked.slice(0, 4);
+    // Encouraging copy that pushes the full package while naming the alternatives.
+    const reasoning = isCareer
+      ? `Based on where you are, the ${pkgLabel} package is your most complete path to an internship — one fixed price, one Associate (a professional in your field) who manages everything. Prefer to keep it lighter? You can remove any optional component. Only after one thing? Grab a single service below. And for the fastest route to companies, join our Talent Pool.`
+      : `Based on where you are, the ${pkgLabel} package gives you everything in one fixed price, guided 1:1 by a student already there. Prefer it lighter? You can remove any optional component. Only need one thing right now? You can also start with a single service below.`;
 
     return new Response(JSON.stringify({
       type: "recommendation",
-      title: "Your best-fit services",
-      message: "Hand-picked from the real CareerPilot catalog based on your answers.",
-      reasoning: category === "Layover"
-        ? "Because you're transferring or changing degree, recommendations come from Layover services only."
-        : category === "Altitude"
-          ? "Career-stage recommendations from our Altitude track, tailored to what you selected."
-          : `Recommendations from the ${category} track based on the support areas you selected.`,
-      services: final,
-      service_names: final.map((s) => s.name),
+      category,
+      talent_pool: talentPool,
+      title: `${pkgLabel} is your best fit`,
+      message: "We recommend the full package — but you're free to lighten it or pick a single service.",
+      reasoning,
+      // Single à-la-carte product (option c). Front-end hydrates from `service_names`.
+      service_names: singleNames,
     }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
   } catch (err) {
     console.error("pilot-advisor error", err);

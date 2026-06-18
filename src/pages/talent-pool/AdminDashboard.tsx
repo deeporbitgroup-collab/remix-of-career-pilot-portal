@@ -540,27 +540,16 @@ const AdminDashboard = () => {
       const student = students.find(s => s.id === userId);
       const studentProfile = student?.student_profiles?.[0];
 
-      // Update student profile to unlock access AND make visible to companies
-      const { error: profileError } = await supabase
-        .from('student_profiles')
-        .update({ 
-          access_status: 'UNLOCKED',
-          payment_status: 'VERIFIED',
-          monthly_payment_active: true,
-          monthly_payment_start_date: new Date().toISOString(),
-          profile_visible_to_companies: true
-        })
-        .eq('user_id', userId);
+      // Unlock access + make visible + mark APPROVED via the SECURITY DEFINER RPC.
+      // The anon Talent Pool client can't UPDATE these tables directly (RLS), so the
+      // previous direct updates silently failed — tp_set_student_status does it all.
+      const { error: profileError } = await supabase.rpc('tp_set_student_status', {
+        _student_id: userId,
+        _new_status: 'active_member',
+        _admin_id: null,
+      });
 
       if (profileError) throw profileError;
-
-      // Also update registration status if it's ADMITTED
-      if (student?.registration_status === 'ADMITTED') {
-        await supabase
-          .from('talent_pool_users')
-          .update({ registration_status: 'APPROVED' })
-          .eq('id', userId);
-      }
 
       // Send email notification to student
       if (studentProfile && student?.email) {

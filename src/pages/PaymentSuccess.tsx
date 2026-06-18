@@ -1,9 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { CheckCircle2, Loader2, AlertCircle } from "lucide-react";
+import { fulfillClientOrder, type PendingClientOrder } from "@/lib/fulfillClientOrder";
 
 const PaymentSuccess = () => {
   const navigate = useNavigate();
@@ -12,6 +13,9 @@ const PaymentSuccess = () => {
   const kind = params.get("kind"); // client_order | kb_order | talent_pool_subscription
   const [status, setStatus] = useState<"verifying" | "ok" | "fail">("verifying");
   const [info, setInfo] = useState<any>(null);
+  // Guard so the order is fulfilled at most once even if the effect re-runs
+  // (React strict mode double-invoke, refreshes, etc.).
+  const fulfilledRef = useRef(false);
 
   useEffect(() => {
     const verify = async () => {
@@ -27,12 +31,51 @@ const PaymentSuccess = () => {
           setStatus("fail");
           return;
         }
+
+        // Client order: the order/projects/slots were intentionally NOT created
+        // before payment. Now that Stripe confirmed it, take an atomic claim on the
+        // staged payload and create everything. The Stripe webhook does the exact
+        // same claim server-side, so whichever runs first wins and the order is
+        // created EXACTLY once — even if the user closed this tab.
+        if (kind === "client_order" && !fulfilledRef.current) {
+          fulfilledRef.current = true;
+          // claim_pending_order flips pending → processing and returns the row only
+          // to the winner (these RPCs aren't in the generated types yet → cast).
+          const { data: claim } = await (supabase.rpc as any)("claim_pending_order", {
+            _session_id: sessionId,
+          });
+          if (claim?.status === "processing" && claim?.payload) {
+            try {
+              const payload = claim.payload as PendingClientOrder;
+              const { orderId } = await fulfillClientOrder(payload);
+              await (supabase.rpc as any)("complete_pending_order", {
+                _session_id: sessionId,
+                _order_id: orderId,
+              });
+              // Fire confirmation emails only after the order/projects exist.
+              await Promise.allSettled([
+                supabase.functions.invoke("send-client-order-notification", { body: { orderId } }),
+                payload.clientId
+                  ? supabase.functions.invoke("send-client-payment-confirmation", {
+                      body: { orderId, clientId: payload.clientId },
+                    })
+                  : Promise.resolve(null),
+              ]);
+            } catch (fulfillErr) {
+              // Release the claim so the Stripe webhook retry can recover it.
+              console.error("[payment-success] fulfillment error", fulfillErr);
+              await (supabase.rpc as any)("release_pending_order", { _session_id: sessionId });
+            }
+          }
+          // If we didn't win the claim, the webhook is handling (or already did) it.
+          localStorage.removeItem("guest_cart");
+        }
+
         setInfo(data);
         setStatus("ok");
 
         // Cleanup local carts
         if (kind === "kb_order") localStorage.removeItem("kb_cart");
-        if (kind === "client_order") localStorage.removeItem("guest_cart");
       } catch (e) {
         setStatus("fail");
       }

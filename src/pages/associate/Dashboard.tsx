@@ -49,15 +49,20 @@ const AssociateDashboard = () => {
   const [notifications, setNotifications] = useState<any[]>([]);
   const [completedProjects, setCompletedProjects] = useState<any[]>([]);
   const [activeCount, setActiveCount] = useState(0);
-  const [, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
   const { language, t } = useI18n();
   const isEn = language === 'en';
 
-  useEffect(() => {
+  const loadAll = () => {
+    setIsLoading(true);
     fetchUserData();
     fetchKPIs();
     fetchNotifications();
     fetchProjectsForChart();
+  };
+
+  useEffect(() => {
+    loadAll();
   }, []);
 
   const fetchUserData = async () => {
@@ -178,6 +183,38 @@ const AssociateDashboard = () => {
       console.error('Error marking notification as read:', error);
     }
   };
+
+  // While the profile is loading, show a spinner instead of a half-empty page.
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="h-10 w-10 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+      </div>
+    );
+  }
+
+  // Profile failed to load (e.g. session lost): show an actionable error instead
+  // of silently rendering an empty dashboard with no project lists.
+  if (!userProfile) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-6">
+        <div className="max-w-sm w-full rounded-xl border bg-card p-6 text-center shadow-sm">
+          <h2 className="text-lg font-bold">{isEn ? "Couldn't load your dashboard" : "Impossibile caricare la dashboard"}</h2>
+          <p className="mt-2 text-sm text-muted-foreground">
+            {isEn
+              ? "We couldn't load your profile. Please retry, or sign in again."
+              : "Non siamo riusciti a caricare il tuo profilo. Riprova o accedi di nuovo."}
+          </p>
+          <div className="mt-4 flex justify-center gap-2">
+            <Button onClick={loadAll}>{isEn ? "Retry" : "Riprova"}</Button>
+            <Button variant="outline" onClick={() => navigate('/')}>
+              {isEn ? "Home" : "Home"}
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">

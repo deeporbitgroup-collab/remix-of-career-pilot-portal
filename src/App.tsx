@@ -9,14 +9,11 @@ import Index from "./pages/Index";
 import Terms from "./pages/Terms";
 import AssociateTerms from "./pages/AssociateTerms";
 import Privacy from "./pages/Privacy";
-import TalentPool from "./pages/TalentPool";
 import TalentPoolMain from "./pages/talent-pool/TalentPool";
 import TalentPoolAdminLogin from "./pages/talent-pool/AdminLogin";
 import TalentPoolAdminDashboard from "./pages/talent-pool/AdminDashboard";
 import StudentAuth from "./pages/talent-pool/StudentAuth";
 import StudentDashboard from "./pages/talent-pool/StudentDashboard";
-
-import StudentTalentPool from "./pages/talent-pool/StudentTalentPool";
 import CompanyAuth from "./pages/talent-pool/CompanyAuth";
 import CompanyDashboard from "./pages/talent-pool/CompanyDashboard";
 import CompanySelectedStudents from "./pages/talent-pool/CompanySelectedStudents";
@@ -49,7 +46,6 @@ import ClientAuth from "./pages/client-portal/ClientAuth";
 import ClientDashboard from "./pages/client-portal/ClientDashboard";
 import ClientServices from "./pages/client-portal/ClientServices";
 import ClientCheckout from "./pages/client-portal/ClientCheckout";
-import OrderConfirmation from "./pages/client-portal/OrderConfirmation";
 import ClientResetPassword from "./pages/client-portal/ClientResetPassword";
 import KnowledgeBase from "./pages/KnowledgeBase";
 import KnowledgeBaseCheckout from "./pages/KnowledgeBaseCheckout";
@@ -79,7 +75,6 @@ const App = () => (
               <Route path="/talent-pool/student" element={<TalentPoolLanguageProvider><StudentAuth /></TalentPoolLanguageProvider>} />
               <Route path="/talent-pool/student/dashboard" element={<TalentPoolLanguageProvider><StudentDashboard /></TalentPoolLanguageProvider>} />
               
-              <Route path="/talent-pool/student/talent-pool" element={<TalentPoolLanguageProvider><StudentTalentPool /></TalentPoolLanguageProvider>} />
               <Route path="/talent-pool/company/auth" element={<TalentPoolLanguageProvider><CompanyAuth /></TalentPoolLanguageProvider>} />
               <Route path="/talent-pool/company" element={<TalentPoolLanguageProvider><CompanyAuth /></TalentPoolLanguageProvider>} />
               <Route path="/talent-pool/company/dashboard" element={<TalentPoolLanguageProvider><CompanyDashboard /></TalentPoolLanguageProvider>} />
@@ -107,7 +102,6 @@ const App = () => (
               <Route path="/client-portal/checkout" element={<ClientCheckout />} />
               <Route path="/client-portal/auth" element={<ClientAuth />} />
               <Route path="/client-portal/dashboard" element={<ClientDashboard />} />
-              <Route path="/client-portal/order-confirmation" element={<OrderConfirmation />} />
               <Route path="/client-portal/reset-password" element={<ClientResetPassword />} />
 
               {/* Knowledge Base */}

@@ -63,7 +63,6 @@ const StudentDashboard = () => {
   const [paymentInfo, setPaymentInfo] = useState<any>(null);
   const [companies, setCompanies] = useState<any[]>([]);
   const [filteredCompanies, setFilteredCompanies] = useState<any[]>([]);
-  const [selectedCompanyTypes, setSelectedCompanyTypes] = useState<string[]>([]);
   const [selectedSectors, setSelectedSectors] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [notifications, setNotifications] = useState<any[]>([]);
@@ -100,7 +99,7 @@ const StudentDashboard = () => {
 
   useEffect(() => {
     filterCompanies();
-  }, [companies, selectedCompanyTypes, selectedSectors, searchQuery]);
+  }, [companies, selectedSectors, searchQuery]);
 
   // Refetch the companies that currently have this student selected.
   const refreshSelections = useCallback(async () => {
@@ -159,18 +158,15 @@ const StudentDashboard = () => {
   const filterCompanies = () => {
     let filtered = companies;
 
-    if (selectedCompanyTypes.length > 0) {
-      filtered = filtered.filter(c => selectedCompanyTypes.includes(c.size));
-    }
 
     if (selectedSectors.length > 0) {
       filtered = filtered.filter(c => selectedSectors.includes(c.sector));
     }
 
     if (searchQuery) {
-      filtered = filtered.filter(c => 
-        c.company_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        c.sector.toLowerCase().includes(searchQuery.toLowerCase())
+      filtered = filtered.filter(c =>
+        (c.company_name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (c.sector || '').toLowerCase().includes(searchQuery.toLowerCase())
       );
     }
 
@@ -589,12 +585,6 @@ const StudentDashboard = () => {
         : [...locations, location];
       return { ...prev, preferred_locations: newLocations };
     });
-  };
-
-  const toggleFilterCompanyType = (type: string) => {
-    setSelectedCompanyTypes(prev =>
-      prev.includes(type) ? prev.filter(t => t !== type) : [...prev, type]
-    );
   };
 
   const toggleFilterSector = (sector: string) => {
@@ -1220,10 +1210,13 @@ const StudentDashboard = () => {
                       checked={studentProfile.profile_visible_to_companies || false}
                       onCheckedChange={async (checked) => {
                         try {
-                          const { error } = await supabase
-                            .from('student_profiles')
-                            .update({ profile_visible_to_companies: checked as boolean })
-                            .eq('user_id', userInfo.id);
+                          // Talent Pool client is unauthenticated (anon), so a direct
+                          // UPDATE is blocked by RLS — go through the SECURITY DEFINER RPC.
+                          // (Cast: this RPC isn't in the generated types yet.)
+                          const { error } = await (supabase.rpc as any)('tp_set_profile_visibility', {
+                            _student_id: userInfo.id,
+                            _visible: checked as boolean,
+                          });
 
                           if (error) throw error;
 
@@ -1303,25 +1296,6 @@ const StudentDashboard = () => {
                   <div>
                     <Label className="flex items-center gap-2 mb-2">
                       <Filter className="h-4 w-4" />
-                      {t('studentTalentPool.companies.companySize')}
-                    </Label>
-                    <div className="flex gap-2 flex-wrap">
-                      {COMPANY_TYPES.map(type => (
-                        <Badge
-                          key={type}
-                          variant={selectedCompanyTypes.includes(type) ? "default" : "outline"}
-                          className="cursor-pointer"
-                          onClick={() => toggleFilterCompanyType(type)}
-                        >
-                          {type}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div>
-                    <Label className="flex items-center gap-2 mb-2">
-                      <Filter className="h-4 w-4" />
                       {t('studentTalentPool.companies.sector')}
                     </Label>
                     <div className="flex gap-2 flex-wrap">
@@ -1357,7 +1331,7 @@ const StudentDashboard = () => {
                         <div className="flex gap-4">
                           <Avatar className="h-16 w-16">
                             <AvatarImage src={company.logo_url || undefined} />
-                            <AvatarFallback>{company.company_name[0]}</AvatarFallback>
+                            <AvatarFallback>{company.company_name?.[0] || '?'}</AvatarFallback>
                           </Avatar>
                           <div className="flex-1">
                             <h3 className="font-semibold text-lg">{company.company_name}</h3>

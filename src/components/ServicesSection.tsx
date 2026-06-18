@@ -1018,7 +1018,7 @@ const ServicesSection = () => {
                                   variant="outline"
                                   size="sm"
                                   className="rounded-full border-sky text-sky hover:bg-sky/10 hover:border-sky-dark transition-colors"
-                                  onClick={() => window.open(detail.ctaHref, '_blank')}
+                                  onClick={() => detail.ctaHref!.startsWith('/') ? navigate(detail.ctaHref!) : window.open(detail.ctaHref, '_blank')}
                                 >
                                   {detail.ctaText}
                                   <ArrowRight className="ml-1 h-3 w-3" />
