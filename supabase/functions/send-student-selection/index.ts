@@ -14,6 +14,7 @@ const corsHeaders = {
 // Career Pilot URLs - NEVER use Lovable URLs
 const STUDENT_DASHBOARD = "https://careerpilot.it/talent-pool/student/dashboard";
 const TALENT_POOL_ADMIN = "https://careerpilot.it/talent-pool/admin";
+const ADMIN_EMAIL = "careerpilot2025@gmail.com";
 
 interface SelectionRequest {
   companyId: string;
@@ -192,6 +193,7 @@ serve(async (req: Request) => {
     const { error: studentEmailError } = await resend.emails.send({
       from: "Career Pilot Talent Pool <noreply@careerpilot.it>",
       to: [resolvedStudentEmail],
+      bcc: [ADMIN_EMAIL], // admin monitors every selection message (private copy)
       subject: `Good news! A company is interested in you 🎉`,
       html: getEmailTemplate(studentContent, "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)"),
     });
@@ -232,6 +234,7 @@ serve(async (req: Request) => {
     const { error: companyEmailError } = await resend.emails.send({
       from: "Career Pilot Talent Pool <noreply@careerpilot.it>",
       to: [resolvedCompanyEmail],
+      bcc: [ADMIN_EMAIL], // admin monitors every selection message (private copy)
       subject: `Selection confirmed: ${resolvedStudentName}`,
       html: getEmailTemplate(companyContent, "linear-gradient(135deg, #16a34a 0%, #15803d 100%)"),
     });

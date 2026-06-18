@@ -58,6 +58,19 @@ const PartnerSignupForm = () => {
 
       if (authError) throw authError;
 
+      // Welcome the partner + notify admin (non-blocking: never fail the signup).
+      try {
+        await supabase.functions.invoke('send-partner-registration', {
+          body: {
+            companyName: data.companyName,
+            email: data.email,
+            phone: data.phone,
+          },
+        });
+      } catch (emailError) {
+        console.error('Partner registration email failed (non-fatal):', emailError);
+      }
+
       toast({
         title: language === 'it' ? "Registrazione completata!" : "Registration successful!",
         description: language === 'it'
