@@ -5,22 +5,52 @@ import { universities, companies } from "@/data/coveredLogos";
 interface CoveredLogosProps {
   /** Which roster to show: universities (Take Off / Summit / Layover) or companies (Altitude). */
   kind: "universities" | "companies";
-  /** How many logos to show before collapsing the rest into a "+N" tile. Keep a multiple of the column count for tidy rows. */
-  max?: number;
 }
 
 /**
- * A compact, uniform logo wall used inside the package card to fill the lower
- * empty space. Logos are intentionally muted (grayscale, soft) so they support
- * — never overpower — the package name, price and bullet list.
+ * Two stacked marquee rows inside the package card: the covered universities (or
+ * companies for Altitude) scrolling left on an infinite loop. Uniform tile sizing
+ * + edge fades keep it tidy and on-brand, supporting — not overpowering — the
+ * package name, price and bullet list above.
  */
-const CoveredLogos = ({ kind, max = 7 }: CoveredLogosProps) => {
+const CoveredLogos = ({ kind }: CoveredLogosProps) => {
   const items: MarqueeItem[] = kind === "companies" ? companies : universities;
   const Icon = kind === "companies" ? Building2 : GraduationCap;
   const label = kind === "companies" ? "Companies our mentors come from" : "Universities you can target";
 
-  const shown = items.slice(0, max);
-  const remaining = items.length - shown.length;
+  // Split the roster across the two rows so they show different logos.
+  const mid = Math.ceil(items.length / 2);
+  const rows: MarqueeItem[][] = [items.slice(0, mid), items.slice(mid)];
+
+  const renderRow = (rowItems: MarqueeItem[], durationSec: number) => {
+    // Tripled so a -33.333% shift loops seamlessly (matches .animate-scroll-carousel).
+    const track = [...rowItems, ...rowItems, ...rowItems];
+    return (
+      <div className="relative overflow-hidden">
+        <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-8 bg-gradient-to-r from-card to-transparent" />
+        <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-8 bg-gradient-to-l from-card to-transparent" />
+        <div
+          className="flex items-center gap-3 animate-scroll-carousel"
+          style={{ width: "max-content", animationDuration: `${durationSec}s` }}
+        >
+          {track.map((item, i) => (
+            <div
+              key={`${item.name}-${i}`}
+              title={item.name}
+              className="flex h-9 w-20 shrink-0 items-center justify-center"
+            >
+              <img
+                src={item.logo}
+                alt={item.name}
+                loading="lazy"
+                className="max-h-full max-w-full object-contain"
+              />
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div className="flex flex-1 flex-col justify-center gap-2 pt-1">
@@ -30,27 +60,9 @@ const CoveredLogos = ({ kind, max = 7 }: CoveredLogosProps) => {
         <span className="ml-auto font-bold text-primary/60">{items.length}+</span>
       </p>
 
-      <div className="grid grid-cols-4 gap-1.5">
-        {shown.map((item) => (
-          <div
-            key={item.name}
-            title={item.name}
-            className="flex h-10 items-center justify-center rounded-lg border border-border/40 bg-white/80 p-1.5 dark:bg-white/[0.06]"
-          >
-            <img
-              src={item.logo}
-              alt={item.name}
-              loading="lazy"
-              className="max-h-full max-w-full object-contain opacity-70 grayscale transition-opacity"
-            />
-          </div>
-        ))}
-
-        {remaining > 0 && (
-          <div className="flex h-10 items-center justify-center rounded-lg border border-dashed border-border/50 bg-muted/30 px-1 text-[11px] font-bold text-muted-foreground">
-            +{remaining}
-          </div>
-        )}
+      <div className="space-y-1.5">
+        {renderRow(rows[0], 38)}
+        {renderRow(rows[1], 48)}
       </div>
     </div>
   );
