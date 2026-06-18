@@ -29,6 +29,20 @@ import {
 } from "lucide-react";
 import AssociateChoiceCarousel from "./AssociateChoiceCarousel";
 import CoveredLogos from "./CoveredLogos";
+import whatsappLogo from "@/assets/whatsapp-logo.png";
+
+// The "Dedicated WhatsApp group with your Associate" bullet gets a small
+// WhatsApp glyph rendered inline, sized to the surrounding text and sitting
+// right next to the label.
+const isWhatsAppBullet = (label: string) => /whats\s?app/i.test(label);
+const WhatsAppMark = () => (
+  <img
+    src={whatsappLogo}
+    alt="WhatsApp"
+    aria-hidden="true"
+    className="ml-1.5 inline-block h-[1.05em] w-[1.05em] shrink-0 translate-y-[1px] object-contain align-text-bottom"
+  />
+);
 
 interface Service {
   id: string;
@@ -391,7 +405,10 @@ const PackageExperience = ({
   const renderBulletRow = (b: { label: string; info: string }) => (
     <li key={b.label} className="flex items-start gap-2 text-sm">
       <Check className="mt-0.5 h-4 w-4 shrink-0 text-primary/70" />
-      <span className="flex-1 font-medium text-foreground/90">{b.label}</span>
+      <span className="flex-1 font-medium text-foreground/90">
+        {b.label}
+        {isWhatsAppBullet(b.label) && <WhatsAppMark />}
+      </span>
     </li>
   );
 
@@ -832,7 +849,10 @@ const PackageExperience = ({
               <li key={b.label} className="flex items-start gap-3">
                 <Check className="mt-0.5 h-5 w-5 shrink-0 text-primary/60" />
                 <div>
-                  <p className="font-semibold text-foreground">{b.label}</p>
+                  <p className="font-semibold text-foreground">
+                    {b.label}
+                    {isWhatsAppBullet(b.label) && <WhatsAppMark />}
+                  </p>
                   <p className="text-sm text-muted-foreground leading-relaxed">{b.info}</p>
                 </div>
               </li>
