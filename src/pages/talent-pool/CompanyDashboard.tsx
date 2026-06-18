@@ -340,6 +340,66 @@ const CompanyDashboardContent = () => {
     }
   };
 
+  // ---- C4: offer / reject decision (recruiting-decision) ----
+  const openOfferDialog = (selection: any) => {
+    setOfferDialogFor(selection);
+    setOfferForm({ jobTitle: '', message: '' });
+  };
+
+  const handleOffer = async () => {
+    if (!offerDialogFor || !company?.id) return;
+    setSubmittingDecision(true);
+    try {
+      const { error } = await supabase.functions.invoke('recruiting-decision', {
+        body: {
+          action: 'offer',
+          companyId: company.id,
+          studentId: offerDialogFor.student_id,
+          jobTitle: offerForm.jobTitle.trim() || null,
+          message: offerForm.message.trim() || null,
+        }
+      });
+      if (error) throw error;
+      toast({ title: "Offer sent", description: "The candidate and Career Pilot have been notified." });
+      setOfferDialogFor(null);
+      await loadSelectedStudents(company.id);
+    } catch (e: any) {
+      console.error('Offer error:', e);
+      toast({ title: "Error", description: e.message || "Failed to send offer", variant: "destructive" });
+    } finally {
+      setSubmittingDecision(false);
+    }
+  };
+
+  const openRejectDialog = (selection: any) => {
+    setRejectDialogFor(selection);
+    setRejectReason('');
+  };
+
+  const handleReject = async () => {
+    if (!rejectDialogFor || !company?.id) return;
+    setSubmittingDecision(true);
+    try {
+      const { error } = await supabase.functions.invoke('recruiting-decision', {
+        body: {
+          action: 'reject',
+          companyId: company.id,
+          studentId: rejectDialogFor.student_id,
+          reason: rejectReason.trim() || null,
+        }
+      });
+      if (error) throw error;
+      toast({ title: "Candidate rejected", description: "The candidate and Career Pilot have been notified." });
+      setRejectDialogFor(null);
+      await loadSelectedStudents(company.id);
+    } catch (e: any) {
+      console.error('Reject error:', e);
+      toast({ title: "Error", description: e.message || "Failed to reject", variant: "destructive" });
+    } finally {
+      setSubmittingDecision(false);
+    }
+  };
+
   const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -1071,8 +1131,8 @@ const CompanyDashboardContent = () => {
                               <div className="grid grid-cols-2 gap-2">
                                 <Button size="sm" variant="outline" onClick={() => openMeetingDialog(selection)}><CalendarClock className="h-4 w-4 mr-1" /> Schedule meeting</Button>
                                 <Button size="sm" variant="outline" disabled title="Coming soon"><ClipboardCheck className="h-4 w-4 mr-1" /> Test</Button>
-                                <Button size="sm" variant="outline" disabled title="Coming soon"><Handshake className="h-4 w-4 mr-1" /> Offer</Button>
-                                <Button size="sm" variant="outline" disabled title="Coming soon"><XCircle className="h-4 w-4 mr-1" /> Reject</Button>
+                                <Button size="sm" variant="outline" onClick={() => openOfferDialog(selection)}><Handshake className="h-4 w-4 mr-1" /> Offer</Button>
+                                <Button size="sm" variant="outline" className="text-destructive hover:text-destructive" onClick={() => openRejectDialog(selection)}><XCircle className="h-4 w-4 mr-1" /> Reject</Button>
                               </div>
                             </div>
 
@@ -1244,6 +1304,66 @@ const CompanyDashboardContent = () => {
               <Button variant="outline" onClick={() => setLinkDialogFor(null)} disabled={submittingLink}>Cancel</Button>
               <Button onClick={handleSetLink} disabled={submittingLink}>
                 {submittingLink ? 'Saving...' : 'Save link'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Offer (C4) */}
+        <Dialog open={!!offerDialogFor} onOpenChange={(o) => { if (!o) setOfferDialogFor(null); }}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Make an offer</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label>Role / job title (optional)</Label>
+                <Input
+                  placeholder="e.g. Summer Analyst Internship"
+                  value={offerForm.jobTitle}
+                  onChange={(e) => setOfferForm({ ...offerForm, jobTitle: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Message (optional)</Label>
+                <Textarea
+                  placeholder="A short message to the candidate about the offer and next steps."
+                  value={offerForm.message}
+                  onChange={(e) => setOfferForm({ ...offerForm, message: e.target.value })}
+                />
+              </div>
+              <p className="text-xs text-muted-foreground">The candidate and Career Pilot are notified. The candidate's stage becomes "Offer".</p>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setOfferDialogFor(null)} disabled={submittingDecision}>Cancel</Button>
+              <Button onClick={handleOffer} disabled={submittingDecision}>
+                {submittingDecision ? 'Sending...' : 'Send offer'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Reject (C4) */}
+        <Dialog open={!!rejectDialogFor} onOpenChange={(o) => { if (!o) setRejectDialogFor(null); }}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Reject candidate</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label>Reason (optional)</Label>
+                <Textarea
+                  placeholder="An optional note shared with the candidate."
+                  value={rejectReason}
+                  onChange={(e) => setRejectReason(e.target.value)}
+                />
+              </div>
+              <p className="text-xs text-muted-foreground">The candidate and Career Pilot are notified. The candidate's stage becomes "Rejected" (their recruiting history is kept).</p>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setRejectDialogFor(null)} disabled={submittingDecision}>Cancel</Button>
+              <Button variant="destructive" onClick={handleReject} disabled={submittingDecision}>
+                {submittingDecision ? 'Submitting...' : 'Reject candidate'}
               </Button>
             </DialogFooter>
           </DialogContent>
