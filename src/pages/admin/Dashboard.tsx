@@ -9,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   LogOut, Users, Shield, Activity, FileText, 
   Search, Filter, CheckCircle, XCircle, Clock,
-  UserCheck, UserX, ChevronRight, Building, Send, ShoppingCart, Briefcase, BookOpen, ExternalLink, FolderOpen, FileCode
+  UserCheck, UserX, ChevronRight, Building, Send, ShoppingCart, Briefcase, BookOpen, ExternalLink, FileCode, ListTodo
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import PendingApprovals from "@/components/admin/PendingApprovals";
@@ -22,6 +22,7 @@ import AdminClientFeedback from "@/components/admin/AdminClientFeedback";
 import AdminClientProjects from "@/components/admin/AdminClientProjects";
 import PrepMaterialsManagement from "@/components/admin/PrepMaterialsManagement";
 import AdminCRM from "@/components/admin/AdminCRM";
+import AdminTasks from "@/components/admin/AdminTasks";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 import { useLanguage } from "@/contexts/LanguageContext";
 
@@ -201,23 +202,22 @@ const AdminDashboard = () => {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <a
-                href="https://www.dropbox.com/scl/fo/9z8jcf96dh3i51gxadcih/AKzb4hP8UHXeHmV51OHnuc0?rlkey=xylzv0qp7i2lerjfww8tjz2er&e=1&st=k7hcdbdb&dl=0"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="group flex items-center justify-between gap-3 p-4 rounded-lg border border-border hover:border-primary hover:bg-primary/5 transition-all"
+              <button
+                type="button"
+                onClick={() => setMainTab("tasks")}
+                className="group flex items-center justify-between gap-3 p-4 rounded-lg border border-border hover:border-primary hover:bg-primary/5 transition-all text-left"
               >
                 <div className="flex items-center gap-3">
                   <div className="h-10 w-10 rounded-md bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
-                    <FolderOpen className="h-5 w-5 text-primary" />
+                    <ListTodo className="h-5 w-5 text-primary" />
                   </div>
                   <div>
-                    <div className="font-medium">Shared Resources Library</div>
-                    <div className="text-xs text-muted-foreground">Dropbox shared folder</div>
+                    <div className="font-medium">Tasks</div>
+                    <div className="text-xs text-muted-foreground">Team to-do board</div>
                   </div>
                 </div>
-                <ExternalLink className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
-              </a>
+                <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+              </button>
               <button
                 type="button"
                 onClick={() => setMainTab("crm")}
@@ -240,7 +240,7 @@ const AdminDashboard = () => {
 
         {/* Main Content Tabs */}
         <Tabs value={mainTab} onValueChange={setMainTab} className="space-y-4">
-          <TabsList className="w-full grid grid-cols-4">
+          <TabsList className="w-full grid grid-cols-5">
             <TabsTrigger value="associates" className="gap-2">
               <Users className="h-4 w-4" />
               ASSOCIATES
@@ -261,6 +261,10 @@ const AdminDashboard = () => {
             <TabsTrigger value="crm" className="gap-2">
               <FileCode className="h-4 w-4" />
               CRM
+            </TabsTrigger>
+            <TabsTrigger value="tasks" className="gap-2">
+              <ListTodo className="h-4 w-4" />
+              TASKS
             </TabsTrigger>
           </TabsList>
 
@@ -413,6 +417,10 @@ const AdminDashboard = () => {
           {/* CRM AREA */}
           <TabsContent value="crm">
             <AdminCRM />
+          </TabsContent>
+
+          <TabsContent value="tasks">
+            <AdminTasks />
           </TabsContent>
 
         </Tabs>
