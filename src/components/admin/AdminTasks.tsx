@@ -108,15 +108,15 @@ const AdminTasks = () => {
     setMembers(list);
   };
 
-  // Email the assignee that a task is now theirs. Fire-and-forget; legacy
-  // free-text names (no matching member email) are silently skipped.
-  const notifyAssignee = (name: string, taskTitle: string, dueDate: string | null, notes: string | null) => {
-    const m = members.find((x) => x.name === name);
-    if (!m?.email) return;
+  // Notify about a task: the assignee (if we know their email) gets it directly,
+  // and the Career Pilot team is always BCC'd for oversight (handled server-side).
+  // Fire-and-forget.
+  const notifyTask = (assigneeName: string | null, taskTitle: string, dueDate: string | null, notes: string | null) => {
+    const m = assigneeName ? members.find((x) => x.name === assigneeName) : null;
     supabase.functions
-      .invoke("notify-task-assignee", { body: { email: m.email, name: m.name, taskTitle, dueDate, notes } })
-      .then(() => toast({ title: `${m.name} notified by email` }))
-      .catch((e) => console.error("notify assignee failed", e));
+      .invoke("notify-task-assignee", { body: { email: m?.email ?? null, name: assigneeName, taskTitle, dueDate, notes } })
+      .then(() => toast({ title: assigneeName ? `${assigneeName} and the team were notified` : "Team notified by email" }))
+      .catch((e) => console.error("notify task failed", e));
   };
 
   useEffect(() => {
@@ -151,7 +151,7 @@ const AdminTasks = () => {
       toast({ title: "Could not create task", description: error.message, variant: "destructive" });
       return;
     }
-    if (assignee !== UNASSIGNED) notifyAssignee(assignee, trimmed, dueDate || null, null);
+    notifyTask(assignee === UNASSIGNED ? null : assignee, trimmed, dueDate || null, null);
     setTitle("");
     setAssignee(UNASSIGNED);
     setDueDate("");
@@ -235,7 +235,7 @@ const AdminTasks = () => {
     // Notify only when the assignee actually changed to a new person.
     const prevAssignee = editing.assignee && editing.assignee.trim() ? editing.assignee : UNASSIGNED;
     if (editForm.assignee !== UNASSIGNED && editForm.assignee !== prevAssignee) {
-      notifyAssignee(editForm.assignee, trimmed, editForm.due_date || null, editForm.notes.trim() || null);
+      notifyTask(editForm.assignee, trimmed, editForm.due_date || null, editForm.notes.trim() || null);
     }
     setEditing(null);
   };
