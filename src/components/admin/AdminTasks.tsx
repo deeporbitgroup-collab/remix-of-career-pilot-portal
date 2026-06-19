@@ -55,9 +55,17 @@ const COLUMNS: { key: Status; label: string; accent: string }[] = [
 
 const UNASSIGNED = "__unassigned__";
 
+// The task board is for the Career Pilot management team only (not associates).
+// Assignees and notifications stay strictly within these three.
+const TEAM_MEMBERS: Member[] = [
+  { id: "leone", name: "Leone Fassio", email: "fassio.leone@gmail.com" },
+  { id: "andrea", name: "Andrea", email: "andreaa@mit.edu" },
+  { id: "elisabetta", name: "Elisabetta Fabris", email: "elisabettafabris.work@gmail.com" },
+];
+
 const AdminTasks = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
-  const [members, setMembers] = useState<Member[]>([]);
+  const members = TEAM_MEMBERS;
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
 
@@ -93,21 +101,6 @@ const AdminTasks = () => {
     setLoading(false);
   };
 
-  const loadMembers = async () => {
-    // The "team": approved associates + admins. Used to assign tasks to a real
-    // person instead of free text.
-    const { data } = await db
-      .from("profiles")
-      .select("id, first_name, last_name, email, role, status")
-      .in("role", ["ADMIN", "ASSOCIATE"])
-      .eq("status", "approved")
-      .order("first_name", { ascending: true });
-    const list = (data ?? [])
-      .map((p: any) => ({ id: p.id, name: `${p.first_name ?? ""} ${p.last_name ?? ""}`.trim(), email: p.email ?? null }))
-      .filter((m: Member) => m.name);
-    setMembers(list);
-  };
-
   // Notify about a task: the assignee (if we know their email) gets it directly,
   // and the Career Pilot team is always BCC'd for oversight (handled server-side).
   // Fire-and-forget.
@@ -121,7 +114,6 @@ const AdminTasks = () => {
 
   useEffect(() => {
     load();
-    loadMembers();
     const channel = db
       .channel("admin_tasks_changes")
       .on("postgres_changes", { event: "*", schema: "public", table: "admin_tasks" }, () => load())
