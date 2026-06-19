@@ -820,7 +820,7 @@ const StudentDashboard = () => {
               {selectedCompanies.length === 0 ? (
                 <div className="text-steel-gray text-sm">No companies have selected your profile yet.</div>
               ) : (
-                <div className="space-y-3">
+                <div className="space-y-3 max-md:flex max-md:snap-x max-md:snap-mandatory max-md:gap-3 max-md:space-y-0 max-md:overflow-x-auto max-md:pb-2 max-md:[&>*]:w-[85vw] max-md:[&>*]:shrink-0 max-md:[&>*]:snap-center">
                   {selectedCompanies.map((selection) => {
                     const company = selection.talent_pool_users?.company_profiles?.[0];
                     return (

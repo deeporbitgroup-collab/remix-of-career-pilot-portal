@@ -212,13 +212,13 @@ const AssociateClientProjects = ({ associateId, language, mode = 'all' }: Associ
                 {group.projects.length} {language === 'it' ? 'servizi' : 'services'}
               </Badge>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 max-md:flex max-md:snap-x max-md:snap-mandatory max-md:overflow-x-auto max-md:pb-1 max-md:[&>*]:w-[78vw] max-md:[&>*]:shrink-0 max-md:[&>*]:snap-center">
               {group.projects.map(renderCard)}
             </div>
           </div>
         ))}
         {singles.length > 0 && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 max-md:flex max-md:snap-x max-md:snap-mandatory max-md:overflow-x-auto max-md:pb-1 max-md:[&>*]:w-[78vw] max-md:[&>*]:shrink-0 max-md:[&>*]:snap-center">
             {singles.map(renderCard)}
           </div>
         )}

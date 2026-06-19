@@ -301,10 +301,14 @@ const MyProjectsSection = ({ clientId, clientName }: MyProjectsSectionProps) => 
     return groups;
   };
 
-  const renderGroups = (list: any[], renderCard: (project: any) => JSX.Element) =>
-    groupByPackage(list).map((group) =>
+  // On mobile each top-level project/package becomes a horizontal swipe card so
+  // multiple ongoing projects don't pile up into one long scroll; desktop keeps
+  // the vertical stack.
+  const renderGroups = (list: any[], renderCard: (project: any) => JSX.Element, scrollable = false) => {
+    const slide = scrollable ? " max-md:w-[85vw] max-md:shrink-0 max-md:snap-center" : "";
+    return groupByPackage(list).map((group) =>
       group.packageName ? (
-        <div key={group.key} className="rounded-xl border border-primary/20 bg-primary/[0.03] p-3 sm:p-4">
+        <div key={group.key} className={`rounded-xl border border-primary/20 bg-primary/[0.03] p-3 sm:p-4${slide}`}>
           <div className="mb-3 flex items-center gap-2">
             <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/10 text-primary">
               <Layers className="h-4 w-4" />
@@ -317,9 +321,10 @@ const MyProjectsSection = ({ clientId, clientName }: MyProjectsSectionProps) => 
           <div className="space-y-3">{group.projects.map(renderCard)}</div>
         </div>
       ) : (
-        <div key={group.key}>{group.projects.map(renderCard)}</div>
+        <div key={group.key} className={slide.trim() || undefined}>{group.projects.map(renderCard)}</div>
       )
     );
+  };
 
   return (
     <div className="space-y-6">
@@ -347,7 +352,7 @@ const MyProjectsSection = ({ clientId, clientName }: MyProjectsSectionProps) => 
           </CardTitle>
           <CardDescription>Track your ongoing services and bookings</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-4 max-md:flex max-md:snap-x max-md:snap-mandatory max-md:gap-3 max-md:space-y-0 max-md:overflow-x-auto max-md:pb-2">
           {activeProjects.length === 0 ? (
             <p className="text-center text-muted-foreground py-4">No active projects</p>
           ) : (
@@ -364,7 +369,7 @@ const MyProjectsSection = ({ clientId, clientName }: MyProjectsSectionProps) => 
                 onToggle={() => toggleProject(project.id)}
                 onBookAdditionalCall={(project) => setAdditionalCallProject(project)}
               />
-            ))
+            ), true)
           )}
         </CardContent>
       </Card>
@@ -376,7 +381,7 @@ const MyProjectsSection = ({ clientId, clientName }: MyProjectsSectionProps) => 
             <CardTitle className="text-xl">Completed Projects</CardTitle>
             <CardDescription>Your finished services with downloadable documents</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-4 max-md:flex max-md:snap-x max-md:snap-mandatory max-md:gap-3 max-md:space-y-0 max-md:overflow-x-auto max-md:pb-2">
             {renderGroups(completedProjects, (project) => (
               <ProjectCard
                 key={project.id}
@@ -387,7 +392,7 @@ const MyProjectsSection = ({ clientId, clientName }: MyProjectsSectionProps) => 
                 isExpanded={expandedProjects.has(project.id)}
                 onToggle={() => toggleProject(project.id)}
               />
-            ))}
+            ), true)}
           </CardContent>
         </Card>
       )}

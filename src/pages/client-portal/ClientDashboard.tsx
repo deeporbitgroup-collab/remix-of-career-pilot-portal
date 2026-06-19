@@ -129,7 +129,7 @@ const ClientDashboard = () => {
 
         {/* Main Content */}
         <Tabs defaultValue="projects" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3 md:grid-cols-6 backdrop-blur-sm bg-background/90">
+          <TabsList className="grid w-full grid-cols-3 md:grid-cols-6 h-auto gap-1 p-1 backdrop-blur-sm bg-background/90">
             <TabsTrigger value="projects" className="flex items-center gap-2">
               <Plane className="h-4 w-4" />
               <span className="hidden sm:inline">My Projects</span>
