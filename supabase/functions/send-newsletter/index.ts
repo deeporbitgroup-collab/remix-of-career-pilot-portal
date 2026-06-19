@@ -36,28 +36,62 @@ type Recipient = { email: string; first_name?: string | null };
 
 const emailTemplate = (subject: string, body: string, hasAttachments: boolean) => `
 <!DOCTYPE html>
-<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
-<body style="margin:0;padding:0;font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background-color:#f8fafc;">
-  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:600px;margin:0 auto;padding:20px;">
-    <tr><td>
-      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:linear-gradient(135deg,#1a365d 0%,#2d4a7c 100%);border-radius:16px 16px 0 0;">
-        <tr><td style="padding:36px 30px;text-align:center;">
-          <h1 style="margin:0;color:#fff;font-size:26px;font-weight:700;">Career Pilot</h1>
-          <p style="margin:8px 0 0;color:#94a3b8;font-size:13px;">Your Flight Plan to Success</p>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="x-apple-disable-message-reformatting">
+</head>
+<body style="margin:0;padding:0;background-color:#e8eef6;font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;-webkit-font-smoothing:antialiased;">
+  <span style="display:none!important;visibility:hidden;opacity:0;height:0;width:0;overflow:hidden;">${subject}</span>
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color:#e8eef6;padding:28px 14px;">
+    <tr><td align="center">
+      <table role="presentation" width="600" cellspacing="0" cellpadding="0" style="width:600px;max-width:100%;background:#ffffff;border-radius:20px;overflow:hidden;box-shadow:0 18px 48px rgba(15,23,42,0.16);">
+
+        <!-- Header -->
+        <tr><td style="background:linear-gradient(135deg,#0b2545 0%,#1a365d 45%,#2d6cdf 100%);padding:0;">
+          <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+            <tr><td style="padding:40px 36px 34px;text-align:center;">
+              <div style="display:inline-block;width:56px;height:56px;line-height:56px;border-radius:16px;background:rgba(255,255,255,0.14);color:#ffffff;font-size:26px;margin-bottom:14px;">&#9992;&#65039;</div>
+              <h1 style="margin:0;color:#ffffff;font-size:26px;font-weight:800;letter-spacing:-0.4px;">Career Pilot</h1>
+              <p style="margin:7px 0 0;color:#a9c6f5;font-size:12px;letter-spacing:2px;text-transform:uppercase;">Your Flight Plan to Success</p>
+            </td></tr>
+          </table>
         </td></tr>
-      </table>
-      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#fff;border-left:1px solid #e2e8f0;border-right:1px solid #e2e8f0;">
-        <tr><td style="padding:36px 30px;">
-          <h2 style="margin:0 0 16px;color:#1a365d;font-size:20px;">${subject}</h2>
-          <div style="color:#475569;font-size:15px;line-height:1.6;white-space:pre-wrap;">${body}</div>
-          ${hasAttachments ? `<p style="margin-top:20px;color:#64748b;font-size:13px;">📎 You'll find the attached document(s) in this email.</p>` : ""}
+        <!-- Accent bar -->
+        <tr><td style="height:5px;background:linear-gradient(90deg,#2d6cdf,#38bdf8,#34d399);font-size:0;line-height:0;">&nbsp;</td></tr>
+
+        <!-- Body -->
+        <tr><td style="padding:40px 40px 8px;">
+          <h2 style="margin:0 0 18px;color:#0b2545;font-size:23px;line-height:1.25;font-weight:800;letter-spacing:-0.3px;">${subject}</h2>
+          <div style="color:#475569;font-size:16px;line-height:1.72;white-space:pre-wrap;">${body}</div>
         </td></tr>
-      </table>
-      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f1f5f9;border-radius:0 0 16px 16px;border:1px solid #e2e8f0;">
-        <tr><td style="padding:20px 30px;text-align:center;color:#94a3b8;font-size:12px;">
-          You're receiving this because you're part of the Career Pilot community.<br/>This is an automated email, please do not reply.
+
+        ${hasAttachments ? `
+        <tr><td style="padding:18px 40px 0;">
+          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:12px;">
+            <tr><td style="padding:14px 18px;color:#1d4ed8;font-size:14px;font-weight:600;">&#128206;&nbsp; Your document(s) are attached to this email.</td></tr>
+          </table>
+        </td></tr>` : ""}
+
+        <!-- Divider -->
+        <tr><td style="padding:30px 40px 0;"><div style="height:1px;background:#e8edf4;font-size:0;line-height:0;">&nbsp;</div></td></tr>
+
+        <!-- Footer -->
+        <tr><td style="padding:24px 40px 36px;text-align:center;">
+          <p style="margin:0 0 12px;color:#64748b;font-size:13px;">Stay in touch with the Career Pilot crew</p>
+          <table role="presentation" align="center" cellspacing="0" cellpadding="0"><tr>
+            <td style="padding:0 7px;"><a href="https://instagram.com/careerpilot_official" style="color:#2d6cdf;text-decoration:none;font-size:13px;font-weight:600;">Instagram</a></td>
+            <td style="color:#cbd5e1;">&bull;</td>
+            <td style="padding:0 7px;"><a href="https://linkedin.com/company/career-pilot" style="color:#2d6cdf;text-decoration:none;font-size:13px;font-weight:600;">LinkedIn</a></td>
+            <td style="color:#cbd5e1;">&bull;</td>
+            <td style="padding:0 7px;"><a href="mailto:CareerPilot.team@gmail.com" style="color:#2d6cdf;text-decoration:none;font-size:13px;font-weight:600;">Email</a></td>
+          </tr></table>
+          <p style="margin:16px 0 0;color:#94a3b8;font-size:11px;line-height:1.6;">
+            You're receiving this because you're part of the Career Pilot community.<br/>
+            This is an automated email — please do not reply.
+          </p>
         </td></tr>
+
       </table>
+      <p style="margin:18px 0 0;color:#9aa7bd;font-size:11px;">&copy; Career Pilot · Made by students, for students.</p>
     </td></tr>
   </table>
 </body></html>`;

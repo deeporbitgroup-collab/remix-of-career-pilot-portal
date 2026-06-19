@@ -189,6 +189,10 @@ verify_jwt = false
 [functions.newsletter-subscribe]
 verify_jwt = false
 
+# Task assignment notification (crew portal task board).
+[functions.notify-task-assignee]
+verify_jwt = false
+
 [functions.send-client-feedback-confirmation]
 verify_jwt = false
 

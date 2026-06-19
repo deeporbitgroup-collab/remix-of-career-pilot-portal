@@ -44,6 +44,7 @@ interface Task {
 interface Member {
   id: string;
   name: string;
+  email: string | null;
 }
 
 const COLUMNS: { key: Status; label: string; accent: string }[] = [
@@ -97,14 +98,25 @@ const AdminTasks = () => {
     // person instead of free text.
     const { data } = await db
       .from("profiles")
-      .select("id, first_name, last_name, role, status")
+      .select("id, first_name, last_name, email, role, status")
       .in("role", ["ADMIN", "ASSOCIATE"])
       .eq("status", "approved")
       .order("first_name", { ascending: true });
     const list = (data ?? [])
-      .map((p: any) => ({ id: p.id, name: `${p.first_name ?? ""} ${p.last_name ?? ""}`.trim() }))
+      .map((p: any) => ({ id: p.id, name: `${p.first_name ?? ""} ${p.last_name ?? ""}`.trim(), email: p.email ?? null }))
       .filter((m: Member) => m.name);
     setMembers(list);
+  };
+
+  // Email the assignee that a task is now theirs. Fire-and-forget; legacy
+  // free-text names (no matching member email) are silently skipped.
+  const notifyAssignee = (name: string, taskTitle: string, dueDate: string | null, notes: string | null) => {
+    const m = members.find((x) => x.name === name);
+    if (!m?.email) return;
+    supabase.functions
+      .invoke("notify-task-assignee", { body: { email: m.email, name: m.name, taskTitle, dueDate, notes } })
+      .then(() => toast({ title: `${m.name} notified by email` }))
+      .catch((e) => console.error("notify assignee failed", e));
   };
 
   useEffect(() => {
@@ -139,6 +151,7 @@ const AdminTasks = () => {
       toast({ title: "Could not create task", description: error.message, variant: "destructive" });
       return;
     }
+    if (assignee !== UNASSIGNED) notifyAssignee(assignee, trimmed, dueDate || null, null);
     setTitle("");
     setAssignee(UNASSIGNED);
     setDueDate("");
@@ -219,6 +232,11 @@ const AdminTasks = () => {
       return;
     }
     setTasks((prev) => prev.map((t) => (t.id === editing.id ? { ...t, ...patch } : t)));
+    // Notify only when the assignee actually changed to a new person.
+    const prevAssignee = editing.assignee && editing.assignee.trim() ? editing.assignee : UNASSIGNED;
+    if (editForm.assignee !== UNASSIGNED && editForm.assignee !== prevAssignee) {
+      notifyAssignee(editForm.assignee, trimmed, editForm.due_date || null, editForm.notes.trim() || null);
+    }
     setEditing(null);
   };
 
