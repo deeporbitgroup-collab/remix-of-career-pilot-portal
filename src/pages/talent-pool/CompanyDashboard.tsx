@@ -829,10 +829,10 @@ const CompanyDashboardContent = () => {
         </div>
 
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'students' | 'selected' | 'profile')} className="space-y-6">
-          <TabsList>
-            <TabsTrigger value="students">Available Students</TabsTrigger>
-            <TabsTrigger value="selected">Selected Students ({selectedList.length})</TabsTrigger>
-            <TabsTrigger value="profile">Company Profile</TabsTrigger>
+          <TabsList className="max-md:grid max-md:w-full max-md:grid-cols-3 max-md:h-auto max-md:gap-1">
+            <TabsTrigger value="students" className="max-md:h-auto max-md:whitespace-normal max-md:px-1 max-md:py-2 max-md:text-[11px] max-md:leading-tight">Available Students</TabsTrigger>
+            <TabsTrigger value="selected" className="max-md:h-auto max-md:whitespace-normal max-md:px-1 max-md:py-2 max-md:text-[11px] max-md:leading-tight">Selected Students ({selectedList.length})</TabsTrigger>
+            <TabsTrigger value="profile" className="max-md:h-auto max-md:whitespace-normal max-md:px-1 max-md:py-2 max-md:text-[11px] max-md:leading-tight">Company Profile</TabsTrigger>
           </TabsList>
 
           <TabsContent value="profile">
@@ -1105,7 +1105,7 @@ const CompanyDashboardContent = () => {
                     </p>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-md:flex max-md:snap-x max-md:snap-mandatory max-md:overflow-x-auto max-md:pb-2 max-md:[&>*]:w-[82vw] max-md:[&>*]:shrink-0 max-md:[&>*]:snap-center">
                     {students.map((student) => (
                       <Card key={student.id} className="p-4 hover:shadow-lg transition-shadow">
                         <div className="space-y-3">
@@ -1162,7 +1162,7 @@ const CompanyDashboardContent = () => {
                                 <video
                                   src={student.presentation_video_url}
                                   controls
-                                  className="w-full rounded-md border bg-black"
+                                  className="hidden md:block w-full rounded-md border bg-black"
                                 />
                                 <Button
                                   size="sm"
@@ -1246,7 +1246,7 @@ const CompanyDashboardContent = () => {
                     </p>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-md:flex max-md:snap-x max-md:snap-mandatory max-md:overflow-x-auto max-md:pb-2 max-md:[&>*]:w-[85vw] max-md:[&>*]:shrink-0 max-md:[&>*]:snap-center">
                     {selectedList.map((selection) => {
                       const student = selection.profile;
                       if (!student) return null;

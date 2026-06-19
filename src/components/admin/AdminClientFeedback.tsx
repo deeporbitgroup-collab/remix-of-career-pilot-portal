@@ -56,6 +56,7 @@ const AdminClientFeedback = () => {
         ) : feedbacks.length === 0 ? (
           <p className="text-muted-foreground text-center py-8">No feedbacks yet</p>
         ) : (
+          <div className="w-full overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>
@@ -89,6 +90,7 @@ const AdminClientFeedback = () => {
               ))}
             </TableBody>
           </Table>
+          </div>
         )}
       </CardContent>
     </Card>
