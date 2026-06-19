@@ -86,7 +86,8 @@ const UsefulContacts = () => {
           </a>
         </Button>
 
-        <div className="flex flex-wrap gap-2 ml-auto">
+        {/* Intro videos — desktop only (hidden on mobile to keep the area tidy) */}
+        <div className="hidden md:flex flex-wrap gap-2 ml-auto">
           <InlineVideoCard label="Welcome to your personal area!" src="/videos/client-welcome.mp4" />
           <InlineVideoCard label="Get to know better your area" src="/videos/client-getknow.mp4" />
         </div>

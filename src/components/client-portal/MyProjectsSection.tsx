@@ -513,11 +513,11 @@ const ProjectCard = ({ project, clientId, clientName, onSelectSlot, onAcceptCoun
                       <Button
                         key={slot.id}
                         variant="outline"
-                        className="justify-between h-auto py-3"
+                        className="flex h-auto items-center justify-between gap-2 whitespace-normal py-3 text-left"
                         onClick={() => onAcceptCounter?.(project.id, slot.id)}
                       >
-                        <span>{slot.proposed_time}</span>
-                        <CheckCircle2 className="h-4 w-4 text-green-600" />
+                        <span className="min-w-0 break-words">{slot.proposed_time}</span>
+                        <CheckCircle2 className="h-4 w-4 shrink-0 text-green-600" />
                       </Button>
                     ))}
                   </div>

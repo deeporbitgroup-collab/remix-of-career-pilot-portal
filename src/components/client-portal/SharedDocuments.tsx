@@ -244,9 +244,9 @@ const SharedDocuments = ({ projectId, uploaderId, uploaderType, uploaderName }: 
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center justify-between">
+        <CardTitle className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <span>Shared Documents</span>
-          <div className="relative">
+          <div className="relative w-full sm:w-auto">
             <Input
               type="file"
               onChange={handleFileUpload}
@@ -254,8 +254,8 @@ const SharedDocuments = ({ projectId, uploaderId, uploaderType, uploaderName }: 
               className="hidden"
               id="file-upload"
             />
-            <label htmlFor="file-upload">
-              <Button asChild disabled={uploading}>
+            <label htmlFor="file-upload" className="block">
+              <Button asChild disabled={uploading} className="w-full sm:w-auto">
                 <span className="cursor-pointer">
                   <Upload className="mr-2 h-4 w-4" />
                   {uploading ? 'Uploading...' : 'Upload Document'}
@@ -274,6 +274,7 @@ const SharedDocuments = ({ projectId, uploaderId, uploaderType, uploaderName }: 
         ) : documents.length === 0 ? (
           <p className="text-muted-foreground text-center py-8">No documents yet</p>
         ) : (
+          <div className="w-full overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>
@@ -287,9 +288,9 @@ const SharedDocuments = ({ projectId, uploaderId, uploaderType, uploaderName }: 
             <TableBody>
               {documents.map((doc) => (
                 <TableRow key={doc.id}>
-                  <TableCell className="flex items-center gap-2">
-                    <FileText className="h-4 w-4" />
-                    {doc.filename}
+                  <TableCell className="flex items-center gap-2 max-w-[200px] truncate">
+                    <FileText className="h-4 w-4 shrink-0" />
+                    <span className="truncate">{doc.filename}</span>
                   </TableCell>
                   <TableCell>
                     <Badge variant="outline">{doc.uploaded_by_type}</Badge>
@@ -320,6 +321,7 @@ const SharedDocuments = ({ projectId, uploaderId, uploaderType, uploaderName }: 
               ))}
             </TableBody>
           </Table>
+          </div>
         )}
       </CardContent>
     </Card>
