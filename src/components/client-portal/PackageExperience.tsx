@@ -508,40 +508,40 @@ const PackageExperience = ({
       {/* ===================== MOBILE compact layout ===================== */}
       {/* Sits on a solid surface so every label stays legible over the page's
           dark photo background (desktop uses the separate block below). */}
-      <div className="md:hidden flex flex-col gap-2.5 rounded-2xl border border-border/50 bg-background/95 p-3 shadow-xl backdrop-blur-sm">
+      <div className="md:hidden flex flex-col gap-2 rounded-2xl border border-border/50 bg-background/95 p-2.5 shadow-xl backdrop-blur-sm">
         {/* Header */}
-        <div className="flex items-center gap-2.5">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/15 text-primary">
-            <Icon className="h-5 w-5" />
+        <div className="flex items-center gap-2">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/15 text-primary">
+            <Icon className="h-4 w-4" />
           </div>
           <div className="min-w-0">
-            <h2 className="text-xl font-extrabold uppercase leading-tight tracking-wide text-primary">
-              <span className="inline-block border-b-[3px] border-secondary pb-0.5">{pkg.code_name}</span>
+            <h2 className="text-lg font-extrabold uppercase leading-tight tracking-wide text-primary">
+              <span className="inline-block border-b-2 border-secondary pb-0.5">{pkg.code_name}</span>
             </h2>
             <p className="truncate text-[11px] text-foreground/70">{pkg.subtitle}</p>
           </div>
           <button
             type="button"
             onClick={() => setPackageInfoOpen(true)}
-            className="ml-auto inline-flex shrink-0 items-center gap-1 rounded-full border border-primary/20 px-2.5 py-1 text-[11px] font-medium text-primary"
+            className="ml-auto inline-flex shrink-0 items-center gap-1 rounded-full border border-primary/20 px-2 py-0.5 text-[11px] font-medium text-primary"
           >
             <Info className="h-3.5 w-3.5" /> Info
           </button>
         </div>
 
         {/* What's included (summary) + Customize via bottom-sheet */}
-        <div className="rounded-xl border border-primary/20 bg-card p-3 shadow-sm">
-          <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">What's included</p>
-          <ul className="space-y-1">
+        <div className="rounded-xl border border-primary/20 bg-card p-2.5 shadow-sm">
+          <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">What's included</p>
+          <ul className="space-y-0.5">
             {includedCore.map((c) => (
-              <li key={c.id} className="flex items-start gap-1.5 text-[13px]">
-                <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />
+              <li key={c.id} className="flex items-start gap-1.5 text-[12px] leading-snug">
+                <Check className="mt-0.5 h-3 w-3 shrink-0 text-primary" />
                 <span className="font-medium text-foreground">{c.label || c.service?.name}</span>
               </li>
             ))}
             {coreComponents.filter((c) => removed.has(c.id)).map((c) => (
-              <li key={c.id} className="flex items-start gap-1.5 text-[13px] text-muted-foreground line-through">
-                <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 opacity-40" />
+              <li key={c.id} className="flex items-start gap-1.5 text-[12px] leading-snug text-muted-foreground line-through">
+                <Check className="mt-0.5 h-3 w-3 shrink-0 opacity-40" />
                 <span>{c.label || c.service?.name}</span>
               </li>
             ))}
@@ -549,7 +549,7 @@ const PackageExperience = ({
           {coreComponents.some((c) => c.is_removable) && (
             <Sheet>
               <SheetTrigger asChild>
-                <Button variant="outline" size="sm" className="mt-2 w-full border-primary/30 text-primary">
+                <Button variant="outline" size="sm" className="mt-1.5 h-7 w-full border-primary/30 text-xs text-primary">
                   Customize components
                 </Button>
               </SheetTrigger>
@@ -602,41 +602,30 @@ const PackageExperience = ({
           )}
         </div>
 
-        {/* Demo / sample projects */}
-        {demoPdfNames.length > 0 && (
-          <div className="flex flex-wrap gap-2">
-            {demoPdfNames.map((name) => (
-              <Button key={name} variant="outline" size="sm" className="h-7 text-[11px]" onClick={() => onDownloadPdf(name, pkg.category)}>
-                <Download className="mr-1 h-3 w-3" /> {demoShortLabel(name)}
-              </Button>
-            ))}
-          </div>
-        )}
-
         {/* Price + add to cart */}
-        <div className="rounded-xl border border-primary/20 bg-primary/5 p-3">
-          <div className="flex items-end justify-between">
-            <div>
-              <span className="text-3xl font-extrabold text-primary">€{total.toFixed(0)}</span>
-              {total < fullPrice && <span className="ml-2 text-sm text-muted-foreground line-through">€{fullPrice.toFixed(0)}</span>}
+        <div className="rounded-xl border border-primary/20 bg-primary/5 p-2.5">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-baseline gap-2">
+              <span className="text-2xl font-extrabold text-primary">€{total.toFixed(0)}</span>
+              {total < fullPrice && <span className="text-xs text-muted-foreground line-through">€{fullPrice.toFixed(0)}</span>}
             </div>
             {removed.size > 0 && (
               <Badge variant="secondary" className="bg-amber-100 text-amber-700">Customized</Badge>
             )}
           </div>
-          <Button className="mt-2.5 w-full bg-gradient-to-r from-primary to-secondary text-base font-bold shadow-md" size="lg" onClick={addPackageToCart}>
-            <ShoppingCart className="mr-2 h-5 w-5" />
+          <Button className="mt-2 h-10 w-full bg-gradient-to-r from-primary to-secondary text-sm font-bold shadow-md" onClick={addPackageToCart}>
+            <ShoppingCart className="mr-2 h-4 w-4" />
             {selectedAssociate ? `Add with ${selectedAssociate.first_name}` : "Pick an Associate below"}
           </Button>
         </div>
 
         {/* Choose your Associate */}
-        <div className="rounded-xl border border-secondary/30 bg-card p-3">
-          <p className="mb-1.5 flex items-center gap-1.5 text-sm font-semibold">
+        <div className="rounded-xl border border-secondary/30 bg-card p-2.5">
+          <p className="mb-1.5 flex items-center gap-1.5 text-[13px] font-semibold">
             <Users className="h-4 w-4 text-primary" /> Choose your Associate
           </p>
           <Select value={associateFilter || "__all__"} onValueChange={(v) => setAssociateFilter(v === "__all__" ? "" : v)}>
-            <SelectTrigger className="w-full border-primary/20"><SelectValue placeholder="Pick from the list" /></SelectTrigger>
+            <SelectTrigger className="h-9 w-full border-primary/20 text-sm"><SelectValue placeholder="Pick from the list" /></SelectTrigger>
             <SelectContent className="max-h-72">
               <SelectItem value="__all__">All {filterLabel.toLowerCase()}</SelectItem>
               {availableValues.map((v) => (<SelectItem key={v} value={v}>{v}</SelectItem>))}
@@ -648,6 +637,8 @@ const PackageExperience = ({
             ) : (
               <AssociateChoiceCarousel
                 associates={filteredAssociates}
+                fillHeight
+                compact
                 isSelected={(a) => selectedAssociateId === a.id}
                 onToggle={(a) => setSelectedAssociateId((prev) => (prev === a.id ? null : a.id))}
                 getSectors={(a) => {

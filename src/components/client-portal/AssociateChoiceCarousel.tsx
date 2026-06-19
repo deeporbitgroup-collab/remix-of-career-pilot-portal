@@ -46,6 +46,11 @@ interface AssociateChoiceCarouselProps {
    * dialogs keep the default, larger fixed-height photos.
    */
   fillHeight?: boolean;
+  /**
+   * Extra-tight variant for the mobile package view, where the whole package
+   * must fit one screen: smaller photo, denser info and a slimmer select bar.
+   */
+  compact?: boolean;
 }
 
 const getInitials = (a: AssociateLike) =>
@@ -62,6 +67,7 @@ const AssociateChoiceCarousel = ({
   renderActions,
   highlightCard,
   fillHeight = false,
+  compact = false,
 }: AssociateChoiceCarouselProps) => {
   const [api, setApi] = useState<CarouselApi>();
   const [current, setCurrent] = useState(0);
@@ -121,7 +127,9 @@ const AssociateChoiceCarousel = ({
                   <div
                     className={cn(
                       "relative w-full overflow-hidden",
-                      fillHeight
+                      compact
+                        ? "h-28"
+                        : fillHeight
                         ? "h-[20vh] min-h-[128px] max-h-[240px]"
                         : "h-64 sm:h-72"
                     )}
@@ -152,16 +160,16 @@ const AssociateChoiceCarousel = ({
                     )}
 
                     {/* Name (ALWAYS visible) — company now lives in a tidy box below */}
-                    <div className="absolute inset-x-0 bottom-0 p-4">
-                      <h3 className="text-xl font-bold leading-tight text-white drop-shadow-sm sm:text-2xl">
+                    <div className={cn("absolute inset-x-0 bottom-0", compact ? "p-2.5" : "p-4")}>
+                      <h3 className={cn("font-bold leading-tight text-white drop-shadow-sm", compact ? "text-base" : "text-xl sm:text-2xl")}>
                         {associate.first_name} {associate.last_name}
                       </h3>
                     </div>
                   </div>
 
                   {/* ---- Key info (ALWAYS visible) ---- */}
-                  <div className={cn("flex flex-1 flex-col", fillHeight ? "gap-2 p-3" : "gap-3 p-4")}>
-                    <div className={cn("flex flex-col", fillHeight ? "gap-1.5" : "gap-2.5")}>
+                  <div className={cn("flex flex-1 flex-col", compact ? "gap-1 p-2" : fillHeight ? "gap-2 p-3" : "gap-3 p-4")}>
+                    <div className={cn("flex flex-col", compact ? "gap-1" : fillHeight ? "gap-1.5" : "gap-2.5")}>
                       {(associate.university || associate.university_2) && (
                         <div className="flex items-start gap-2">
                           <GraduationCap className="mt-0.5 h-4 w-4 shrink-0 text-primary" aria-label="University" />
@@ -243,7 +251,8 @@ const AssociateChoiceCarousel = ({
                     {/* Click affordance — makes it obvious the card is selectable */}
                     <div
                       className={cn(
-                        "mt-1 flex items-center justify-center gap-1.5 rounded-lg py-2 text-sm font-medium transition-colors",
+                        "mt-1 flex items-center justify-center gap-1.5 rounded-lg font-medium transition-colors",
+                        compact ? "py-1 text-[11px]" : "py-2 text-sm",
                         selected
                           ? "bg-primary text-primary-foreground"
                           : "bg-muted text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary"
