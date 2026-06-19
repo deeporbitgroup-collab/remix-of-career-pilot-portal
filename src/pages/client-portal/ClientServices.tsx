@@ -553,7 +553,43 @@ const ClientServicesPage = () => {
 
         {/* Introduction — hidden on package verticals (each PackageExperience has its own header) */}
         {!(highlightCategory && PACKAGE_CATEGORIES.includes(highlightCategory)) && (
-          <Card className="backdrop-blur-sm bg-background/90 shadow-lg border-primary/20">
+          <>
+          {/* MOBILE: compact 3-step journey timeline (replaces the large intro card) */}
+          <div className="md:hidden rounded-2xl border border-primary/20 bg-background/95 p-4 shadow-lg backdrop-blur-sm">
+            <h2 className="mb-4 text-base font-bold text-foreground">How your journey works</h2>
+            <ol>
+              {[
+                {
+                  t: "Book a free call — or pick your Associate & package",
+                  d: "Start with a no-cost 1:1 to map your goals, or jump straight in and choose your mentor and package.",
+                },
+                {
+                  t: "First 1:1 meeting",
+                  d: "Your mentor walks you through your materials and gives practical, tailored preparation advice — live, one-to-one.",
+                },
+                {
+                  t: "Ongoing support",
+                  d: "Book extra 1:1 sessions with your mentor anytime from your dashboard, plus a dedicated WhatsApp group with your mentor and a Career Pilot student to answer your questions and keep you organized.",
+                },
+              ].map((s, i, arr) => (
+                <li key={i} className="flex gap-3">
+                  <div className="flex flex-col items-center">
+                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-primary to-secondary text-xs font-bold text-primary-foreground shadow">
+                      {i + 1}
+                    </span>
+                    {i < arr.length - 1 && <span className="my-1 w-px flex-1 bg-primary/20" />}
+                  </div>
+                  <div className={i < arr.length - 1 ? "pb-5" : ""}>
+                    <p className="text-sm font-bold leading-tight text-foreground">{s.t}</p>
+                    <p className="mt-1 text-xs leading-snug text-muted-foreground">{s.d}</p>
+                  </div>
+                </li>
+              ))}
+            </ol>
+          </div>
+
+          {/* DESKTOP: original intro card (unchanged) */}
+          <Card className="hidden md:block backdrop-blur-sm bg-background/90 shadow-lg border-primary/20">
             <CardHeader>
               <CardTitle className="text-2xl">Our Premium Services</CardTitle>
               <CardDescription>Choose the perfect service to advance your career</CardDescription>
@@ -590,6 +626,7 @@ const ClientServicesPage = () => {
 
             </CardContent>
           </Card>
+          </>
         )}
 
         {/* Services by Category.

@@ -200,6 +200,75 @@ const buildAssociateBio = (a: AssociatePreview): string => {
   return `${fullName} ${clauses.join(" and ")}.`;
 };
 
+// Diacritic-insensitive lowercase for fuzzy token matching.
+const normalize = (s: string | null | undefined): string =>
+  (s || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .trim();
+
+// Per-vertical "show these first" ordering so the Associate panel doesn't open
+// with the same faces in every package. Each entry is a list of synonym groups;
+// an associate is ranked by the index of the first group its field matches.
+//  - Take Off / Layover → matched on university
+//  - Summit             → matched on master program
+//  - Altitude           → matched on associate name
+const ASSOCIATE_PRIORITY: Record<
+  string,
+  { by: "university" | "master" | "name"; groups: string[][] }
+> = {
+  "Take Off": {
+    by: "university",
+    groups: [["lse", "london school of economics"], ["bocconi"], ["escp"]],
+  },
+  Layover: {
+    by: "university",
+    groups: [["rotterdam", "erasmus"], ["escp"], ["bocconi"]],
+  },
+  Summit: {
+    by: "master",
+    groups: [["mit"], ["escp"]],
+  },
+  Altitude: {
+    by: "name",
+    groups: [["alessandro olivetti"], ["riccardo ciardelli"], ["antoine falche"]],
+  },
+};
+
+// Small deterministic hash so the *non-pinned* associates fan out differently
+// per category (instead of every vertical leading with the same person).
+const hashStr = (s: string): number => {
+  let h = 0;
+  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
+  return h;
+};
+
+const orderAssociatesForCategory = (
+  list: AssociatePreview[],
+  category: string
+): AssociatePreview[] => {
+  const cfg = ASSOCIATE_PRIORITY[category];
+  const rankOf = (a: AssociatePreview): number => {
+    if (!cfg) return Number.MAX_SAFE_INTEGER;
+    const haystack =
+      cfg.by === "name"
+        ? normalize(`${a.first_name} ${a.last_name}`)
+        : cfg.by === "master"
+        ? normalize(a.master_program)
+        : `${normalize(a.university)} ${normalize(a.university_2)}`;
+    const idx = cfg.groups.findIndex((grp) => grp.some((t) => haystack.includes(t)));
+    return idx === -1 ? Number.MAX_SAFE_INTEGER : idx;
+  };
+  return [...list].sort((a, b) => {
+    const ra = rankOf(a);
+    const rb = rankOf(b);
+    if (ra !== rb) return ra - rb;
+    // Tie-break: category-scoped hash so each vertical shows a different spread.
+    return hashStr(a.id + category) - hashStr(b.id + category);
+  });
+};
+
 const demoShortLabel = (name: string): string => {
   const short: Record<string, string> = {
     "Personalized Timeline": "Timeline",
@@ -313,14 +382,15 @@ const PackageExperience = ({
   }, [associates, filterMode]);
 
   const matchableAssociates = useMemo(() => {
-    return associates.filter((a) =>
+    const matched = associates.filter((a) =>
       filterMode === "master"
         ? !!a.master_program
         : filterMode === "sector"
         ? !!(a.sector || a.sector_2)
         : !!(a.university || a.university_2)
     );
-  }, [associates, filterMode]);
+    return orderAssociatesForCategory(matched, pkg.category);
+  }, [associates, filterMode, pkg.category]);
 
   const filteredAssociates = useMemo(() => {
     const q = associateFilter.trim().toLowerCase();
@@ -436,7 +506,9 @@ const PackageExperience = ({
   return (
     <div style={accentStyle}>
       {/* ===================== MOBILE compact layout ===================== */}
-      <div className="md:hidden flex flex-col gap-2.5">
+      {/* Sits on a solid surface so every label stays legible over the page's
+          dark photo background (desktop uses the separate block below). */}
+      <div className="md:hidden flex flex-col gap-2.5 rounded-2xl border border-border/50 bg-background/95 p-3 shadow-xl backdrop-blur-sm">
         {/* Header */}
         <div className="flex items-center gap-2.5">
           <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/15 text-primary">

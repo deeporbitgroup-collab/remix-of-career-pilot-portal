@@ -25,7 +25,7 @@ const TalentPoolContent = () => {
   };
 
   return (
-    <div className="h-[100svh] overflow-hidden relative flex flex-col animate-fade-in">
+    <div className="min-h-[100svh] md:h-[100svh] md:overflow-hidden relative flex flex-col animate-fade-in">
       {/* Background Image with Overlay */}
       <div 
         className="fixed inset-0 z-0 animate-scale-in"
@@ -65,7 +65,7 @@ const TalentPoolContent = () => {
       </nav>
 
       {/* Main Content */}
-      <div ref={containerRef} className="relative z-10 flex-1 min-h-0 flex flex-col justify-center container mx-auto px-4 md:px-6 py-3 md:py-4">
+      <div ref={containerRef} className="relative z-10 flex-1 md:min-h-0 flex flex-col justify-start md:justify-center container mx-auto px-4 md:px-6 py-4 md:py-4">
         {/* WIP / Expansion Banner */}
         <div className="max-w-4xl mx-auto w-full mb-3 md:mb-4">
           <div className="relative overflow-hidden rounded-xl border-2 border-amber-400/60 bg-gradient-to-r from-amber-500/15 via-amber-400/10 to-amber-500/15 backdrop-blur-md shadow-xl shadow-amber-500/10 p-4 md:p-5">

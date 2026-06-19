@@ -264,29 +264,41 @@ const HeroSection = () => {
               </div>
             </button>
 
-            {/* Two pathways: Mentoring + Talent Pool */}
+            {/* Two product pathways: Mentoring + Talent Pool — bold, filled
+                tiles so it's instantly clear they open our two services. */}
+            <p className="text-center text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground">
+              Explore our two services
+            </p>
             <div className="grid grid-cols-2 gap-3">
               <button
                 onClick={() => { window.location.href = '/client-portal/services'; }}
-                className="group relative flex flex-col items-start gap-1.5 overflow-hidden rounded-2xl bg-card/90 backdrop-blur border-2 border-primary/30 px-4 py-4 text-left active:scale-95 transition-transform"
-                style={{ boxShadow: '0 6px 18px hsla(223, 83%, 27%, 0.18)' }}
+                className="group relative flex h-full flex-col overflow-hidden rounded-2xl bg-gradient-to-br from-primary via-primary to-secondary px-4 py-4 text-left text-primary-foreground active:scale-95 transition-transform"
+                style={{ boxShadow: '0 10px 26px hsla(223, 83%, 27%, 0.4)' }}
               >
-                <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/15 to-transparent -translate-x-full group-active:translate-x-full transition-transform duration-700" />
+                <span className="relative z-10 mb-2 flex h-10 w-10 items-center justify-center rounded-xl bg-white/20">
                   <GraduationCap className="h-5 w-5" />
                 </span>
-                <span className="text-sm font-extrabold text-primary leading-tight">Mentoring</span>
-                <span className="text-[10px] font-medium text-muted-foreground leading-tight">University · Master · Internship · Transfer</span>
+                <span className="relative z-10 text-base font-extrabold leading-tight">Mentoring</span>
+                <span className="relative z-10 mt-0.5 text-[10px] font-medium leading-tight text-primary-foreground/85">University · Master · Internship · Transfer</span>
+                <span className="relative z-10 mt-2 inline-flex items-center gap-1 text-[11px] font-bold">
+                  Explore <ArrowRight className="h-3.5 w-3.5" />
+                </span>
               </button>
               <button
                 onClick={() => { window.location.href = '/talent-pool'; }}
-                className="group relative flex flex-col items-start gap-1.5 overflow-hidden rounded-2xl bg-card/90 backdrop-blur border-2 border-secondary/40 px-4 py-4 text-left active:scale-95 transition-transform"
-                style={{ boxShadow: '0 6px 18px hsla(215, 100%, 60%, 0.18)' }}
+                className="group relative flex h-full flex-col overflow-hidden rounded-2xl bg-gradient-to-br from-emerald-500 via-teal-500 to-teal-600 px-4 py-4 text-left text-white active:scale-95 transition-transform"
+                style={{ boxShadow: '0 10px 26px hsla(173, 80%, 30%, 0.4)' }}
               >
-                <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-secondary/10 text-secondary">
+                <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/15 to-transparent -translate-x-full group-active:translate-x-full transition-transform duration-700" />
+                <span className="relative z-10 mb-2 flex h-10 w-10 items-center justify-center rounded-xl bg-white/20">
                   <Building className="h-5 w-5" />
                 </span>
-                <span className="text-sm font-extrabold text-secondary leading-tight">Talent Pool</span>
-                <span className="text-[10px] font-medium text-muted-foreground leading-tight">Get discovered by companies</span>
+                <span className="relative z-10 text-base font-extrabold leading-tight">Talent Pool</span>
+                <span className="relative z-10 mt-0.5 text-[10px] font-medium leading-tight text-white/85">Get discovered by top companies</span>
+                <span className="relative z-10 mt-2 inline-flex items-center gap-1 text-[11px] font-bold">
+                  Explore <ArrowRight className="h-3.5 w-3.5" />
+                </span>
               </button>
             </div>
           </div>

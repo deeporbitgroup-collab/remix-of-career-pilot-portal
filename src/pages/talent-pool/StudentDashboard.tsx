@@ -29,7 +29,9 @@ import {
   Linkedin,
   DoorOpen,
   Bell,
-  Info
+  Info,
+  Sparkles,
+  LayoutDashboard
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import ActiveRecruitingSection from "@/components/talent-pool/ActiveRecruitingSection";
@@ -864,32 +866,67 @@ const StudentDashboard = () => {
                 userEmail={userInfo.email || ''}
               />
             </div>
-            {/* Disclaimer about company selection notifications */}
-            <Card className="mb-6 border-primary/30 bg-primary/5">
-              <CardContent className="p-4">
-                <div className="flex items-start gap-3">
-                  <Bell className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                  <div className="text-sm text-steel-gray">
-                    <p className="font-medium text-foreground mb-1">
-                      {language === 'it' ? 'Come funziona la selezione' : 'How selection works'}
-                    </p>
-                    <p>
-                      {language === 'it' 
-                        ? 'Quando un\'azienda seleziona il tuo profilo, verrai notificato sia nella tua area personale che via email. Il team di Career Pilot ti contatterà per organizzare i prossimi step.'
-                        : 'When a company selects your profile, you will be notified both in your personal area and by email. The Career Pilot team will reach out to organize the next steps.'}
-                    </p>
+            {/* How it works — young, punchy: companies come to YOU, track it all here */}
+            <div className="mb-6 overflow-hidden rounded-2xl border border-sky-200 bg-gradient-to-br from-sky-50 via-white to-emerald-50 shadow-sm">
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-1 px-4 pt-4">
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-sky-100 px-3 py-1 text-[11px] font-extrabold uppercase tracking-wide text-sky-700">
+                  <Sparkles className="h-3.5 w-3.5" />
+                  {language === 'it' ? 'Come funziona' : 'How it works'}
+                </span>
+                <span className="text-xs font-bold text-emerald-700">
+                  {language === 'it' ? 'Sono le aziende a cercare te 🎯' : 'The companies come to you 🎯'}
+                </span>
+              </div>
+              <div className="grid gap-3 p-4 sm:grid-cols-3">
+                {[
+                  {
+                    icon: <Sparkles className="h-5 w-5" />,
+                    accent: "from-sky-500 to-sky-600",
+                    title: language === 'it' ? 'Sei già dentro' : "You're already in",
+                    desc: language === 'it'
+                      ? 'Niente candidature da inviare: il tuo profilo è live nella Talent Pool.'
+                      : 'No applications to send — your profile is live in the Talent Pool.',
+                  },
+                  {
+                    icon: <Building2 className="h-5 w-5" />,
+                    accent: "from-emerald-500 to-emerald-600",
+                    title: language === 'it' ? 'Le aziende scelgono te' : 'Companies pick you',
+                    desc: language === 'it'
+                      ? 'Le aziende partner sfogliano i profili e selezionano te — non il contrario.'
+                      : 'Partner companies browse profiles and select you — not the other way around.',
+                  },
+                  {
+                    icon: <LayoutDashboard className="h-5 w-5" />,
+                    accent: "from-sky-500 to-emerald-500",
+                    title: language === 'it' ? 'Monitori tutto qui' : 'Track everything here',
+                    desc: language === 'it'
+                      ? 'Selezioni, eventi e materiali in un\'unica piattaforma. Career Pilot organizza i prossimi step e ti avvisa via email.'
+                      : 'Selections, events and prep in one platform. Career Pilot organizes the next steps and notifies you by email.',
+                  },
+                ].map((s, i) => (
+                  <div key={i} className="relative flex flex-col gap-2 rounded-xl border border-border/60 bg-white p-4 shadow-sm">
+                    <div className="flex items-center gap-2.5">
+                      <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br ${s.accent} text-white shadow`}>
+                        {s.icon}
+                      </span>
+                      <span className="flex h-6 w-6 items-center justify-center rounded-full bg-muted text-xs font-extrabold text-foreground">
+                        {i + 1}
+                      </span>
+                    </div>
+                    <p className="text-sm font-bold leading-tight text-foreground">{s.title}</p>
+                    <p className="text-xs leading-snug text-steel-gray">{s.desc}</p>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
+                ))}
+              </div>
+            </div>
 
             {/* Three sections as tabs (overview above stays outside) */}
             <Tabs defaultValue="companies" className="w-full">
-              <TabsList className="grid w-full grid-cols-4 mb-4">
-                <TabsTrigger value="companies">Partner Companies</TabsTrigger>
-                <TabsTrigger value="events">Scheduled events</TabsTrigger>
-                <TabsTrigger value="prep">Prep Material</TabsTrigger>
-                <TabsTrigger value="profile">Personal Profile</TabsTrigger>
+              <TabsList className="grid h-auto w-full grid-cols-2 gap-1.5 mb-4 md:grid-cols-4">
+                <TabsTrigger value="companies" className="h-auto whitespace-normal py-2 text-xs leading-tight md:text-sm">Partner Companies</TabsTrigger>
+                <TabsTrigger value="events" className="h-auto whitespace-normal py-2 text-xs leading-tight md:text-sm">Scheduled events</TabsTrigger>
+                <TabsTrigger value="prep" className="h-auto whitespace-normal py-2 text-xs leading-tight md:text-sm">Prep Material</TabsTrigger>
+                <TabsTrigger value="profile" className="h-auto whitespace-normal py-2 text-xs leading-tight md:text-sm">Personal Profile</TabsTrigger>
               </TabsList>
 
               {/* SECTION 3 — Personal Profile */}
