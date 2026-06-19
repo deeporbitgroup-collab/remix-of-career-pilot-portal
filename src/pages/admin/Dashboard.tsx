@@ -9,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   LogOut, Users, Shield, Activity, FileText, 
   Search, Filter, CheckCircle, XCircle, Clock,
-  UserCheck, UserX, ChevronRight, Building, Send, ShoppingCart, Briefcase, BookOpen, ExternalLink, FileCode, ListTodo
+  UserCheck, UserX, ChevronRight, Building, Send, ShoppingCart, Briefcase, BookOpen, ExternalLink, FileCode, ListTodo, Mail
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import PendingApprovals from "@/components/admin/PendingApprovals";
@@ -23,6 +23,7 @@ import AdminClientProjects from "@/components/admin/AdminClientProjects";
 import PrepMaterialsManagement from "@/components/admin/PrepMaterialsManagement";
 import AdminCRM from "@/components/admin/AdminCRM";
 import AdminTasks from "@/components/admin/AdminTasks";
+import NewsletterManagement from "@/components/admin/NewsletterManagement";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 import { useLanguage } from "@/contexts/LanguageContext";
 
@@ -240,7 +241,7 @@ const AdminDashboard = () => {
 
         {/* Main Content Tabs */}
         <Tabs value={mainTab} onValueChange={setMainTab} className="space-y-4">
-          <TabsList className="w-full grid grid-cols-5">
+          <TabsList className="w-full grid grid-cols-3 md:grid-cols-6 h-auto gap-1">
             <TabsTrigger value="associates" className="gap-2">
               <Users className="h-4 w-4" />
               ASSOCIATES
@@ -265,6 +266,10 @@ const AdminDashboard = () => {
             <TabsTrigger value="tasks" className="gap-2">
               <ListTodo className="h-4 w-4" />
               TASKS
+            </TabsTrigger>
+            <TabsTrigger value="newsletter" className="gap-2">
+              <Mail className="h-4 w-4" />
+              NEWSLETTER
             </TabsTrigger>
           </TabsList>
 
@@ -421,6 +426,10 @@ const AdminDashboard = () => {
 
           <TabsContent value="tasks">
             <AdminTasks />
+          </TabsContent>
+
+          <TabsContent value="newsletter">
+            <NewsletterManagement />
           </TabsContent>
 
         </Tabs>

@@ -181,6 +181,14 @@ verify_jwt = false
 [functions.send-document-notification]
 verify_jwt = false
 
+# Newsletter: admin compose+send and public footer signup. Both run with the
+# service role internally and guard their own input.
+[functions.send-newsletter]
+verify_jwt = false
+
+[functions.newsletter-subscribe]
+verify_jwt = false
+
 [functions.send-client-feedback-confirmation]
 verify_jwt = false
 

@@ -1,14 +1,40 @@
-import { Plane, Mail, Instagram, Linkedin } from "lucide-react";
+import { useState } from "react";
+import { Plane, Mail, Instagram, Linkedin, Send } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { translations } from "@/utils/translations";
 import { useScrollAnimation } from "@/hooks/useScrollAnimation";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 import deepOrbitLogo from "@/assets/deeporbit-group.jpg";
 import qoraAiLogo from "@/assets/qora-ai-logo.png";
 
 const Footer = () => {
   const { language } = useLanguage();
   const t = translations[language];
-  
+
+  const [newsletterEmail, setNewsletterEmail] = useState("");
+  const [subscribing, setSubscribing] = useState(false);
+
+  const handleSubscribe = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const email = newsletterEmail.trim();
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
+      toast.error(language === 'it' ? 'Inserisci un indirizzo email valido.' : 'Please enter a valid email address.');
+      return;
+    }
+    setSubscribing(true);
+    try {
+      const { error } = await supabase.functions.invoke('newsletter-subscribe', { body: { email } });
+      if (error) throw error;
+      toast.success(language === 'it' ? 'Iscrizione completata! Grazie.' : "You're subscribed! Thank you.");
+      setNewsletterEmail("");
+    } catch (err) {
+      toast.error(language === 'it' ? 'Iscrizione non riuscita. Riprova.' : 'Subscription failed. Please try again.');
+    } finally {
+      setSubscribing(false);
+    }
+  };
+
   // Scroll animations
   const footerAnimation = useScrollAnimation({ animationClass: 'animate-fade-up', delay: 100 });
 
@@ -35,6 +61,38 @@ const Footer = () => {
               <a href="https://linkedin.com/company/career-pilot" className="hover:text-sky-blue transition-colors duration-300">
                 <Linkedin className="h-6 w-6" />
               </a>
+            </div>
+
+            {/* Newsletter signup */}
+            <div className="max-w-md">
+              <h3 className="text-base font-semibold mb-1">
+                {language === 'it' ? 'Iscriviti alla nostra newsletter' : 'Subscribe to our newsletter'}
+              </h3>
+              <p className="text-gray-300 text-sm mb-3">
+                {language === 'it'
+                  ? 'Opportunità, scadenze e aggiornamenti — direttamente nella tua inbox.'
+                  : 'Opportunities, deadlines and updates — straight to your inbox.'}
+              </p>
+              <form onSubmit={handleSubscribe} className="flex flex-col gap-2 sm:flex-row">
+                <input
+                  type="email"
+                  value={newsletterEmail}
+                  onChange={(e) => setNewsletterEmail(e.target.value)}
+                  placeholder={language === 'it' ? 'La tua email' : 'Your email'}
+                  className="flex-1 rounded-lg border border-white/20 bg-white/10 px-3 py-2 text-sm text-white placeholder:text-gray-400 focus:border-sky-blue focus:outline-none"
+                  aria-label={language === 'it' ? 'Email per la newsletter' : 'Newsletter email'}
+                />
+                <button
+                  type="submit"
+                  disabled={subscribing}
+                  className="inline-flex items-center justify-center gap-2 rounded-lg bg-white px-4 py-2 text-sm font-semibold text-primary transition-opacity hover:opacity-90 disabled:opacity-60"
+                >
+                  <Send className="h-4 w-4" />
+                  {subscribing
+                    ? (language === 'it' ? 'Invio...' : 'Sending...')
+                    : (language === 'it' ? 'Iscriviti' : 'Subscribe')}
+                </button>
+              </form>
             </div>
           </div>
 
