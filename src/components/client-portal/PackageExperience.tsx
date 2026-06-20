@@ -297,6 +297,9 @@ const PackageExperience = ({
   const [removed, setRemoved] = useState<Set<string>>(new Set());
   const [packageInfoOpen, setPackageInfoOpen] = useState(false);
   const [bioAssociate, setBioAssociate] = useState<AssociatePreview | null>(null);
+  // Comparative add-on opt-in (mobile face). Default OFF — checking adds it to
+  // the cart as a packaged add-on and bumps the displayed total.
+  const [comparativeOn, setComparativeOn] = useState(false);
   // Mobile-only: which "face" of the card is showing, and whether the (possibly
   // long) included list is fully expanded. Desktop ignores both.
   const [mobileView, setMobileView] = useState<"package" | "associate">("package");
