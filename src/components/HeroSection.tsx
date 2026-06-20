@@ -395,13 +395,13 @@ const HeroSection = () => {
                 <div className="w-12 h-px bg-border/60" />
                 <button
                   onClick={() => window.location.href = '/talent-pool'}
-                  className="group relative inline-flex items-center justify-center gap-2 overflow-hidden rounded-full bg-gradient-to-r from-emerald-500 via-teal-500 to-teal-600 px-6 py-2.5 2xl:px-7 2xl:py-3 text-white font-bold shadow-lg transition-all duration-300 hover:scale-105 hover:-translate-y-0.5 w-full"
-                  style={{ boxShadow: '0 8px 22px hsla(173, 80%, 30%, 0.45)' }}
+                  className="group relative inline-flex items-center justify-center gap-1.5 overflow-hidden rounded-full bg-gradient-to-r from-emerald-500/90 via-teal-500/90 to-teal-600/90 px-2.5 py-1 2xl:px-3 2xl:py-1.5 text-white font-medium shadow-md transition-all duration-300 hover:scale-105 hover:-translate-y-0.5"
+                  style={{ boxShadow: '0 4px 12px hsla(173, 80%, 30%, 0.35)' }}
                 >
                   <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
-                  <Building className="h-5 w-5 relative z-10" />
-                  <span className="relative z-10 text-sm 2xl:text-base">Talent Pool — get discovered by companies</span>
-                  <ArrowRight className="h-4 w-4 relative z-10 transition-transform group-hover:translate-x-0.5" />
+                  <Building className="h-3 w-3 2xl:h-3.5 2xl:w-3.5 relative z-10" />
+                  <span className="relative z-10 text-[11px] 2xl:text-xs leading-none">Talent Pool</span>
+                  <ArrowRight className="h-3 w-3 relative z-10 transition-transform group-hover:translate-x-0.5" />
                 </button>
               </div>
             </div>
