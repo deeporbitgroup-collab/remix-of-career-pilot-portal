@@ -537,8 +537,13 @@ const PackageExperience = ({
   const trailingBullets = (pkg.bullets || []).filter((b) => !isAnchorBullet(b.label));
 
   const renderBulletRow = (b: { label: string; info: string }) => (
-    <li key={b.label} className="flex items-start gap-2 text-sm">
-      <Check className="mt-0.5 h-4 w-4 shrink-0 text-primary/70" />
+    <li
+      key={b.label}
+      className="flex items-start gap-2 rounded-lg border border-border/40 bg-muted/30 px-2.5 py-1.5 text-sm leading-snug shadow-sm"
+    >
+      <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary">
+        <Check className="h-3 w-3" strokeWidth={3} />
+      </span>
       <span className="flex-1 font-medium text-foreground/90">
         {b.label}
         {isWhatsAppBullet(b.label) && <WhatsAppMark />}
