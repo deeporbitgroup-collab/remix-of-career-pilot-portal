@@ -485,6 +485,29 @@ const PackageExperience = ({
         });
       }
     });
+
+    // Comparative add-on opt-in (mobile): bill as a packaged add-on at addon_price.
+    if (comparativeOn && comparativeAddon?.service) {
+      const addonService: Service = {
+        ...comparativeAddon.service,
+        price: Number(comparativeAddon.addon_price || 0),
+      };
+      onAddToCart({
+        id: `${groupId}-${comparativeAddon.id}-addon`,
+        service: addonService,
+        associate: {
+          id: selectedAssociate.id,
+          first_name: selectedAssociate.first_name,
+          last_name: selectedAssociate.last_name,
+        },
+        university: filterMode === "sector" ? undefined : matchValue,
+        sector: filterMode === "sector" ? matchValue : undefined,
+        packageGroupId: groupId,
+        packageName,
+        packageRole: "addon",
+      });
+    }
+
     toast.success(`${pkg.code_name} package added to cart!`);
   };
 
