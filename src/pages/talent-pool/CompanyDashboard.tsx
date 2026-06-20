@@ -82,6 +82,12 @@ const CompanyDashboardContent = () => {
   const [meetingDialogFor, setMeetingDialogFor] = useState<any>(null);
   const [meetingForm, setMeetingForm] = useState({ title: '', slot1: '', slot2: '', timezone: '' });
   const [submittingMeeting, setSubmittingMeeting] = useState(false);
+  // Tests (C3)
+  const [companyTests, setCompanyTests] = useState<any[]>([]);
+  const [testDialogFor, setTestDialogFor] = useState<any>(null);
+  const [testForm, setTestForm] = useState({ title: '', instructions: '', link: '', dueDate: '', timezone: '' });
+  const [submittingTest, setSubmittingTest] = useState(false);
+  const [testActionId, setTestActionId] = useState<string | null>(null);
   // Interview link (C2.3): set/edit the call link + description on a CONFIRMED meeting.
   const [linkDialogFor, setLinkDialogFor] = useState<any>(null);
   const [linkForm, setLinkForm] = useState({ meetLink: '', description: '' });
@@ -151,6 +157,7 @@ const CompanyDashboardContent = () => {
       await loadStudents();
       await loadSelectedStudents(userData.id);
       await loadMeetings(userData.id);
+      await loadTests(userData.id);
     } catch (error) {
       console.error('Auth check error:', error);
       navigate('/talent-pool/company');
@@ -324,6 +331,90 @@ const CompanyDashboardContent = () => {
       toast({ title: "Error", description: e.message || "Failed to propose meeting", variant: "destructive" });
     } finally {
       setSubmittingMeeting(false);
+    }
+  };
+
+  // ---- Tests (C3) ----
+  const loadTests = async (companyId: string) => {
+    try {
+      const { data, error } = await supabase.functions.invoke('get-recruiting-tests', { body: { companyId } });
+      if (error) { console.error('Error loading tests:', error); return; }
+      setCompanyTests(Array.isArray(data) ? data : []);
+    } catch (e) {
+      console.error('Error loading tests:', e);
+    }
+  };
+
+  const openTestDialog = (selection: any) => {
+    setTestDialogFor(selection);
+    setTestForm({ title: '', instructions: '', link: '', dueDate: '', timezone: '' });
+  };
+
+  const handleSendTest = async () => {
+    if (!testDialogFor || !company?.id) return;
+    if (!testForm.link.trim()) {
+      toast({ title: "Test link required", description: "Paste the link the candidate should use for the test.", variant: "destructive" });
+      return;
+    }
+    setSubmittingTest(true);
+    try {
+      const { error } = await supabase.functions.invoke('recruiting-test-action', {
+        body: {
+          action: 'send',
+          companyId: company.id,
+          studentId: testDialogFor.student_id,
+          title: testForm.title || null,
+          instructions: testForm.instructions || null,
+          link: testForm.link.trim(),
+          dueAt: testForm.dueDate || null,
+          timezone: testForm.timezone.trim() || null,
+        }
+      });
+      if (error) throw error;
+      toast({ title: "Test sent", description: "The candidate and Career Pilot have been notified." });
+      setTestDialogFor(null);
+      await loadTests(company.id);
+    } catch (e: any) {
+      console.error('Send test error:', e);
+      toast({ title: "Error", description: e.message || "Failed to send the test", variant: "destructive" });
+    } finally {
+      setSubmittingTest(false);
+    }
+  };
+
+  const handleMarkTest = async (test: any, result: 'PASSED' | 'FAILED') => {
+    if (!company?.id) return;
+    setTestActionId(test.id);
+    try {
+      const { error } = await supabase.functions.invoke('recruiting-test-action', {
+        body: { action: 'mark', testId: test.id, result }
+      });
+      if (error) throw error;
+      toast({ title: result === 'PASSED' ? "Marked as passed" : "Marked as failed", description: "The candidate and Career Pilot have been notified." });
+      await loadTests(company.id);
+    } catch (e: any) {
+      console.error('Mark test error:', e);
+      toast({ title: "Error", description: e.message || "Failed to update the test", variant: "destructive" });
+    } finally {
+      setTestActionId(null);
+    }
+  };
+
+  const handleCancelTest = async (test: any) => {
+    if (!company?.id) return;
+    setTestActionId(test.id);
+    try {
+      const { error } = await supabase.functions.invoke('recruiting-test-action', {
+        body: { action: 'cancel', testId: test.id }
+      });
+      if (error) throw error;
+      toast({ title: "Test cancelled" });
+      await loadTests(company.id);
+    } catch (e: any) {
+      console.error('Cancel test error:', e);
+      toast({ title: "Error", description: e.message || "Failed to cancel the test", variant: "destructive" });
+    } finally {
+      setTestActionId(null);
     }
   };
 
@@ -1302,6 +1393,7 @@ const CompanyDashboardContent = () => {
                       };
                       const sm = stageMeta[stage] || stageMeta.IN_PROGRESS;
                       const myMeetings = companyMeetings.filter((m: any) => m.student_id === selection.student_id);
+                      const myTests = companyTests.filter((tst: any) => tst.student_id === selection.student_id);
                       return (
                         <Card key={selection.id} className="p-4">
                           <div className="space-y-3">
@@ -1378,7 +1470,7 @@ const CompanyDashboardContent = () => {
                               <p className="text-xs font-medium text-muted-foreground mb-2">Next step</p>
                               <div className="grid grid-cols-2 gap-2">
                                 <Button size="sm" variant="outline" onClick={() => openMeetingDialog(selection)}><CalendarClock className="h-4 w-4 mr-1" /> Schedule meeting</Button>
-                                <Button size="sm" variant="outline" disabled title="Coming soon"><ClipboardCheck className="h-4 w-4 mr-1" /> Test</Button>
+                                <Button size="sm" variant="outline" onClick={() => openTestDialog(selection)}><ClipboardCheck className="h-4 w-4 mr-1" /> Test</Button>
                                 <Button size="sm" variant="outline" onClick={() => openOfferDialog(selection)}><Handshake className="h-4 w-4 mr-1" /> Offer</Button>
                                 <Button size="sm" variant="outline" className="text-destructive hover:text-destructive" onClick={() => openRejectDialog(selection)}><XCircle className="h-4 w-4 mr-1" /> Reject</Button>
                               </div>
@@ -1429,9 +1521,39 @@ const CompanyDashboardContent = () => {
                                   ))
                                 )}
                               </div>
-                              <div className="rounded-md border p-2">
-                                <p className="text-xs font-medium">Tests (0)</p>
-                                <p className="text-xs text-muted-foreground">No tests yet</p>
+                              <div className="rounded-md border p-2 space-y-2">
+                                <p className="text-xs font-medium">Tests ({myTests.length})</p>
+                                {myTests.length === 0 ? (
+                                  <p className="text-xs text-muted-foreground">No tests yet</p>
+                                ) : (
+                                  myTests.map((tst: any) => (
+                                    <div key={tst.id} className="rounded border bg-muted/30 p-2 text-xs space-y-1">
+                                      <div className="flex items-center justify-between gap-2">
+                                        <span className="font-medium">{tst.title || 'Test'}</span>
+                                        <Badge variant="outline" className="text-[10px]">{tst.status}</Badge>
+                                      </div>
+                                      {tst.due_at && <p>Deadline: <strong>{new Date(tst.due_at).toLocaleDateString()}</strong>{tst.timezone ? ` (${tst.timezone})` : ''}</p>}
+                                      {tst.link && (
+                                        <a href={tst.link} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 font-medium text-primary hover:underline">
+                                          <LinkIcon className="h-3.5 w-3.5" /> Test link
+                                        </a>
+                                      )}
+                                      {tst.outcome && <p className="text-muted-foreground">{tst.outcome}</p>}
+                                      {tst.status === 'SUBMITTED' && (
+                                        <div className="flex flex-wrap gap-2 pt-1">
+                                          <Button size="sm" className="h-7 text-[11px] bg-green-600 hover:bg-green-700" disabled={testActionId === tst.id} onClick={() => handleMarkTest(tst, 'PASSED')}>Mark passed</Button>
+                                          <Button size="sm" variant="outline" className="h-7 text-[11px] text-destructive hover:text-destructive" disabled={testActionId === tst.id} onClick={() => handleMarkTest(tst, 'FAILED')}>Mark failed</Button>
+                                        </div>
+                                      )}
+                                      {tst.status === 'SENT' && (
+                                        <div className="flex items-center justify-between gap-2 pt-0.5">
+                                          <span className="text-muted-foreground">Waiting for the candidate</span>
+                                          <Button size="sm" variant="ghost" className="h-6 px-1 text-[11px] text-destructive hover:text-destructive" disabled={testActionId === tst.id} onClick={() => handleCancelTest(tst)}>Cancel</Button>
+                                        </div>
+                                      )}
+                                    </div>
+                                  ))
+                                )}
                               </div>
                             </div>
 
@@ -1518,6 +1640,65 @@ const CompanyDashboardContent = () => {
               <Button variant="outline" onClick={() => setMeetingDialogFor(null)} disabled={submittingMeeting}>Cancel</Button>
               <Button onClick={handleProposeMeeting} disabled={submittingMeeting}>
                 {submittingMeeting ? 'Sending...' : 'Propose meeting'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Assign a test (C3) */}
+        <Dialog open={!!testDialogFor} onOpenChange={(o) => { if (!o) setTestDialogFor(null); }}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Assign a test</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label>Title (optional)</Label>
+                <Input
+                  placeholder="e.g. Online assessment"
+                  value={testForm.title}
+                  onChange={(e) => setTestForm({ ...testForm, title: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Test link</Label>
+                <Input
+                  placeholder="https://... (the link the candidate uses)"
+                  value={testForm.link}
+                  onChange={(e) => setTestForm({ ...testForm, link: e.target.value })}
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <Label>Deadline</Label>
+                  <Input
+                    type="date"
+                    value={testForm.dueDate}
+                    onChange={(e) => setTestForm({ ...testForm, dueDate: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Timezone (optional)</Label>
+                  <Input
+                    placeholder="e.g. CET"
+                    value={testForm.timezone}
+                    onChange={(e) => setTestForm({ ...testForm, timezone: e.target.value })}
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>Message (optional)</Label>
+                <Textarea
+                  placeholder="Instructions for the candidate..."
+                  value={testForm.instructions}
+                  onChange={(e) => setTestForm({ ...testForm, instructions: e.target.value })}
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setTestDialogFor(null)} disabled={submittingTest}>Cancel</Button>
+              <Button onClick={handleSendTest} disabled={submittingTest}>
+                {submittingTest ? 'Sending...' : 'Send test'}
               </Button>
             </DialogFooter>
           </DialogContent>

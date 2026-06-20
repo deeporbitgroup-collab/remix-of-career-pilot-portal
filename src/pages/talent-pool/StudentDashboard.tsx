@@ -37,6 +37,7 @@ import { supabase } from "@/integrations/supabase/client";
 import ActiveRecruitingSection from "@/components/talent-pool/ActiveRecruitingSection";
 import StudentScheduledEventsTab from "@/components/talent-pool/StudentScheduledEventsTab";
 import TalentPoolPrepMaterial from "@/components/talent-pool/TalentPoolPrepMaterial";
+import StudentTestsTab from "@/components/talent-pool/StudentTestsTab";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Calendar } from "@/components/ui/calendar";
@@ -74,6 +75,8 @@ const StudentDashboard = () => {
   // student's response. Derived from meeting state, so it persists until the
   // student actually acts (which changes the meeting status), not on tab open.
   const [actionableMeetings, setActionableMeetings] = useState(0);
+  // "+N" badge on the Tests tab: number of tests still to complete (status SENT).
+  const [actionableTests, setActionableTests] = useState(0);
   
   // Refs for file inputs
   const cvInputRef = useRef<HTMLInputElement>(null);
@@ -152,6 +155,23 @@ const StudentDashboard = () => {
 
   useEffect(() => { refreshMeetingBadge(); }, [refreshMeetingBadge]);
 
+  // Count tests the student still has to complete (status SENT).
+  const refreshTestBadge = useCallback(async () => {
+    if (!userInfo?.id) return;
+    try {
+      const { data, error } = await supabase.functions.invoke('get-recruiting-tests', {
+        body: { studentId: userInfo.id }
+      });
+      if (error) return;
+      const n = (Array.isArray(data) ? data : []).filter((t: any) => t.status === 'SENT').length;
+      setActionableTests(n);
+    } catch (e) {
+      console.error('Test badge error:', e);
+    }
+  }, [userInfo?.id]);
+
+  useEffect(() => { refreshTestBadge(); }, [refreshTestBadge]);
+
   // Realtime updates: refresh when a company SELECTS or DESELECTS this student.
   // company_selected_students has REPLICA IDENTITY FULL, so the DELETE event still
   // carries the old row and the student_id filter matches on removal too.
@@ -176,7 +196,7 @@ const StudentDashboard = () => {
   useEffect(() => {
     if (!userInfo?.id) return;
     const onVisible = () => {
-      if (document.visibilityState === 'visible') { refreshSelections(); refreshMeetingBadge(); }
+      if (document.visibilityState === 'visible') { refreshSelections(); refreshMeetingBadge(); refreshTestBadge(); }
     };
     document.addEventListener('visibilitychange', onVisible);
     window.addEventListener('focus', onVisible);
@@ -949,7 +969,7 @@ const StudentDashboard = () => {
 
             {/* Three sections as tabs (overview above stays outside) */}
             <Tabs defaultValue="companies" className="w-full">
-              <TabsList className="grid h-auto w-full grid-cols-2 gap-1.5 mb-4 md:grid-cols-4">
+              <TabsList className="grid h-auto w-full grid-cols-2 gap-1.5 mb-4 md:grid-cols-5">
                 <TabsTrigger value="companies" className="h-auto whitespace-normal py-2 text-xs leading-tight md:text-sm">Partner Companies</TabsTrigger>
                 <TabsTrigger value="events" className="relative h-auto whitespace-normal py-2 text-xs leading-tight md:text-sm">
                   <span className="inline-flex items-center gap-1.5">
@@ -957,6 +977,16 @@ const StudentDashboard = () => {
                     {actionableMeetings > 0 && (
                       <span className="inline-flex h-5 min-w-[20px] items-center justify-center rounded-full bg-red-500 px-1 text-[11px] font-bold text-white">
                         +{actionableMeetings}
+                      </span>
+                    )}
+                  </span>
+                </TabsTrigger>
+                <TabsTrigger value="tests" className="relative h-auto whitespace-normal py-2 text-xs leading-tight md:text-sm">
+                  <span className="inline-flex items-center gap-1.5">
+                    Tests
+                    {actionableTests > 0 && (
+                      <span className="inline-flex h-5 min-w-[20px] items-center justify-center rounded-full bg-red-500 px-1 text-[11px] font-bold text-white">
+                        +{actionableTests}
                       </span>
                     )}
                   </span>
@@ -1660,6 +1690,11 @@ const StudentDashboard = () => {
               {/* SECTION 4 — Scheduled events (meeting accept / decline / counter) */}
               <TabsContent value="events" className="space-y-4">
                 <StudentScheduledEventsTab studentId={userInfo.id} onMeetingsChange={refreshMeetingBadge} />
+              </TabsContent>
+
+              {/* SECTION 5 — Tests (C3) */}
+              <TabsContent value="tests" className="space-y-4">
+                <StudentTestsTab studentId={userInfo.id} onTestsChange={refreshTestBadge} />
               </TabsContent>
             </Tabs>
           </>
