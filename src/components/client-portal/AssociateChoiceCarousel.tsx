@@ -100,15 +100,19 @@ const AssociateChoiceCarousel = ({
             const highlighted = highlightCard?.(associate) ?? false;
 
             return (
-              <CarouselItem
-                key={associate.id}
-                className={cn(
-                  "pl-4",
-                  // One big card + a peek of the next on every breakpoint, so it is
-                  // always obvious that more associates exist to the right.
-                  isSingle ? "basis-full sm:basis-4/5 mx-auto" : "basis-[82%] sm:basis-[58%] lg:basis-[44%]"
-                )}
-              >
+                <CarouselItem
+                  key={associate.id}
+                  className={cn(
+                    "pl-4",
+                    // One big card + a peek of the next on every breakpoint, so it is
+                    // always obvious that more associates exist to the right.
+                    isSingle
+                      ? "basis-full sm:basis-4/5 mx-auto"
+                      : compact
+                      ? "basis-[76%] sm:basis-[58%] lg:basis-[44%]"
+                      : "basis-[82%] sm:basis-[58%] lg:basis-[44%]"
+                  )}
+                >
                 <button
                   type="button"
                   onClick={() => onToggle(associate)}
@@ -128,7 +132,7 @@ const AssociateChoiceCarousel = ({
                     className={cn(
                       "relative w-full overflow-hidden",
                       compact
-                        ? "h-28"
+                        ? "h-20"
                         : fillHeight
                         ? "h-[20vh] min-h-[128px] max-h-[240px]"
                         : "h-64 sm:h-72"
@@ -143,7 +147,7 @@ const AssociateChoiceCarousel = ({
                       />
                     ) : (
                       <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-primary/20 via-primary/10 to-muted">
-                        <span className="text-5xl font-semibold text-primary/70">
+                        <span className={cn("font-semibold text-primary/70", compact ? "text-3xl" : "text-5xl")}>
                           {getInitials(associate)}
                         </span>
                       </div>
@@ -154,31 +158,34 @@ const AssociateChoiceCarousel = ({
 
                     {/* Selected badge — top-right */}
                     {selected && (
-                      <div className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg">
-                        <Check className="h-5 w-5" strokeWidth={3} />
+                      <div className={cn(
+                        "absolute flex items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg",
+                        compact ? "right-2 top-2 h-7 w-7" : "right-3 top-3 h-9 w-9"
+                      )}>
+                        <Check className={cn("", compact ? "h-4 w-4" : "h-5 w-5")} strokeWidth={3} />
                       </div>
                     )}
 
                     {/* Name (ALWAYS visible) — company now lives in a tidy box below */}
-                    <div className={cn("absolute inset-x-0 bottom-0", compact ? "p-2.5" : "p-4")}>
-                      <h3 className={cn("font-bold leading-tight text-white drop-shadow-sm", compact ? "text-base" : "text-xl sm:text-2xl")}>
+                    <div className={cn("absolute inset-x-0 bottom-0", compact ? "p-2" : "p-4")}>
+                      <h3 className={cn("font-bold leading-tight text-white drop-shadow-sm", compact ? "text-[15px]" : "text-xl sm:text-2xl")}>
                         {associate.first_name} {associate.last_name}
                       </h3>
                     </div>
                   </div>
 
                   {/* ---- Key info (ALWAYS visible) ---- */}
-                  <div className={cn("flex flex-1 flex-col", compact ? "gap-1 p-2" : fillHeight ? "gap-2 p-3" : "gap-3 p-4")}>
+                  <div className={cn("flex flex-1 flex-col", compact ? "gap-1 p-1.5" : fillHeight ? "gap-2 p-3" : "gap-3 p-4")}>
                     <div className={cn("flex flex-col", compact ? "gap-1" : fillHeight ? "gap-1.5" : "gap-2.5")}>
                       {(associate.university || associate.university_2) && (
-                        <div className="flex items-start gap-2">
-                          <GraduationCap className="mt-0.5 h-4 w-4 shrink-0 text-primary" aria-label="University" />
-                          <div className="flex flex-wrap gap-1.5">
+                        <div className="flex items-start gap-1.5">
+                          <GraduationCap className={cn("mt-0.5 shrink-0 text-primary", compact ? "h-3.5 w-3.5" : "h-4 w-4")} aria-label="University" />
+                          <div className="flex flex-wrap gap-1">
                             {associate.university && (
-                              <Badge variant="secondary">{associate.university}</Badge>
+                              <Badge variant="secondary" className={cn(compact && "px-1.5 py-0 text-[10px]")}>{associate.university}</Badge>
                             )}
                             {associate.university_2 && (
-                              <Badge variant="outline" className="border-dashed">
+                              <Badge variant="outline" className={cn("border-dashed", compact && "px-1.5 py-0 text-[10px]")}>
                                 Transfer · {associate.university_2}
                               </Badge>
                             )}
@@ -187,18 +194,18 @@ const AssociateChoiceCarousel = ({
                       )}
 
                       {associate.master_program && (
-                        <div className="flex items-start gap-2">
-                          <Award className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" aria-label="Master" />
-                          <Badge variant="secondary" className="border border-amber-200 bg-amber-50 text-amber-700">
+                        <div className="flex items-start gap-1.5">
+                          <Award className={cn("mt-0.5 shrink-0 text-amber-500", compact ? "h-3.5 w-3.5" : "h-4 w-4")} aria-label="Master" />
+                          <Badge variant="secondary" className={cn("border border-amber-200 bg-amber-50 text-amber-700", compact && "px-1.5 py-0 text-[10px]")}>
                             {associate.master_program}
                           </Badge>
                         </div>
                       )}
 
                       {companies.length > 0 && (
-                        <div className="flex items-start gap-2">
-                          <Building2 className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-                          <div className="flex flex-wrap gap-1.5">
+                        <div className="flex items-start gap-1.5">
+                          <Building2 className={cn("mt-0.5 shrink-0 text-primary", compact ? "h-3.5 w-3.5" : "h-4 w-4")} />
+                          <div className="flex flex-wrap gap-1">
                             {companies.map((company, i) => (
                               <Badge
                                 key={`${company}-${i}`}
@@ -207,7 +214,8 @@ const AssociateChoiceCarousel = ({
                                   "max-w-full truncate",
                                   i === 0
                                     ? "border-transparent bg-primary/10 text-primary hover:bg-primary/15"
-                                    : "border-dashed"
+                                    : "border-dashed",
+                                  compact && "px-1.5 py-0 text-[10px]"
                                 )}
                               >
                                 {company}
@@ -218,16 +226,16 @@ const AssociateChoiceCarousel = ({
                       )}
 
                       {sectors.length > 0 && (
-                        <div className="flex items-start gap-2">
-                          <Briefcase className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-                          <div className="flex flex-wrap gap-1.5">
+                        <div className="flex items-start gap-1.5">
+                          <Briefcase className={cn("mt-0.5 shrink-0 text-primary", compact ? "h-3.5 w-3.5" : "h-4 w-4")} />
+                          <div className="flex flex-wrap gap-1">
                             {sectors.slice(0, fillHeight ? 1 : 2).map((s) => (
-                              <Badge key={s} variant="outline">
+                              <Badge key={s} variant="outline" className={cn(compact && "px-1.5 py-0 text-[10px]")}>
                                 {s}
                               </Badge>
                             ))}
                             {sectors.length > (fillHeight ? 1 : 2) && (
-                              <Badge variant="outline" className="text-muted-foreground">
+                              <Badge variant="outline" className={cn("text-muted-foreground", compact && "px-1.5 py-0 text-[10px]")}>
                                 +{sectors.length - (fillHeight ? 1 : 2)}
                               </Badge>
                             )}
@@ -241,7 +249,10 @@ const AssociateChoiceCarousel = ({
                         out of a narrow card (e.g. the LinkedIn button). */}
                     {renderActions && (
                       <div
-                        className="mt-auto flex flex-wrap gap-2 pt-1"
+                        className={cn(
+                          "mt-auto flex flex-wrap",
+                          compact ? "gap-1.5 pt-1" : "gap-2 pt-1"
+                        )}
                         onClick={(e) => e.stopPropagation()}
                       >
                         {renderActions(associate)}
@@ -252,7 +263,7 @@ const AssociateChoiceCarousel = ({
                     <div
                       className={cn(
                         "mt-1 flex items-center justify-center gap-1.5 rounded-lg font-medium transition-colors",
-                        compact ? "py-1 text-[11px]" : "py-2 text-sm",
+                        compact ? "py-1 text-[10px]" : "py-2 text-sm",
                         selected
                           ? "bg-primary text-primary-foreground"
                           : "bg-muted text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary"
@@ -260,12 +271,12 @@ const AssociateChoiceCarousel = ({
                     >
                       {selected ? (
                         <>
-                          <Check className="h-4 w-4" strokeWidth={3} />
+                          <Check className={cn("", compact ? "h-3.5 w-3.5" : "h-4 w-4")} strokeWidth={3} />
                           Selected
                         </>
                       ) : (
                         <>
-                          <MousePointerClick className="h-4 w-4" />
+                          <MousePointerClick className={cn("", compact ? "h-3.5 w-3.5" : "h-4 w-4")} />
                           Click to select
                         </>
                       )}

@@ -1,4 +1,4 @@
-import { Fragment, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -537,8 +537,13 @@ const PackageExperience = ({
   const trailingBullets = (pkg.bullets || []).filter((b) => !isAnchorBullet(b.label));
 
   const renderBulletRow = (b: { label: string; info: string }) => (
-    <li key={b.label} className="flex items-start gap-2 text-sm">
-      <Check className="mt-0.5 h-4 w-4 shrink-0 text-primary/70" />
+    <li
+      key={b.label}
+      className="flex items-start gap-2 rounded-lg border border-border/40 bg-muted/30 px-2.5 py-1.5 text-sm leading-snug shadow-sm"
+    >
+      <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary">
+        <Check className="h-3 w-3" strokeWidth={3} />
+      </span>
       <span className="flex-1 font-medium text-foreground/90">
         {b.label}
         {isWhatsAppBullet(b.label) && <WhatsAppMark />}
@@ -610,16 +615,26 @@ const PackageExperience = ({
                 the descriptive package bullets (Study Plan, live presentations,
                 WhatsApp). Tap a checkbox to drop a component and shrink the
                 price live. */}
-            <div className="rounded-xl border border-primary/20 bg-card p-3 shadow-sm">
-              <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-                What's included <span className="font-normal normal-case text-muted-foreground/70">— uncheck to remove</span>
+            <div className="rounded-xl border border-border/50 bg-gradient-to-br from-card to-muted/30 p-2.5 shadow-sm">
+              <p className="mb-2 flex items-center justify-between text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                <span>What's included</span>
+                <span className="font-normal normal-case text-muted-foreground/70">uncheck to remove</span>
               </p>
-              <ul className="space-y-2">
+              <ul className="grid grid-cols-1 gap-1.5">
                 {coreComponents.map((comp) => {
                   const isRemoved = removed.has(comp.id);
                   const label = comp.label || comp.service?.name || "Component";
                   return (
-                    <li key={comp.id} className="flex items-start gap-2 text-sm leading-snug">
+                    <li
+                      key={comp.id}
+                      className={`flex items-center gap-2 rounded-lg border px-2.5 py-1.5 text-sm leading-snug shadow-sm transition-colors ${
+                        isRemoved
+                          ? "border-border/30 bg-muted/20 text-muted-foreground"
+                          : comp.is_removable
+                          ? "border-border/40 bg-background/80 hover:border-primary/30"
+                          : "border-border/40 bg-background/80"
+                      }`}
+                    >
                       {comp.is_removable ? (
                         <Checkbox
                           checked={!isRemoved}
@@ -631,17 +646,15 @@ const PackageExperience = ({
                               return next;
                             });
                           }}
-                          className="mt-0.5"
+                          className="h-4 w-4 shrink-0"
                           aria-label={`Toggle ${label}`}
                         />
                       ) : (
-                        <Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                        <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary">
+                          <Check className="h-2.5 w-2.5" strokeWidth={3} />
+                        </span>
                       )}
-                      <span
-                        className={`flex-1 font-medium ${
-                          isRemoved ? "text-muted-foreground line-through" : "text-foreground"
-                        }`}
-                      >
+                      <span className={`flex-1 font-medium ${isRemoved ? "line-through" : ""}`}>
                         {label}
                       </span>
                     </li>
@@ -650,31 +663,29 @@ const PackageExperience = ({
 
                 {/* Descriptive bullets that belong to the package (Study Plan,
                     "Projects presented live online", "Dedicated WhatsApp group"). */}
-                {(pkg.bullets || []).map((b) => (
-                  <li key={b.label} className="flex items-start gap-2 text-sm leading-snug">
-                    <Check className="mt-0.5 h-4 w-4 shrink-0 text-primary/70" />
-                    <span className="flex-1 font-medium text-foreground/90">
-                      {b.label}
-                      {isWhatsAppBullet(b.label) && <WhatsAppMark />}
-                    </span>
-                  </li>
-                ))}
+                {(pkg.bullets || []).map((b) => renderBulletRow(b))}
 
                 {/* Comparative add-on — opt in to compare a 2nd target.
                     Off by default; toggling on adds the surcharge to the total. */}
                 {comparativeAddon && (
-                  <li className="flex items-start gap-2 text-sm leading-snug">
+                  <li
+                    className={`flex items-center gap-2 rounded-lg border px-2.5 py-1.5 text-sm leading-snug shadow-sm transition-colors ${
+                      comparativeOn
+                        ? "border-secondary/40 bg-secondary/10"
+                        : "border-border/40 bg-background/80 hover:border-secondary/30"
+                    }`}
+                  >
                     <Checkbox
                       checked={comparativeOn}
                       onCheckedChange={(checked) => setComparativeOn(!!checked)}
-                      className="mt-0.5"
+                      className="h-4 w-4 shrink-0"
                       aria-label="Toggle Comparative Presentation"
                     />
                     <span className={`flex-1 font-medium ${comparativeOn ? "text-foreground" : "text-muted-foreground"}`}>
                       {comparativeAddon.label || comparativeAddon.service?.name || "Comparative Presentation"}
-                      <span className="ml-1.5 text-[10px] font-semibold uppercase tracking-wide text-secondary">
-                        +€{Number(comparativeAddon.addon_price || 0).toFixed(0)}
-                      </span>
+                    </span>
+                    <span className="text-[10px] font-semibold uppercase tracking-wide text-secondary">
+                      +€{Number(comparativeAddon.addon_price || 0).toFixed(0)}
                     </span>
                   </li>
                 )}
@@ -721,20 +732,20 @@ const PackageExperience = ({
 
         {/* ---------- ASSOCIATE FACE ---------- */}
         {mobileView === "associate" && (
-          <div className="rounded-xl border border-secondary/30 bg-card p-2.5">
-            <p className="mb-1.5 flex items-center gap-1.5 text-[13px] font-semibold">
-              <Users className="h-4 w-4 text-primary" /> Choose your Associate
+          <div className="rounded-xl border border-secondary/30 bg-card p-2">
+            <p className="mb-1 flex items-center gap-1.5 text-xs font-semibold">
+              <Users className="h-3.5 w-3.5 text-primary" /> Choose your Associate
             </p>
             <Select value={associateFilter || "__all__"} onValueChange={(v) => setAssociateFilter(v === "__all__" ? "" : v)}>
-              <SelectTrigger className="h-9 w-full border-primary/20 text-sm"><SelectValue placeholder="Pick from the list" /></SelectTrigger>
+              <SelectTrigger className="h-8 w-full border-primary/20 text-xs"><SelectValue placeholder="Pick from the list" /></SelectTrigger>
               <SelectContent className="max-h-72">
                 <SelectItem value="__all__">All {filterLabel.toLowerCase()}</SelectItem>
                 {availableValues.map((v) => (<SelectItem key={v} value={v}>{v}</SelectItem>))}
               </SelectContent>
             </Select>
-            <div className="mt-2">
+            <div className="mt-1.5">
               {filteredAssociates.length === 0 ? (
-                <p className="py-6 text-center text-sm text-muted-foreground">No associates match yet. Try another filter.</p>
+                <p className="py-4 text-center text-xs text-muted-foreground">No associates match yet. Try another filter.</p>
               ) : (
                 <AssociateChoiceCarousel
                   associates={filteredAssociates}
@@ -750,13 +761,13 @@ const PackageExperience = ({
                     const ap = a as AssociatePreview;
                     return (
                       <>
-                        <Button variant="outline" size="sm" className="flex-1 border-primary/20" onClick={(e) => { e.stopPropagation(); setBioAssociate(ap); }}>
-                          <FileText className="mr-1.5 h-4 w-4" /> Overview
+                        <Button variant="outline" size="sm" className="h-7 flex-1 border-primary/20 px-2 text-xs" onClick={(e) => { e.stopPropagation(); setBioAssociate(ap); }}>
+                          <FileText className="mr-1 h-3.5 w-3.5" /> Overview
                         </Button>
                         {ap.linkedin_url && (
-                          <Button asChild variant="outline" size="sm" className="flex-1 border-primary/20">
+                          <Button asChild variant="outline" size="sm" className="h-7 flex-1 border-primary/20 px-2 text-xs">
                             <a href={ap.linkedin_url.startsWith("http") ? ap.linkedin_url : `https://${ap.linkedin_url}`} target="_blank" rel="noopener noreferrer">
-                              <Linkedin className="mr-1.5 h-4 w-4" /> LinkedIn
+                              <Linkedin className="mr-1 h-3.5 w-3.5" /> LinkedIn
                             </a>
                           </Button>
                         )}
@@ -837,17 +848,26 @@ const PackageExperience = ({
           </CardHeader>
 
           <CardContent className="flex flex-1 flex-col gap-2.5 pb-3">
-            <div>
-              <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-                What's included — uncheck what you don't want
+            <div className="rounded-xl border border-border/50 bg-muted/20 p-2.5">
+              <p className="mb-2 flex items-center justify-between text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                <span>What's included</span>
+                <span className="font-normal normal-case text-muted-foreground/70">uncheck what you don't want</span>
               </p>
-              <ul className="space-y-1.5">
+              <ul className="grid grid-cols-1 gap-1.5">
                 {coreComponents.map((comp) => {
                   const isRemoved = removed.has(comp.id);
                   const label = comp.label || comp.service?.name || "Component";
                   return (
-                    <Fragment key={comp.id}>
-                      <li className="flex items-start gap-2 text-sm">
+                    <li key={comp.id}>
+                      <div
+                        className={`flex items-center gap-2 rounded-lg border px-2.5 py-1.5 text-sm leading-snug shadow-sm transition-colors ${
+                          isRemoved
+                            ? "border-border/30 bg-muted/20 text-muted-foreground"
+                            : comp.is_removable
+                            ? "border-border/40 bg-background/80 hover:border-primary/30"
+                            : "border-border/40 bg-background/80"
+                        }`}
+                      >
                         {comp.is_removable ? (
                           <Checkbox
                             checked={!isRemoved}
@@ -859,21 +879,27 @@ const PackageExperience = ({
                                 return next;
                               });
                             }}
-                            className="mt-0.5"
+                            className="h-4 w-4 shrink-0"
                             aria-label={`Toggle ${label}`}
                           />
                         ) : (
-                          <Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                          <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary">
+                            <Check className="h-2.5 w-2.5" strokeWidth={3} />
+                          </span>
                         )}
-                        <span className={`flex-1 font-medium ${isRemoved ? "text-muted-foreground line-through" : "text-foreground"}`}>
+                        <span className={`flex-1 font-medium ${isRemoved ? "line-through" : ""}`}>
                           {label}
                           {!comp.is_removable && (
                             <span className="ml-1.5 text-[10px] font-normal uppercase tracking-wide text-primary/70">included</span>
                           )}
                         </span>
-                      </li>
-                      {isTimelineComponent(comp) && anchorBullets.map(renderBulletRow)}
-                    </Fragment>
+                      </div>
+                      {isTimelineComponent(comp) && (
+                        <ul className="mt-1.5 grid grid-cols-1 gap-1.5 pl-6">
+                          {anchorBullets.map(renderBulletRow)}
+                        </ul>
+                      )}
+                    </li>
                   );
                 })}
                 {trailingBullets.map(renderBulletRow)}
