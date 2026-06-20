@@ -615,16 +615,26 @@ const PackageExperience = ({
                 the descriptive package bullets (Study Plan, live presentations,
                 WhatsApp). Tap a checkbox to drop a component and shrink the
                 price live. */}
-            <div className="rounded-xl border border-primary/20 bg-card p-3 shadow-sm">
-              <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-                What's included <span className="font-normal normal-case text-muted-foreground/70">— uncheck to remove</span>
+            <div className="rounded-xl border border-border/50 bg-gradient-to-br from-card to-muted/30 p-2.5 shadow-sm">
+              <p className="mb-2 flex items-center justify-between text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                <span>What's included</span>
+                <span className="font-normal normal-case text-muted-foreground/70">uncheck to remove</span>
               </p>
-              <ul className="space-y-2">
+              <ul className="grid grid-cols-1 gap-1.5">
                 {coreComponents.map((comp) => {
                   const isRemoved = removed.has(comp.id);
                   const label = comp.label || comp.service?.name || "Component";
                   return (
-                    <li key={comp.id} className="flex items-start gap-2 text-sm leading-snug">
+                    <li
+                      key={comp.id}
+                      className={`flex items-center gap-2 rounded-lg border px-2.5 py-1.5 text-sm leading-snug shadow-sm transition-colors ${
+                        isRemoved
+                          ? "border-border/30 bg-muted/20 text-muted-foreground"
+                          : comp.is_removable
+                          ? "border-border/40 bg-background/80 hover:border-primary/30"
+                          : "border-border/40 bg-background/80"
+                      }`}
+                    >
                       {comp.is_removable ? (
                         <Checkbox
                           checked={!isRemoved}
@@ -636,17 +646,15 @@ const PackageExperience = ({
                               return next;
                             });
                           }}
-                          className="mt-0.5"
+                          className="h-4 w-4 shrink-0"
                           aria-label={`Toggle ${label}`}
                         />
                       ) : (
-                        <Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                        <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary">
+                          <Check className="h-2.5 w-2.5" strokeWidth={3} />
+                        </span>
                       )}
-                      <span
-                        className={`flex-1 font-medium ${
-                          isRemoved ? "text-muted-foreground line-through" : "text-foreground"
-                        }`}
-                      >
+                      <span className={`flex-1 font-medium ${isRemoved ? "line-through" : ""}`}>
                         {label}
                       </span>
                     </li>
@@ -655,31 +663,29 @@ const PackageExperience = ({
 
                 {/* Descriptive bullets that belong to the package (Study Plan,
                     "Projects presented live online", "Dedicated WhatsApp group"). */}
-                {(pkg.bullets || []).map((b) => (
-                  <li key={b.label} className="flex items-start gap-2 text-sm leading-snug">
-                    <Check className="mt-0.5 h-4 w-4 shrink-0 text-primary/70" />
-                    <span className="flex-1 font-medium text-foreground/90">
-                      {b.label}
-                      {isWhatsAppBullet(b.label) && <WhatsAppMark />}
-                    </span>
-                  </li>
-                ))}
+                {(pkg.bullets || []).map((b) => renderBulletRow(b))}
 
                 {/* Comparative add-on — opt in to compare a 2nd target.
                     Off by default; toggling on adds the surcharge to the total. */}
                 {comparativeAddon && (
-                  <li className="flex items-start gap-2 text-sm leading-snug">
+                  <li
+                    className={`flex items-center gap-2 rounded-lg border px-2.5 py-1.5 text-sm leading-snug shadow-sm transition-colors ${
+                      comparativeOn
+                        ? "border-secondary/40 bg-secondary/10"
+                        : "border-border/40 bg-background/80 hover:border-secondary/30"
+                    }`}
+                  >
                     <Checkbox
                       checked={comparativeOn}
                       onCheckedChange={(checked) => setComparativeOn(!!checked)}
-                      className="mt-0.5"
+                      className="h-4 w-4 shrink-0"
                       aria-label="Toggle Comparative Presentation"
                     />
                     <span className={`flex-1 font-medium ${comparativeOn ? "text-foreground" : "text-muted-foreground"}`}>
                       {comparativeAddon.label || comparativeAddon.service?.name || "Comparative Presentation"}
-                      <span className="ml-1.5 text-[10px] font-semibold uppercase tracking-wide text-secondary">
-                        +€{Number(comparativeAddon.addon_price || 0).toFixed(0)}
-                      </span>
+                    </span>
+                    <span className="text-[10px] font-semibold uppercase tracking-wide text-secondary">
+                      +€{Number(comparativeAddon.addon_price || 0).toFixed(0)}
                     </span>
                   </li>
                 )}
