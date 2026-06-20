@@ -171,17 +171,17 @@ const AssociateChoiceCarousel = ({
                   </div>
 
                   {/* ---- Key info (ALWAYS visible) ---- */}
-                  <div className={cn("flex flex-1 flex-col", compact ? "gap-1 p-2" : fillHeight ? "gap-2 p-3" : "gap-3 p-4")}>
+                  <div className={cn("flex flex-1 flex-col", compact ? "gap-1 p-1.5" : fillHeight ? "gap-2 p-3" : "gap-3 p-4")}>
                     <div className={cn("flex flex-col", compact ? "gap-1" : fillHeight ? "gap-1.5" : "gap-2.5")}>
                       {(associate.university || associate.university_2) && (
-                        <div className="flex items-start gap-2">
-                          <GraduationCap className="mt-0.5 h-4 w-4 shrink-0 text-primary" aria-label="University" />
-                          <div className="flex flex-wrap gap-1.5">
+                        <div className="flex items-start gap-1.5">
+                          <GraduationCap className={cn("mt-0.5 shrink-0 text-primary", compact ? "h-3.5 w-3.5" : "h-4 w-4")} aria-label="University" />
+                          <div className="flex flex-wrap gap-1">
                             {associate.university && (
-                              <Badge variant="secondary">{associate.university}</Badge>
+                              <Badge variant="secondary" className={cn(compact && "px-1.5 py-0 text-[10px]")}>{associate.university}</Badge>
                             )}
                             {associate.university_2 && (
-                              <Badge variant="outline" className="border-dashed">
+                              <Badge variant="outline" className={cn("border-dashed", compact && "px-1.5 py-0 text-[10px]")}>
                                 Transfer · {associate.university_2}
                               </Badge>
                             )}
@@ -190,18 +190,18 @@ const AssociateChoiceCarousel = ({
                       )}
 
                       {associate.master_program && (
-                        <div className="flex items-start gap-2">
-                          <Award className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" aria-label="Master" />
-                          <Badge variant="secondary" className="border border-amber-200 bg-amber-50 text-amber-700">
+                        <div className="flex items-start gap-1.5">
+                          <Award className={cn("mt-0.5 shrink-0 text-amber-500", compact ? "h-3.5 w-3.5" : "h-4 w-4")} aria-label="Master" />
+                          <Badge variant="secondary" className={cn("border border-amber-200 bg-amber-50 text-amber-700", compact && "px-1.5 py-0 text-[10px]")}>
                             {associate.master_program}
                           </Badge>
                         </div>
                       )}
 
                       {companies.length > 0 && (
-                        <div className="flex items-start gap-2">
-                          <Building2 className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-                          <div className="flex flex-wrap gap-1.5">
+                        <div className="flex items-start gap-1.5">
+                          <Building2 className={cn("mt-0.5 shrink-0 text-primary", compact ? "h-3.5 w-3.5" : "h-4 w-4")} />
+                          <div className="flex flex-wrap gap-1">
                             {companies.map((company, i) => (
                               <Badge
                                 key={`${company}-${i}`}
@@ -210,7 +210,8 @@ const AssociateChoiceCarousel = ({
                                   "max-w-full truncate",
                                   i === 0
                                     ? "border-transparent bg-primary/10 text-primary hover:bg-primary/15"
-                                    : "border-dashed"
+                                    : "border-dashed",
+                                  compact && "px-1.5 py-0 text-[10px]"
                                 )}
                               >
                                 {company}
@@ -221,16 +222,16 @@ const AssociateChoiceCarousel = ({
                       )}
 
                       {sectors.length > 0 && (
-                        <div className="flex items-start gap-2">
-                          <Briefcase className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-                          <div className="flex flex-wrap gap-1.5">
+                        <div className="flex items-start gap-1.5">
+                          <Briefcase className={cn("mt-0.5 shrink-0 text-primary", compact ? "h-3.5 w-3.5" : "h-4 w-4")} />
+                          <div className="flex flex-wrap gap-1">
                             {sectors.slice(0, fillHeight ? 1 : 2).map((s) => (
-                              <Badge key={s} variant="outline">
+                              <Badge key={s} variant="outline" className={cn(compact && "px-1.5 py-0 text-[10px]")}>
                                 {s}
                               </Badge>
                             ))}
                             {sectors.length > (fillHeight ? 1 : 2) && (
-                              <Badge variant="outline" className="text-muted-foreground">
+                              <Badge variant="outline" className={cn("text-muted-foreground", compact && "px-1.5 py-0 text-[10px]")}>
                                 +{sectors.length - (fillHeight ? 1 : 2)}
                               </Badge>
                             )}
