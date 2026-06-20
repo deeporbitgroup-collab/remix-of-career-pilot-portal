@@ -58,7 +58,7 @@ const statusBadge: Record<Meeting["status"], { label: string; className: string 
   COMPLETED: { label: "Completed", className: "bg-sky-100 text-sky-800 border-sky-200" },
 };
 
-const StudentScheduledEventsTab = ({ studentId }: { studentId: string }) => {
+const StudentScheduledEventsTab = ({ studentId, onMeetingsChange }: { studentId: string; onMeetingsChange?: () => void }) => {
   const { toast } = useToast();
   const [meetings, setMeetings] = useState<Meeting[]>([]);
   const [loading, setLoading] = useState(true);
@@ -80,12 +80,13 @@ const StudentScheduledEventsTab = ({ studentId }: { studentId: string }) => {
       });
       if (error) throw error;
       setMeetings(Array.isArray(data) ? (data as Meeting[]) : []);
+      onMeetingsChange?.();
     } catch (e) {
       console.error("Error loading meetings:", e);
     } finally {
       setLoading(false);
     }
-  }, [studentId]);
+  }, [studentId, onMeetingsChange]);
 
   useEffect(() => {
     load();

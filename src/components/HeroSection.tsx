@@ -408,20 +408,24 @@ const HeroSection = () => {
               </button>
             </div>
 
-            {/* Secondary text links right under pathway buttons */}
-            <div className="flex items-center justify-center gap-x-4 2xl:gap-x-6 mt-2">
+            {/* University Transfer link + a PROMINENT Talent Pool CTA (it's a
+                key service, so it gets its own filled button, not a text link). */}
+            <div className="flex flex-col items-center gap-2 mt-2">
               <button
                 onClick={() => navigate('/client-portal/services?category=Layover')}
                 className="text-sm 2xl:text-base text-muted-foreground hover:text-primary underline underline-offset-4 decoration-dotted transition-colors duration-300 font-medium"
               >
-                {language === 'it' ? 'Trasferimento Universitario' : 'University Transfer'}
+                University Transfer
               </button>
-              <span className="text-muted-foreground/40 text-xs">•</span>
               <button
                 onClick={() => window.location.href = '/talent-pool'}
-                className="text-sm 2xl:text-base text-primary hover:text-primary/80 underline underline-offset-4 transition-colors duration-300 font-medium"
+                className="group relative inline-flex items-center gap-2 overflow-hidden rounded-full bg-gradient-to-r from-emerald-500 via-teal-500 to-teal-600 px-6 py-2.5 2xl:px-7 2xl:py-3 text-white font-bold shadow-lg transition-all duration-300 hover:scale-105 hover:-translate-y-0.5"
+                style={{ boxShadow: '0 8px 22px hsla(173, 80%, 30%, 0.45)' }}
               >
-                {language === 'it' ? 'Talent Pool' : 'Talent Pool'}
+                <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
+                <Building className="h-5 w-5 relative z-10" />
+                <span className="relative z-10 text-sm 2xl:text-base">Talent Pool — get discovered by companies</span>
+                <ArrowRight className="h-4 w-4 relative z-10 transition-transform group-hover:translate-x-0.5" />
               </button>
             </div>
           </div>

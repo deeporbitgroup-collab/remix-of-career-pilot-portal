@@ -36,6 +36,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import ActiveRecruitingSection from "@/components/talent-pool/ActiveRecruitingSection";
 import StudentScheduledEventsTab from "@/components/talent-pool/StudentScheduledEventsTab";
+import TalentPoolPrepMaterial from "@/components/talent-pool/TalentPoolPrepMaterial";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Calendar } from "@/components/ui/calendar";
@@ -69,6 +70,10 @@ const StudentDashboard = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [notifications, setNotifications] = useState<any[]>([]);
   const [selectedCompanies, setSelectedCompanies] = useState<any[]>([]);
+  // "+N" badge on the Scheduled events tab: number of meetings awaiting the
+  // student's response. Derived from meeting state, so it persists until the
+  // student actually acts (which changes the meeting status), not on tab open.
+  const [actionableMeetings, setActionableMeetings] = useState(0);
   
   // Refs for file inputs
   const cvInputRef = useRef<HTMLInputElement>(null);
@@ -128,6 +133,25 @@ const StudentDashboard = () => {
     }
   }, [userInfo?.id]);
 
+  // Count meetings the student still has to respond to (company proposed, status PROPOSED).
+  const refreshMeetingBadge = useCallback(async () => {
+    if (!userInfo?.id) return;
+    try {
+      const { data, error } = await supabase.functions.invoke('get-recruiting-meetings', {
+        body: { studentId: userInfo.id }
+      });
+      if (error) return;
+      const n = (Array.isArray(data) ? data : []).filter(
+        (m: any) => m.status === 'PROPOSED' && m.proposed_by === 'COMPANY'
+      ).length;
+      setActionableMeetings(n);
+    } catch (e) {
+      console.error('Meeting badge error:', e);
+    }
+  }, [userInfo?.id]);
+
+  useEffect(() => { refreshMeetingBadge(); }, [refreshMeetingBadge]);
+
   // Realtime updates: refresh when a company SELECTS or DESELECTS this student.
   // company_selected_students has REPLICA IDENTITY FULL, so the DELETE event still
   // carries the old row and the student_id filter matches on removal too.
@@ -152,7 +176,7 @@ const StudentDashboard = () => {
   useEffect(() => {
     if (!userInfo?.id) return;
     const onVisible = () => {
-      if (document.visibilityState === 'visible') refreshSelections();
+      if (document.visibilityState === 'visible') { refreshSelections(); refreshMeetingBadge(); }
     };
     document.addEventListener('visibilitychange', onVisible);
     window.addEventListener('focus', onVisible);
@@ -160,6 +184,7 @@ const StudentDashboard = () => {
       document.removeEventListener('visibilitychange', onVisible);
       window.removeEventListener('focus', onVisible);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userInfo?.id, refreshSelections]);
   const filterCompanies = () => {
     let filtered = companies;
@@ -926,7 +951,16 @@ const StudentDashboard = () => {
             <Tabs defaultValue="companies" className="w-full">
               <TabsList className="grid h-auto w-full grid-cols-2 gap-1.5 mb-4 md:grid-cols-4">
                 <TabsTrigger value="companies" className="h-auto whitespace-normal py-2 text-xs leading-tight md:text-sm">Partner Companies</TabsTrigger>
-                <TabsTrigger value="events" className="h-auto whitespace-normal py-2 text-xs leading-tight md:text-sm">Scheduled events</TabsTrigger>
+                <TabsTrigger value="events" className="relative h-auto whitespace-normal py-2 text-xs leading-tight md:text-sm">
+                  <span className="inline-flex items-center gap-1.5">
+                    Scheduled events
+                    {actionableMeetings > 0 && (
+                      <span className="inline-flex h-5 min-w-[20px] items-center justify-center rounded-full bg-red-500 px-1 text-[11px] font-bold text-white">
+                        +{actionableMeetings}
+                      </span>
+                    )}
+                  </span>
+                </TabsTrigger>
                 <TabsTrigger value="prep" className="h-auto whitespace-normal py-2 text-xs leading-tight md:text-sm">Prep Material</TabsTrigger>
                 <TabsTrigger value="profile" className="h-auto whitespace-normal py-2 text-xs leading-tight md:text-sm">Personal Profile</TabsTrigger>
               </TabsList>
@@ -1145,13 +1179,14 @@ const StudentDashboard = () => {
                     </Label>
                     <div className="flex gap-2">
                       <div className="flex-1">
-                        <div 
+                        <Button
+                          type="button"
                           onClick={() => cvInputRef.current?.click()}
-                          className="flex h-10 w-full items-center justify-center rounded-md border border-input bg-background px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground cursor-pointer"
+                          className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
                         >
                           <Upload className="h-4 w-4 mr-2" />
-                          Choose File
-                        </div>
+                          {studentProfile.cv_url ? 'Replace CV' : 'Upload CV'}
+                        </Button>
                         <Input
                           ref={cvInputRef}
                           type="file"
@@ -1188,13 +1223,14 @@ const StudentDashboard = () => {
                     </Label>
                     <div className="flex gap-2">
                       <div className="flex-1">
-                        <div 
+                        <Button
+                          type="button"
                           onClick={() => coverInputRef.current?.click()}
-                          className="flex h-10 w-full items-center justify-center rounded-md border border-input bg-background px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground cursor-pointer"
+                          className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
                         >
                           <Upload className="h-4 w-4 mr-2" />
-                          Choose File
-                        </div>
+                          {studentProfile.cover_letter_url ? 'Replace cover letter' : 'Upload cover letter'}
+                        </Button>
                         <Input
                           ref={coverInputRef}
                           type="file"
@@ -1510,35 +1546,9 @@ const StudentDashboard = () => {
 
               </TabsContent>
 
-              {/* SECTION 2 — Prep Material */}
+              {/* SECTION 2 — Prep Material (KB items shown inline) */}
               <TabsContent value="prep" className="space-y-4">
-                <Card className="border-2 border-primary/30 bg-gradient-to-br from-primary/5 to-transparent">
-                  <CardHeader>
-                    <CardTitle className="text-lg font-bold flex items-center gap-2">
-                      <FileText className="h-5 w-5 text-primary" />
-                      {language === 'it' ? 'Materiale di Preparazione' : 'Prep Material'}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    <p className="text-sm text-steel-gray">
-                      {language === 'it'
-                        ? 'Accedi al materiale Knowledge Base dedicato all\'Internship Placement: guide PDF, modelli Excel e pacchetti pronti per le selezioni. Acquista e scarica tutto ciò che ti serve.'
-                        : 'Access the Knowledge Base material dedicated to Internship Placement: PDF guides, Excel models and ready-made packages for your selections. Buy and download everything you need.'}
-                    </p>
-                    <Button
-                      onClick={() => navigate('/knowledge-base?tier=Internship+Placement')}
-                      className="gap-2"
-                    >
-                      <FileText className="h-4 w-4" />
-                      {language === 'it' ? 'Apri Prep Material' : 'Open Prep Material'}
-                    </Button>
-                    <p className="md:hidden text-xs text-muted-foreground">
-                      {language === 'it'
-                        ? 'Per sfogliare comodamente tutto il materiale, ti consigliamo di aprirlo su desktop.'
-                        : 'To browse all the material comfortably, we recommend opening it on desktop.'}
-                    </p>
-                  </CardContent>
-                </Card>
+                <TalentPoolPrepMaterial />
               </TabsContent>
 
               {/* SECTION 1 — Partner Companies (kept as-is, no redesign) */}
@@ -1633,7 +1643,7 @@ const StudentDashboard = () => {
 
               {/* SECTION 4 — Scheduled events (meeting accept / decline / counter) */}
               <TabsContent value="events" className="space-y-4">
-                <StudentScheduledEventsTab studentId={userInfo.id} />
+                <StudentScheduledEventsTab studentId={userInfo.id} onMeetingsChange={refreshMeetingBadge} />
               </TabsContent>
             </Tabs>
           </>

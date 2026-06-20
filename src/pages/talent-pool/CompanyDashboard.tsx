@@ -33,7 +33,8 @@ import {
   BadgeCheck,
   Users,
   CheckCircle2,
-  Eye
+  Eye,
+  Play
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { TalentPoolLanguageProvider, useTalentPoolLanguage } from "@/contexts/TalentPoolLanguageContext";
@@ -614,6 +615,7 @@ const CompanyDashboardContent = () => {
   };
 
   const [viewingPassport, setViewingPassport] = useState<string | null>(null);
+  const [videoFor, setVideoFor] = useState<{ url: string; name: string } | null>(null);
   const handleViewPassport = async (studentId: string) => {
     setViewingPassport(studentId);
     try {
@@ -1107,7 +1109,16 @@ const CompanyDashboardContent = () => {
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-md:flex max-md:snap-x max-md:snap-mandatory max-md:overflow-x-auto max-md:pb-2 max-md:[&>*]:w-[82vw] max-md:[&>*]:shrink-0 max-md:[&>*]:snap-center">
                     {students.map((student) => (
-                      <Card key={student.id} className="p-4 hover:shadow-lg transition-shadow">
+                      <Card key={student.id} className="relative p-4 hover:shadow-lg transition-shadow">
+                        {student.presentation_video_url && (
+                          <Button
+                            size="sm"
+                            onClick={() => setVideoFor({ url: student.presentation_video_url, name: `${student.first_name} ${student.last_name}` })}
+                            className="absolute right-2 top-2 z-10 gap-1 bg-primary text-primary-foreground shadow-md hover:bg-primary/90"
+                          >
+                            <Play className="h-4 w-4" /> Play video
+                          </Button>
+                        )}
                         <div className="space-y-3">
                           <div className="flex flex-col items-center text-center">
                             {student.photo_url ? (
@@ -1168,26 +1179,19 @@ const CompanyDashboardContent = () => {
                               </Button>
                             )}
                             {student.presentation_video_url && (
-                              <>
-                                <video
-                                  src={student.presentation_video_url}
-                                  controls
-                                  className="hidden md:block w-full rounded-md border bg-black"
-                                />
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => downloadFile(
-                                    student.presentation_video_url,
-                                    `${student.first_name}_${student.last_name}_Presentation.mp4`
-                                  )}
-                                  className="w-full flex items-center justify-center gap-2"
-                                >
-                                  <FileText className="h-4 w-4" />
-                                  Presentation Video
-                                  <Download className="h-3 w-3" />
-                                </Button>
-                              </>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => downloadFile(
+                                  student.presentation_video_url,
+                                  `${student.first_name}_${student.last_name}_Presentation.mp4`
+                                )}
+                                className="w-full flex items-center justify-center gap-2"
+                              >
+                                <FileText className="h-4 w-4" />
+                                Presentation Video
+                                <Download className="h-3 w-3" />
+                              </Button>
                             )}
                             
 
@@ -1581,6 +1585,18 @@ const CompanyDashboardContent = () => {
                 {submittingDecision ? 'Submitting...' : 'Reject candidate'}
               </Button>
             </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Presentation video popup (UI 3) */}
+        <Dialog open={!!videoFor} onOpenChange={(o) => { if (!o) setVideoFor(null); }}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>{videoFor?.name} — presentation video</DialogTitle>
+            </DialogHeader>
+            {videoFor && (
+              <video src={videoFor.url} controls autoPlay className="w-full rounded-md border bg-black" />
+            )}
           </DialogContent>
         </Dialog>
       </div>
