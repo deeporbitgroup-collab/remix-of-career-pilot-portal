@@ -362,9 +362,18 @@ const PackageExperience = ({
     return Array.from(names);
   }, [services, coreComponents, hasDemo]);
 
+  // The Comparative add-on (if present) can be opted in from the mobile face.
+  const comparativeAddon = useMemo(
+    () => addonComponents.find((c) => c.addon_type === "comparative") || null,
+    [addonComponents]
+  );
+  const comparativeSurcharge = comparativeAddon ? Number(comparativeAddon.addon_price || 0) : 0;
+
   const total = useMemo(
-    () => includedCore.reduce((sum, c) => sum + Number(c.internal_price) * c.quantity, 0),
-    [includedCore]
+    () =>
+      includedCore.reduce((sum, c) => sum + Number(c.internal_price) * c.quantity, 0) +
+      (comparativeOn ? comparativeSurcharge : 0),
+    [includedCore, comparativeOn, comparativeSurcharge]
   );
   const fullPrice = Number(pkg.price);
 
