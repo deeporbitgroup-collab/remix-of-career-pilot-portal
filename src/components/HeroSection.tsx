@@ -346,11 +346,11 @@ const HeroSection = () => {
 
           {/* Pathway Selection */}
           <div className="w-full max-w-4xl 2xl:max-w-6xl mx-auto animate-fade-in opacity-0" style={{ animationDelay: '0.65s', animationFillMode: 'forwards' }}>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="flex flex-col gap-3">
+            <div className="grid grid-cols-3 gap-4">
+              <div className="flex flex-col items-center gap-2">
                 <button
                   onClick={() => navigate('/client-portal/services?category=Take+Off')}
-                  className="group relative flex flex-col items-center justify-center gap-1.5 2xl:gap-2 bg-gradient-to-br from-primary via-primary to-secondary text-primary-foreground rounded-xl px-3 py-2.5 2xl:px-5 2xl:py-3.5 transition-all duration-300 hover:scale-105 hover:-translate-y-0.5 overflow-hidden"
+                  className="group relative flex flex-col items-center justify-center gap-1.5 2xl:gap-2 bg-gradient-to-br from-primary via-primary to-secondary text-primary-foreground rounded-xl px-3 py-2.5 2xl:px-5 2xl:py-3.5 transition-all duration-300 hover:scale-105 hover:-translate-y-0.5 overflow-hidden w-full"
                   style={{ boxShadow: '0 0 20px hsla(223, 83%, 27%, 0.45), 0 0 40px hsla(215, 100%, 60%, 0.25)' }}
                 >
                   <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
@@ -359,6 +359,7 @@ const HeroSection = () => {
                     {language === 'it' ? 'Liceo → Università' : 'Highschool to University'}
                   </span>
                 </button>
+                <div className="w-12 h-px bg-border/60" />
                 <button
                   onClick={() => navigate('/client-portal/services?category=Layover')}
                   className="text-sm 2xl:text-base text-muted-foreground hover:text-primary underline underline-offset-4 decoration-dotted transition-colors duration-300 font-medium"
@@ -366,10 +367,10 @@ const HeroSection = () => {
                   University Transfer
                 </button>
               </div>
-              <div className="flex flex-col gap-3">
+              <div className="flex flex-col items-center">
                 <button
                   onClick={() => navigate('/client-portal/services?category=Summit')}
-                  className="group relative flex flex-col items-center justify-center gap-1.5 2xl:gap-2 bg-gradient-to-br from-primary via-primary to-secondary text-primary-foreground rounded-xl px-3 py-2.5 2xl:px-5 2xl:py-3.5 transition-all duration-300 hover:scale-105 hover:-translate-y-0.5 overflow-hidden"
+                  className="group relative flex flex-col items-center justify-center gap-1.5 2xl:gap-2 bg-gradient-to-br from-primary via-primary to-secondary text-primary-foreground rounded-xl px-3 py-2.5 2xl:px-5 2xl:py-3.5 transition-all duration-300 hover:scale-105 hover:-translate-y-0.5 overflow-hidden w-full"
                   style={{ boxShadow: '0 0 20px hsla(223, 83%, 27%, 0.45), 0 0 40px hsla(215, 100%, 60%, 0.25)' }}
                 >
                   <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
@@ -378,9 +379,11 @@ const HeroSection = () => {
                     {language === 'it' ? 'Università → Master' : 'University to Master'}
                   </span>
                 </button>
+              </div>
+              <div className="flex flex-col items-center gap-2">
                 <button
                   onClick={() => navigate('/client-portal/services?category=Altitude')}
-                  className="group relative flex flex-col items-center justify-center gap-1.5 2xl:gap-2 bg-gradient-to-br from-primary via-primary to-secondary text-primary-foreground rounded-xl px-3 py-2.5 2xl:px-5 2xl:py-3.5 transition-all duration-300 hover:scale-105 hover:-translate-y-0.5 overflow-hidden"
+                  className="group relative flex flex-col items-center justify-center gap-1.5 2xl:gap-2 bg-gradient-to-br from-primary via-primary to-secondary text-primary-foreground rounded-xl px-3 py-2.5 2xl:px-5 2xl:py-3.5 transition-all duration-300 hover:scale-105 hover:-translate-y-0.5 overflow-hidden w-full"
                   style={{ boxShadow: '0 0 20px hsla(223, 83%, 27%, 0.45), 0 0 40px hsla(215, 100%, 60%, 0.25)' }}
                 >
                   <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
@@ -389,9 +392,10 @@ const HeroSection = () => {
                     {language === 'it' ? 'Internship Placement' : 'Internship Placement'}
                   </span>
                 </button>
+                <div className="w-12 h-px bg-border/60" />
                 <button
                   onClick={() => window.location.href = '/talent-pool'}
-                  className="group relative inline-flex items-center justify-center gap-2 overflow-hidden rounded-full bg-gradient-to-r from-emerald-500 via-teal-500 to-teal-600 px-6 py-2.5 2xl:px-7 2xl:py-3 text-white font-bold shadow-lg transition-all duration-300 hover:scale-105 hover:-translate-y-0.5"
+                  className="group relative inline-flex items-center justify-center gap-2 overflow-hidden rounded-full bg-gradient-to-r from-emerald-500 via-teal-500 to-teal-600 px-6 py-2.5 2xl:px-7 2xl:py-3 text-white font-bold shadow-lg transition-all duration-300 hover:scale-105 hover:-translate-y-0.5 w-full"
                   style={{ boxShadow: '0 8px 22px hsla(173, 80%, 30%, 0.45)' }}
                 >
                   <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
@@ -402,6 +406,7 @@ const HeroSection = () => {
               </div>
             </div>
           </div>
+
 
 
           {/* Bigger associates strip */}
