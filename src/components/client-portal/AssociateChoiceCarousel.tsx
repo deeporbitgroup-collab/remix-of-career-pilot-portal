@@ -100,15 +100,19 @@ const AssociateChoiceCarousel = ({
             const highlighted = highlightCard?.(associate) ?? false;
 
             return (
-              <CarouselItem
-                key={associate.id}
-                className={cn(
-                  "pl-4",
-                  // One big card + a peek of the next on every breakpoint, so it is
-                  // always obvious that more associates exist to the right.
-                  isSingle ? "basis-full sm:basis-4/5 mx-auto" : "basis-[82%] sm:basis-[58%] lg:basis-[44%]"
-                )}
-              >
+                <CarouselItem
+                  key={associate.id}
+                  className={cn(
+                    "pl-4",
+                    // One big card + a peek of the next on every breakpoint, so it is
+                    // always obvious that more associates exist to the right.
+                    isSingle
+                      ? "basis-full sm:basis-4/5 mx-auto"
+                      : compact
+                      ? "basis-[76%] sm:basis-[58%] lg:basis-[44%]"
+                      : "basis-[82%] sm:basis-[58%] lg:basis-[44%]"
+                  )}
+                >
                 <button
                   type="button"
                   onClick={() => onToggle(associate)}
