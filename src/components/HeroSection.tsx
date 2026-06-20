@@ -344,91 +344,65 @@ const HeroSection = () => {
             </Button>
           </div>
 
-          {/* Pilot AI — alternative path, framed as an "or undecided" route */}
-          <div className="flex flex-col items-center gap-2 animate-fade-in opacity-0" style={{ animationDelay: '0.65s', animationFillMode: 'forwards' }}>
-            <div className="flex items-center gap-2 w-full max-w-[320px]">
-              <span className="h-px flex-1 bg-border" />
-              <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">
-                {language === 'it' ? 'oppure' : 'or'}
-              </span>
-              <span className="h-px flex-1 bg-border" />
-            </div>
-            <button
-              onClick={() => navigate('/client-portal/services?advisor=1')}
-              className="group inline-flex items-center gap-2 rounded-full bg-background/70 backdrop-blur border border-secondary/40 hover:border-secondary hover:bg-secondary/10 px-4 py-2 transition-all active:scale-[0.97]"
-              aria-label={language === 'it' ? 'Apri il Pilot Advisor AI' : 'Open Pilot Advisor AI'}
-              title={language === 'it' ? 'Pilot Advisor — AI guidata' : 'Pilot Advisor — AI-guided'}
-            >
-              <span className="relative inline-flex h-6 w-6 items-center justify-center rounded-full bg-gradient-to-br from-primary to-secondary text-primary-foreground">
-                <Plane className="h-3 w-3 -rotate-12" />
-              </span>
-              <span className="text-[12px] font-bold text-primary">
-                {language === 'it' ? "Non sai quale scegliere? Lascia che il Co-Pilot ti guidi" : "Not sure which to pick? Let your Co-Pilot guide you"}
-              </span>
-              <ArrowRight className="h-3.5 w-3.5 text-secondary group-hover:translate-x-0.5 transition-transform" />
-            </button>
-          </div>
-
-
           {/* Pathway Selection */}
-          <div className="w-full max-w-4xl 2xl:max-w-6xl mx-auto">
-            <div className="grid grid-cols-3 gap-4">
-              <button
-                onClick={() => navigate('/client-portal/services?category=Take+Off')}
-                className="group relative flex flex-col items-center justify-center gap-1.5 2xl:gap-2 bg-gradient-to-br from-primary via-primary to-secondary text-primary-foreground rounded-xl px-3 py-2.5 2xl:px-5 2xl:py-3.5 transition-all duration-300 hover:scale-105 hover:-translate-y-0.5 overflow-hidden"
-                style={{ boxShadow: '0 0 20px hsla(223, 83%, 27%, 0.45), 0 0 40px hsla(215, 100%, 60%, 0.25)' }}
-              >
-                <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
-                <Plane className="h-6 w-6 2xl:h-7 2xl:w-7 text-primary-foreground relative z-10" />
-                <span className="text-base 2xl:text-xl font-bold text-primary-foreground text-center leading-tight relative z-10">
-                  {language === 'it' ? 'Liceo → Università' : 'Highschool to University'}
-                </span>
-              </button>
-              <button
-                onClick={() => navigate('/client-portal/services?category=Summit')}
-                className="group relative flex flex-col items-center justify-center gap-1.5 2xl:gap-2 bg-gradient-to-br from-primary via-primary to-secondary text-primary-foreground rounded-xl px-3 py-2.5 2xl:px-5 2xl:py-3.5 transition-all duration-300 hover:scale-105 hover:-translate-y-0.5 overflow-hidden"
-                style={{ boxShadow: '0 0 20px hsla(223, 83%, 27%, 0.45), 0 0 40px hsla(215, 100%, 60%, 0.25)' }}
-              >
-                <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
-                <GraduationCap className="h-6 w-6 2xl:h-7 2xl:w-7 text-primary-foreground relative z-10" />
-                <span className="text-base 2xl:text-xl font-bold text-primary-foreground text-center leading-tight relative z-10">
-                  {language === 'it' ? 'Università → Master' : 'University to Master'}
-                </span>
-              </button>
-              <button
-                onClick={() => navigate('/client-portal/services?category=Altitude')}
-                className="group relative flex flex-col items-center justify-center gap-1.5 2xl:gap-2 bg-gradient-to-br from-primary via-primary to-secondary text-primary-foreground rounded-xl px-3 py-2.5 2xl:px-5 2xl:py-3.5 transition-all duration-300 hover:scale-105 hover:-translate-y-0.5 overflow-hidden"
-                style={{ boxShadow: '0 0 20px hsla(223, 83%, 27%, 0.45), 0 0 40px hsla(215, 100%, 60%, 0.25)' }}
-              >
-                <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
-                <Building className="h-6 w-6 2xl:h-7 2xl:w-7 text-primary-foreground relative z-10" />
-                <span className="text-base 2xl:text-xl font-bold text-primary-foreground text-center leading-tight relative z-10">
-                  {language === 'it' ? 'Internship Placement' : 'Internship Placement'}
-                </span>
-              </button>
-            </div>
-
-            {/* University Transfer link + a PROMINENT Talent Pool CTA (it's a
-                key service, so it gets its own filled button, not a text link). */}
-            <div className="flex flex-col items-center gap-2 mt-2">
-              <button
-                onClick={() => navigate('/client-portal/services?category=Layover')}
-                className="text-sm 2xl:text-base text-muted-foreground hover:text-primary underline underline-offset-4 decoration-dotted transition-colors duration-300 font-medium"
-              >
-                University Transfer
-              </button>
-              <button
-                onClick={() => window.location.href = '/talent-pool'}
-                className="group relative inline-flex items-center gap-2 overflow-hidden rounded-full bg-gradient-to-r from-emerald-500 via-teal-500 to-teal-600 px-6 py-2.5 2xl:px-7 2xl:py-3 text-white font-bold shadow-lg transition-all duration-300 hover:scale-105 hover:-translate-y-0.5"
-                style={{ boxShadow: '0 8px 22px hsla(173, 80%, 30%, 0.45)' }}
-              >
-                <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
-                <Building className="h-5 w-5 relative z-10" />
-                <span className="relative z-10 text-sm 2xl:text-base">Talent Pool — get discovered by companies</span>
-                <ArrowRight className="h-4 w-4 relative z-10 transition-transform group-hover:translate-x-0.5" />
-              </button>
+          <div className="w-full max-w-4xl 2xl:max-w-6xl mx-auto animate-fade-in opacity-0" style={{ animationDelay: '0.65s', animationFillMode: 'forwards' }}>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="flex flex-col gap-3">
+                <button
+                  onClick={() => navigate('/client-portal/services?category=Take+Off')}
+                  className="group relative flex flex-col items-center justify-center gap-1.5 2xl:gap-2 bg-gradient-to-br from-primary via-primary to-secondary text-primary-foreground rounded-xl px-3 py-2.5 2xl:px-5 2xl:py-3.5 transition-all duration-300 hover:scale-105 hover:-translate-y-0.5 overflow-hidden"
+                  style={{ boxShadow: '0 0 20px hsla(223, 83%, 27%, 0.45), 0 0 40px hsla(215, 100%, 60%, 0.25)' }}
+                >
+                  <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
+                  <Plane className="h-6 w-6 2xl:h-7 2xl:w-7 text-primary-foreground relative z-10" />
+                  <span className="text-base 2xl:text-xl font-bold text-primary-foreground text-center leading-tight relative z-10">
+                    {language === 'it' ? 'Liceo → Università' : 'Highschool to University'}
+                  </span>
+                </button>
+                <button
+                  onClick={() => navigate('/client-portal/services?category=Layover')}
+                  className="text-sm 2xl:text-base text-muted-foreground hover:text-primary underline underline-offset-4 decoration-dotted transition-colors duration-300 font-medium"
+                >
+                  University Transfer
+                </button>
+              </div>
+              <div className="flex flex-col gap-3">
+                <button
+                  onClick={() => navigate('/client-portal/services?category=Summit')}
+                  className="group relative flex flex-col items-center justify-center gap-1.5 2xl:gap-2 bg-gradient-to-br from-primary via-primary to-secondary text-primary-foreground rounded-xl px-3 py-2.5 2xl:px-5 2xl:py-3.5 transition-all duration-300 hover:scale-105 hover:-translate-y-0.5 overflow-hidden"
+                  style={{ boxShadow: '0 0 20px hsla(223, 83%, 27%, 0.45), 0 0 40px hsla(215, 100%, 60%, 0.25)' }}
+                >
+                  <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
+                  <GraduationCap className="h-6 w-6 2xl:h-7 2xl:w-7 text-primary-foreground relative z-10" />
+                  <span className="text-base 2xl:text-xl font-bold text-primary-foreground text-center leading-tight relative z-10">
+                    {language === 'it' ? 'Università → Master' : 'University to Master'}
+                  </span>
+                </button>
+                <button
+                  onClick={() => navigate('/client-portal/services?category=Altitude')}
+                  className="group relative flex flex-col items-center justify-center gap-1.5 2xl:gap-2 bg-gradient-to-br from-primary via-primary to-secondary text-primary-foreground rounded-xl px-3 py-2.5 2xl:px-5 2xl:py-3.5 transition-all duration-300 hover:scale-105 hover:-translate-y-0.5 overflow-hidden"
+                  style={{ boxShadow: '0 0 20px hsla(223, 83%, 27%, 0.45), 0 0 40px hsla(215, 100%, 60%, 0.25)' }}
+                >
+                  <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
+                  <Building className="h-6 w-6 2xl:h-7 2xl:w-7 text-primary-foreground relative z-10" />
+                  <span className="text-base 2xl:text-xl font-bold text-primary-foreground text-center leading-tight relative z-10">
+                    {language === 'it' ? 'Internship Placement' : 'Internship Placement'}
+                  </span>
+                </button>
+                <button
+                  onClick={() => window.location.href = '/talent-pool'}
+                  className="group relative inline-flex items-center justify-center gap-2 overflow-hidden rounded-full bg-gradient-to-r from-emerald-500 via-teal-500 to-teal-600 px-6 py-2.5 2xl:px-7 2xl:py-3 text-white font-bold shadow-lg transition-all duration-300 hover:scale-105 hover:-translate-y-0.5"
+                  style={{ boxShadow: '0 8px 22px hsla(173, 80%, 30%, 0.45)' }}
+                >
+                  <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
+                  <Building className="h-5 w-5 relative z-10" />
+                  <span className="relative z-10 text-sm 2xl:text-base">Talent Pool — get discovered by companies</span>
+                  <ArrowRight className="h-4 w-4 relative z-10 transition-transform group-hover:translate-x-0.5" />
+                </button>
+              </div>
             </div>
           </div>
+
 
           {/* Bigger associates strip */}
           {associatePhotos.length > 0 && (
