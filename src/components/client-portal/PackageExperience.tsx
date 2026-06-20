@@ -297,6 +297,9 @@ const PackageExperience = ({
   const [removed, setRemoved] = useState<Set<string>>(new Set());
   const [packageInfoOpen, setPackageInfoOpen] = useState(false);
   const [bioAssociate, setBioAssociate] = useState<AssociatePreview | null>(null);
+  // Comparative add-on opt-in (mobile face). Default OFF — checking adds it to
+  // the cart as a packaged add-on and bumps the displayed total.
+  const [comparativeOn, setComparativeOn] = useState(false);
   // Mobile-only: which "face" of the card is showing, and whether the (possibly
   // long) included list is fully expanded. Desktop ignores both.
   const [mobileView, setMobileView] = useState<"package" | "associate">("package");
@@ -359,9 +362,18 @@ const PackageExperience = ({
     return Array.from(names);
   }, [services, coreComponents, hasDemo]);
 
+  // The Comparative add-on (if present) can be opted in from the mobile face.
+  const comparativeAddon = useMemo(
+    () => addonComponents.find((c) => c.addon_type === "comparative") || null,
+    [addonComponents]
+  );
+  const comparativeSurcharge = comparativeAddon ? Number(comparativeAddon.addon_price || 0) : 0;
+
   const total = useMemo(
-    () => includedCore.reduce((sum, c) => sum + Number(c.internal_price) * c.quantity, 0),
-    [includedCore]
+    () =>
+      includedCore.reduce((sum, c) => sum + Number(c.internal_price) * c.quantity, 0) +
+      (comparativeOn ? comparativeSurcharge : 0),
+    [includedCore, comparativeOn, comparativeSurcharge]
   );
   const fullPrice = Number(pkg.price);
 
@@ -473,6 +485,29 @@ const PackageExperience = ({
         });
       }
     });
+
+    // Comparative add-on opt-in (mobile): bill as a packaged add-on at addon_price.
+    if (comparativeOn && comparativeAddon?.service) {
+      const addonService: Service = {
+        ...comparativeAddon.service,
+        price: Number(comparativeAddon.addon_price || 0),
+      };
+      onAddToCart({
+        id: `${groupId}-${comparativeAddon.id}-addon`,
+        service: addonService,
+        associate: {
+          id: selectedAssociate.id,
+          first_name: selectedAssociate.first_name,
+          last_name: selectedAssociate.last_name,
+        },
+        university: filterMode === "sector" ? undefined : matchValue,
+        sector: filterMode === "sector" ? matchValue : undefined,
+        packageGroupId: groupId,
+        packageName,
+        packageRole: "addon",
+      });
+    }
+
     toast.success(`${pkg.code_name} package added to cart!`);
   };
 
@@ -571,86 +606,79 @@ const PackageExperience = ({
         {/* ---------- PACKAGE FACE ---------- */}
         {mobileView === "package" && (
           <div className="flex flex-col gap-2">
-            {/* What's included — bigger, readable bullets + collapse beyond 5 */}
+            {/* What's included — inline checkboxes on removable rows, plus
+                the descriptive package bullets (Study Plan, live presentations,
+                WhatsApp). Tap a checkbox to drop a component and shrink the
+                price live. */}
             <div className="rounded-xl border border-primary/20 bg-card p-3 shadow-sm">
-              <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">What's included</p>
-              <ul className="space-y-1.5">
-                {(showAllIncluded ? includedCore : includedCore.slice(0, 5)).map((c) => (
-                  <li key={c.id} className="flex items-start gap-2 text-sm leading-snug">
-                    <Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-                    <span className="font-medium text-foreground">{c.label || c.service?.name}</span>
+              <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                What's included <span className="font-normal normal-case text-muted-foreground/70">— uncheck to remove</span>
+              </p>
+              <ul className="space-y-2">
+                {coreComponents.map((comp) => {
+                  const isRemoved = removed.has(comp.id);
+                  const label = comp.label || comp.service?.name || "Component";
+                  return (
+                    <li key={comp.id} className="flex items-start gap-2 text-sm leading-snug">
+                      {comp.is_removable ? (
+                        <Checkbox
+                          checked={!isRemoved}
+                          onCheckedChange={(checked) => {
+                            setRemoved((prev) => {
+                              const next = new Set(prev);
+                              if (checked) next.delete(comp.id);
+                              else next.add(comp.id);
+                              return next;
+                            });
+                          }}
+                          className="mt-0.5"
+                          aria-label={`Toggle ${label}`}
+                        />
+                      ) : (
+                        <Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                      )}
+                      <span
+                        className={`flex-1 font-medium ${
+                          isRemoved ? "text-muted-foreground line-through" : "text-foreground"
+                        }`}
+                      >
+                        {label}
+                      </span>
+                    </li>
+                  );
+                })}
+
+                {/* Descriptive bullets that belong to the package (Study Plan,
+                    "Projects presented live online", "Dedicated WhatsApp group"). */}
+                {(pkg.bullets || []).map((b) => (
+                  <li key={b.label} className="flex items-start gap-2 text-sm leading-snug">
+                    <Check className="mt-0.5 h-4 w-4 shrink-0 text-primary/70" />
+                    <span className="flex-1 font-medium text-foreground/90">
+                      {b.label}
+                      {isWhatsAppBullet(b.label) && <WhatsAppMark />}
+                    </span>
                   </li>
                 ))}
-                {coreComponents.filter((c) => removed.has(c.id)).map((c) => (
-                  <li key={c.id} className="flex items-start gap-2 text-sm leading-snug text-muted-foreground line-through">
-                    <Check className="mt-0.5 h-4 w-4 shrink-0 opacity-40" />
-                    <span>{c.label || c.service?.name}</span>
+
+                {/* Comparative add-on — opt in to compare a 2nd target.
+                    Off by default; toggling on adds the surcharge to the total. */}
+                {comparativeAddon && (
+                  <li className="flex items-start gap-2 text-sm leading-snug">
+                    <Checkbox
+                      checked={comparativeOn}
+                      onCheckedChange={(checked) => setComparativeOn(!!checked)}
+                      className="mt-0.5"
+                      aria-label="Toggle Comparative Presentation"
+                    />
+                    <span className={`flex-1 font-medium ${comparativeOn ? "text-foreground" : "text-muted-foreground"}`}>
+                      {comparativeAddon.label || comparativeAddon.service?.name || "Comparative Presentation"}
+                      <span className="ml-1.5 text-[10px] font-semibold uppercase tracking-wide text-secondary">
+                        +€{Number(comparativeAddon.addon_price || 0).toFixed(0)}
+                      </span>
+                    </span>
                   </li>
-                ))}
+                )}
               </ul>
-              {includedCore.length > 5 && (
-                <button
-                  type="button"
-                  onClick={() => setShowAllIncluded((v) => !v)}
-                  className="mt-2 text-xs font-medium text-primary underline-offset-4 hover:underline"
-                >
-                  {showAllIncluded ? "Show less" : `+${includedCore.length - 5} more included`}
-                </button>
-              )}
-              {coreComponents.some((c) => c.is_removable) && (
-                <Sheet>
-                  <SheetTrigger asChild>
-                    <Button variant="outline" size="sm" className="mt-2 h-8 w-full border-primary/30 text-xs text-primary">
-                      Customize components
-                    </Button>
-                  </SheetTrigger>
-                  <SheetContent side="bottom" className="max-h-[82vh] overflow-y-auto rounded-t-2xl">
-                    <SheetHeader>
-                      <SheetTitle>Customize your {pkg.code_name} package</SheetTitle>
-                    </SheetHeader>
-                    <p className="mb-3 mt-1 text-xs text-muted-foreground">Uncheck what you don't need — the price updates automatically.</p>
-                    <ul className="space-y-3">
-                      {coreComponents.map((comp) => {
-                        const isRemoved = removed.has(comp.id);
-                        const label = comp.label || comp.service?.name || "Component";
-                        return (
-                          <li key={comp.id} className="flex items-start gap-2.5 text-sm">
-                            {comp.is_removable ? (
-                              <Checkbox
-                                checked={!isRemoved}
-                                onCheckedChange={(checked) => {
-                                  setRemoved((prev) => {
-                                    const next = new Set(prev);
-                                    if (checked) next.delete(comp.id);
-                                    else next.add(comp.id);
-                                    return next;
-                                  });
-                                }}
-                                className="mt-0.5"
-                                aria-label={`Toggle ${label}`}
-                              />
-                            ) : (
-                              <Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-                            )}
-                            <span className={`flex-1 font-medium ${isRemoved ? "text-muted-foreground line-through" : "text-foreground"}`}>
-                              {label}
-                              {!comp.is_removable && <span className="ml-1.5 text-[10px] font-normal uppercase tracking-wide text-primary/70">included</span>}
-                            </span>
-                            <span className="shrink-0 text-xs text-muted-foreground">€{(Number(comp.internal_price) * comp.quantity).toFixed(0)}</span>
-                          </li>
-                        );
-                      })}
-                    </ul>
-                    <div className="mt-4 flex items-center justify-between border-t pt-3">
-                      <span className="text-sm text-muted-foreground">Total</span>
-                      <span className="text-xl font-extrabold text-primary">€{total.toFixed(0)}</span>
-                    </div>
-                    <SheetClose asChild>
-                      <Button className="mt-3 w-full bg-gradient-to-r from-primary to-secondary font-bold">Done</Button>
-                    </SheetClose>
-                  </SheetContent>
-                </Sheet>
-              )}
             </div>
 
             {/* Associate reassurance — small face pile makes it obvious every

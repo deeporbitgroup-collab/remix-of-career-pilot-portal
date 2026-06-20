@@ -923,14 +923,16 @@ const ClientServicesPage = () => {
         })}
         </div>
 
-        {/* B2b — three animated carousels (mobile only): Associates · Universities · Companies */}
-        <div className="md:hidden mt-6 space-y-5">
+        {/* B2b — three animated carousels (mobile only): Associates · Universities · Companies.
+            Wrapped in solid surfaces so the section titles and logos remain
+            legible on top of the dark photo background. */}
+        <div className="md:hidden mt-6 space-y-4">
           {associates.length > 0 && (
-            <div>
+            <div className="rounded-2xl border border-border/50 bg-background/95 p-3 shadow-lg backdrop-blur-sm">
               <p className="mb-2 flex items-center gap-1.5 text-sm font-bold text-primary">
                 <Users className="h-4 w-4" /> Meet our mentors
               </p>
-              <div className="relative -mx-4 overflow-hidden px-4">
+              <div className="relative -mx-3 overflow-hidden px-3">
                 <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-8 bg-gradient-to-r from-background to-transparent" />
                 <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-8 bg-gradient-to-l from-background to-transparent" />
                 <div className="flex gap-3 animate-scroll-carousel" style={{ width: "max-content", animationDuration: "45s" }}>
@@ -951,13 +953,17 @@ const ClientServicesPage = () => {
             </div>
           )}
 
-          <CoveredLogos kind="universities" />
-          <CoveredLogos kind="companies" />
+          <div className="rounded-2xl border border-border/50 bg-background/95 p-3 shadow-lg backdrop-blur-sm">
+            <CoveredLogos kind="universities" />
+          </div>
+          <div className="rounded-2xl border border-border/50 bg-background/95 p-3 shadow-lg backdrop-blur-sm">
+            <CoveredLogos kind="companies" />
+          </div>
 
           {/* Individual products entry (Area 3) — strategic but not invasive */}
           <button
             onClick={() => setIpOpen(true)}
-            className="mt-1 flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-primary/40 bg-card px-4 py-3 text-sm font-semibold text-primary active:scale-[0.98] transition-transform"
+            className="mt-1 flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-primary/40 bg-background/95 backdrop-blur-sm px-4 py-3 text-sm font-semibold text-primary shadow-md active:scale-[0.98] transition-transform"
           >
             Prefer single products? Find yours
             <ArrowRight className="h-4 w-4" />
