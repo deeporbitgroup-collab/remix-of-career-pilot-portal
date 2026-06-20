@@ -68,7 +68,8 @@ const CompanyDashboardContent = () => {
     size: '',
     reference_email: '',
     linkedin_url: '',
-    description: ''
+    description: '',
+    website: ''
   });
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -132,7 +133,8 @@ const CompanyDashboardContent = () => {
           size: profile.size || '',
           reference_email: profile.reference_email || '',
           linkedin_url: profile.linkedin_url || '',
-          description: profile.description || ''
+          description: profile.description || '',
+          website: (profile as any).website || ''
         });
       }
       
@@ -181,7 +183,8 @@ const CompanyDashboardContent = () => {
           size: profile.size || '',
           reference_email: profile.reference_email || '',
           linkedin_url: profile.linkedin_url || '',
-          description: profile.description || ''
+          description: profile.description || '',
+          website: (profile as any).website || ''
         });
       }
     } catch (error) {
@@ -492,8 +495,9 @@ const CompanyDashboardContent = () => {
         p_reference_email: editData.reference_email,
         p_linkedin_url: editData.linkedin_url || null,
         p_logo_url: logoUrl || null,
-        p_description: editData.description || null
-      });
+        p_description: editData.description || null,
+        p_website: editData.website || null,
+      } as any);
 
       if (error) throw error;
 
@@ -923,6 +927,17 @@ const CompanyDashboardContent = () => {
                       </div>
 
                       <div className="space-y-2">
+                        <Label htmlFor="website">Website (optional)</Label>
+                        <Input
+                          id="website"
+                          type="url"
+                          placeholder="https://yourcompany.com"
+                          value={editData.website}
+                          onChange={(e) => setEditData({...editData, website: e.target.value})}
+                        />
+                      </div>
+
+                      <div className="space-y-2">
                         <Label htmlFor="description">Description (optional)</Label>
                         <Textarea
                           id="description"
@@ -1067,6 +1082,20 @@ const CompanyDashboardContent = () => {
                         className="mt-1 inline-flex items-center gap-1 font-semibold text-primary hover:underline"
                       >
                         {t('companyDashboard.profile.viewLinkedin')}
+                        <LinkIcon className="h-3.5 w-3.5" />
+                      </a>
+                    </div>
+                  )}
+                  {company?.company_profiles?.[0]?.website && (
+                    <div className="rounded-lg border bg-muted/30 p-4">
+                      <p className="text-xs font-medium uppercase tracking-wide text-steel-gray">Website</p>
+                      <a
+                        href={company.company_profiles[0].website}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="mt-1 inline-flex items-center gap-1 font-semibold text-primary hover:underline"
+                      >
+                        Visit site
                         <LinkIcon className="h-3.5 w-3.5" />
                       </a>
                     </div>

@@ -69,9 +69,10 @@ const AdminDashboard = () => {
   // Admin company-profile editing (writes the SAME company_profiles row the company edits)
   const [editingCompany, setEditingCompany] = useState<any>(null);
   const [companyEditData, setCompanyEditData] = useState({
-    company_name: '', sector: '', size: '', reference_email: '', linkedin_url: '', description: ''
+    company_name: '', sector: '', size: '', reference_email: '', linkedin_url: '', description: '', website: ''
   });
   const [companyLogoFile, setCompanyLogoFile] = useState<File | null>(null);
+  const [companyCoverFile, setCompanyCoverFile] = useState<File | null>(null);
   const [savingCompany, setSavingCompany] = useState(false);
 
   useEffect(() => {
@@ -437,8 +438,10 @@ const AdminDashboard = () => {
       reference_email: p.reference_email || company.email || '',
       linkedin_url: p.linkedin_url || '',
       description: p.description || '',
+      website: p.website || '',
     });
     setCompanyLogoFile(null);
+    setCompanyCoverFile(null);
   };
 
   const fileToBase64 = async (file: File): Promise<string> => {
@@ -474,8 +477,26 @@ const AdminDashboard = () => {
         }
       }
 
+      // Cover photo (NEW) — reuse the same upload function (it just returns a URL).
+      let coverUrl: string | null = null;
+      if (companyCoverFile) {
+        try {
+          const fileBase64 = await fileToBase64(companyCoverFile);
+          const { data: up, error: upErr } = await supabase.functions.invoke('upload-company-logo', {
+            body: { companyId: editingCompany.id, fileName: `cover-${companyCoverFile.name}`, contentType: companyCoverFile.type, fileBase64 }
+          });
+          if (upErr || !up?.publicUrl) throw upErr || new Error('Cover upload failed');
+          coverUrl = up.publicUrl;
+        } catch (coverErr) {
+          console.error('Cover upload failed (non-fatal):', coverErr);
+          toast({ title: "Cover not updated", description: "The other fields were saved; the cover upload failed.", variant: "destructive" });
+        }
+      }
+
       // update_company_profile OVERWRITES every field — pass ALL pre-filled values so
       // editing one field never blanks the others (logo/LinkedIn/description/etc.).
+      // p_cover_photo_url is only sent when a new cover was uploaded (RPC keeps the
+      // existing one when null).
       const { error } = await supabase.rpc('update_company_profile', {
         p_user_id: editingCompany.id,
         p_company_name: companyEditData.company_name,
@@ -485,7 +506,9 @@ const AdminDashboard = () => {
         p_linkedin_url: companyEditData.linkedin_url || null,
         p_logo_url: logoUrl || null,
         p_description: companyEditData.description || null,
-      });
+        p_website: companyEditData.website || null,
+        p_cover_photo_url: coverUrl,
+      } as any);
       if (error) throw error;
 
       toast({ title: "Saved", description: "Company profile updated." });
@@ -1892,6 +1915,34 @@ const AdminDashboard = () => {
               </div>
 
               <div className="space-y-2">
+                <Label>Cover photo</Label>
+                {(companyCoverFile || (editingCompany?.company_profiles?.[0] as any)?.cover_photo_url) ? (
+                  <img
+                    src={companyCoverFile ? URL.createObjectURL(companyCoverFile) : (editingCompany?.company_profiles?.[0] as any)?.cover_photo_url}
+                    alt="cover"
+                    className="h-24 w-full rounded border object-cover"
+                  />
+                ) : (
+                  <div className="flex h-24 w-full items-center justify-center rounded border bg-runway-gray">
+                    <Building2 className="h-8 w-8 text-steel-gray" />
+                  </div>
+                )}
+                <Input
+                  type="file"
+                  accept="image/png,image/jpeg"
+                  onChange={(e) => {
+                    const f = e.target.files?.[0] || null;
+                    if (f && f.size > 5 * 1024 * 1024) {
+                      toast({ title: "Cover too large", description: "Please select an image under 5MB.", variant: "destructive" });
+                      return;
+                    }
+                    setCompanyCoverFile(f);
+                  }}
+                />
+                <p className="text-xs text-muted-foreground">Banner shown on the company card — PNG/JPG, max 5MB.</p>
+              </div>
+
+              <div className="space-y-2">
                 <Label>Company name</Label>
                 <Input value={companyEditData.company_name} onChange={(e) => setCompanyEditData({ ...companyEditData, company_name: e.target.value })} />
               </div>
@@ -1922,6 +1973,11 @@ const AdminDashboard = () => {
               <div className="space-y-2">
                 <Label>LinkedIn (optional)</Label>
                 <Input value={companyEditData.linkedin_url} placeholder="https://linkedin.com/company/..." onChange={(e) => setCompanyEditData({ ...companyEditData, linkedin_url: e.target.value })} />
+              </div>
+
+              <div className="space-y-2">
+                <Label>Website (optional)</Label>
+                <Input value={companyEditData.website} placeholder="https://company.com" onChange={(e) => setCompanyEditData({ ...companyEditData, website: e.target.value })} />
               </div>
 
               <div className="space-y-2">

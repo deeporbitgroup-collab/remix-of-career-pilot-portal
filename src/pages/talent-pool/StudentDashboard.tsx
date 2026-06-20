@@ -1602,7 +1602,10 @@ const StudentDashboard = () => {
                 ) : (
                   <div className="md:space-y-4 max-md:-mx-4 max-md:flex max-md:snap-x max-md:snap-mandatory max-md:gap-3 max-md:overflow-x-auto max-md:px-4 max-md:pb-2">
                   {filteredCompanies.map(company => (
-                    <Card key={company.id} className="max-md:snap-center max-md:shrink-0 max-md:w-[85vw]">
+                    <Card key={company.id} className="overflow-hidden max-md:snap-center max-md:shrink-0 max-md:w-[85vw]">
+                      {company.cover_photo_url && (
+                        <img src={company.cover_photo_url} alt="" className="h-24 w-full object-cover" />
+                      )}
                       <CardContent className="pt-6">
                         <div className="flex gap-4">
                           <Avatar className="h-16 w-16">
@@ -1620,17 +1623,30 @@ const StudentDashboard = () => {
                                 {company.description}
                               </p>
                             )}
-                            {company.linkedin_url && (
-                              <Button
-                                variant="link"
-                                size="sm"
-                                className="px-0 mt-2"
-                                onClick={() => window.open(company.linkedin_url, '_blank')}
-                              >
-                                <Linkedin className="h-4 w-4 mr-1" />
-                                {t('studentTalentPool.companies.linkedinProfile')}
-                              </Button>
-                            )}
+                            <div className="flex flex-wrap items-center gap-x-4">
+                              {company.linkedin_url && (
+                                <Button
+                                  variant="link"
+                                  size="sm"
+                                  className="px-0 mt-2"
+                                  onClick={() => window.open(company.linkedin_url, '_blank')}
+                                >
+                                  <Linkedin className="h-4 w-4 mr-1" />
+                                  {t('studentTalentPool.companies.linkedinProfile')}
+                                </Button>
+                              )}
+                              {company.website && (
+                                <Button
+                                  variant="link"
+                                  size="sm"
+                                  className="px-0 mt-2"
+                                  onClick={() => window.open(company.website, '_blank')}
+                                >
+                                  <Building2 className="h-4 w-4 mr-1" />
+                                  Visit website
+                                </Button>
+                              )}
+                            </div>
                           </div>
                         </div>
                       </CardContent>
