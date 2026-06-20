@@ -128,7 +128,7 @@ const AssociateChoiceCarousel = ({
                     className={cn(
                       "relative w-full overflow-hidden",
                       compact
-                        ? "h-28"
+                        ? "h-20"
                         : fillHeight
                         ? "h-[20vh] min-h-[128px] max-h-[240px]"
                         : "h-64 sm:h-72"
@@ -143,7 +143,7 @@ const AssociateChoiceCarousel = ({
                       />
                     ) : (
                       <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-primary/20 via-primary/10 to-muted">
-                        <span className="text-5xl font-semibold text-primary/70">
+                        <span className={cn("font-semibold text-primary/70", compact ? "text-3xl" : "text-5xl")}>
                           {getInitials(associate)}
                         </span>
                       </div>
@@ -154,14 +154,17 @@ const AssociateChoiceCarousel = ({
 
                     {/* Selected badge — top-right */}
                     {selected && (
-                      <div className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg">
-                        <Check className="h-5 w-5" strokeWidth={3} />
+                      <div className={cn(
+                        "absolute flex items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg",
+                        compact ? "right-2 top-2 h-7 w-7" : "right-3 top-3 h-9 w-9"
+                      )}>
+                        <Check className={cn("", compact ? "h-4 w-4" : "h-5 w-5")} strokeWidth={3} />
                       </div>
                     )}
 
                     {/* Name (ALWAYS visible) — company now lives in a tidy box below */}
-                    <div className={cn("absolute inset-x-0 bottom-0", compact ? "p-2.5" : "p-4")}>
-                      <h3 className={cn("font-bold leading-tight text-white drop-shadow-sm", compact ? "text-base" : "text-xl sm:text-2xl")}>
+                    <div className={cn("absolute inset-x-0 bottom-0", compact ? "p-2" : "p-4")}>
+                      <h3 className={cn("font-bold leading-tight text-white drop-shadow-sm", compact ? "text-[15px]" : "text-xl sm:text-2xl")}>
                         {associate.first_name} {associate.last_name}
                       </h3>
                     </div>
