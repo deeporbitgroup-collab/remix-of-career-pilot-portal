@@ -848,17 +848,26 @@ const PackageExperience = ({
           </CardHeader>
 
           <CardContent className="flex flex-1 flex-col gap-2.5 pb-3">
-            <div>
-              <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-                What's included — uncheck what you don't want
+            <div className="rounded-xl border border-border/50 bg-muted/20 p-2.5">
+              <p className="mb-2 flex items-center justify-between text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                <span>What's included</span>
+                <span className="font-normal normal-case text-muted-foreground/70">uncheck what you don't want</span>
               </p>
-              <ul className="space-y-1.5">
+              <ul className="grid grid-cols-1 gap-1.5">
                 {coreComponents.map((comp) => {
                   const isRemoved = removed.has(comp.id);
                   const label = comp.label || comp.service?.name || "Component";
                   return (
-                    <Fragment key={comp.id}>
-                      <li className="flex items-start gap-2 text-sm">
+                    <li key={comp.id}>
+                      <div
+                        className={`flex items-center gap-2 rounded-lg border px-2.5 py-1.5 text-sm leading-snug shadow-sm transition-colors ${
+                          isRemoved
+                            ? "border-border/30 bg-muted/20 text-muted-foreground"
+                            : comp.is_removable
+                            ? "border-border/40 bg-background/80 hover:border-primary/30"
+                            : "border-border/40 bg-background/80"
+                        }`}
+                      >
                         {comp.is_removable ? (
                           <Checkbox
                             checked={!isRemoved}
@@ -870,21 +879,27 @@ const PackageExperience = ({
                                 return next;
                               });
                             }}
-                            className="mt-0.5"
+                            className="h-4 w-4 shrink-0"
                             aria-label={`Toggle ${label}`}
                           />
                         ) : (
-                          <Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                          <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary">
+                            <Check className="h-2.5 w-2.5" strokeWidth={3} />
+                          </span>
                         )}
-                        <span className={`flex-1 font-medium ${isRemoved ? "text-muted-foreground line-through" : "text-foreground"}`}>
+                        <span className={`flex-1 font-medium ${isRemoved ? "line-through" : ""}`}>
                           {label}
                           {!comp.is_removable && (
                             <span className="ml-1.5 text-[10px] font-normal uppercase tracking-wide text-primary/70">included</span>
                           )}
                         </span>
-                      </li>
-                      {isTimelineComponent(comp) && anchorBullets.map(renderBulletRow)}
-                    </Fragment>
+                      </div>
+                      {isTimelineComponent(comp) && (
+                        <ul className="mt-1.5 grid grid-cols-1 gap-1.5 pl-6">
+                          {anchorBullets.map(renderBulletRow)}
+                        </ul>
+                      )}
+                    </li>
                   );
                 })}
                 {trailingBullets.map(renderBulletRow)}
