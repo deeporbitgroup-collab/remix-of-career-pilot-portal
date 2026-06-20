@@ -245,7 +245,10 @@ const AssociateChoiceCarousel = ({
                         out of a narrow card (e.g. the LinkedIn button). */}
                     {renderActions && (
                       <div
-                        className="mt-auto flex flex-wrap gap-2 pt-1"
+                        className={cn(
+                          "mt-auto flex flex-wrap",
+                          compact ? "gap-1.5 pt-1" : "gap-2 pt-1"
+                        )}
                         onClick={(e) => e.stopPropagation()}
                       >
                         {renderActions(associate)}
@@ -256,7 +259,7 @@ const AssociateChoiceCarousel = ({
                     <div
                       className={cn(
                         "mt-1 flex items-center justify-center gap-1.5 rounded-lg font-medium transition-colors",
-                        compact ? "py-1 text-[11px]" : "py-2 text-sm",
+                        compact ? "py-1 text-[10px]" : "py-2 text-sm",
                         selected
                           ? "bg-primary text-primary-foreground"
                           : "bg-muted text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary"
@@ -264,12 +267,12 @@ const AssociateChoiceCarousel = ({
                     >
                       {selected ? (
                         <>
-                          <Check className="h-4 w-4" strokeWidth={3} />
+                          <Check className={cn("", compact ? "h-3.5 w-3.5" : "h-4 w-4")} strokeWidth={3} />
                           Selected
                         </>
                       ) : (
                         <>
-                          <MousePointerClick className="h-4 w-4" />
+                          <MousePointerClick className={cn("", compact ? "h-3.5 w-3.5" : "h-4 w-4")} />
                           Click to select
                         </>
                       )}
