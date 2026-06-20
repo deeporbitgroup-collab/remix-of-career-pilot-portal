@@ -732,20 +732,20 @@ const PackageExperience = ({
 
         {/* ---------- ASSOCIATE FACE ---------- */}
         {mobileView === "associate" && (
-          <div className="rounded-xl border border-secondary/30 bg-card p-2.5">
-            <p className="mb-1.5 flex items-center gap-1.5 text-[13px] font-semibold">
-              <Users className="h-4 w-4 text-primary" /> Choose your Associate
+          <div className="rounded-xl border border-secondary/30 bg-card p-2">
+            <p className="mb-1 flex items-center gap-1.5 text-xs font-semibold">
+              <Users className="h-3.5 w-3.5 text-primary" /> Choose your Associate
             </p>
             <Select value={associateFilter || "__all__"} onValueChange={(v) => setAssociateFilter(v === "__all__" ? "" : v)}>
-              <SelectTrigger className="h-9 w-full border-primary/20 text-sm"><SelectValue placeholder="Pick from the list" /></SelectTrigger>
+              <SelectTrigger className="h-8 w-full border-primary/20 text-xs"><SelectValue placeholder="Pick from the list" /></SelectTrigger>
               <SelectContent className="max-h-72">
                 <SelectItem value="__all__">All {filterLabel.toLowerCase()}</SelectItem>
                 {availableValues.map((v) => (<SelectItem key={v} value={v}>{v}</SelectItem>))}
               </SelectContent>
             </Select>
-            <div className="mt-2">
+            <div className="mt-1.5">
               {filteredAssociates.length === 0 ? (
-                <p className="py-6 text-center text-sm text-muted-foreground">No associates match yet. Try another filter.</p>
+                <p className="py-4 text-center text-xs text-muted-foreground">No associates match yet. Try another filter.</p>
               ) : (
                 <AssociateChoiceCarousel
                   associates={filteredAssociates}
@@ -761,13 +761,13 @@ const PackageExperience = ({
                     const ap = a as AssociatePreview;
                     return (
                       <>
-                        <Button variant="outline" size="sm" className="flex-1 border-primary/20" onClick={(e) => { e.stopPropagation(); setBioAssociate(ap); }}>
-                          <FileText className="mr-1.5 h-4 w-4" /> Overview
+                        <Button variant="outline" size="sm" className="h-7 flex-1 border-primary/20 px-2 text-xs" onClick={(e) => { e.stopPropagation(); setBioAssociate(ap); }}>
+                          <FileText className="mr-1 h-3.5 w-3.5" /> Overview
                         </Button>
                         {ap.linkedin_url && (
-                          <Button asChild variant="outline" size="sm" className="flex-1 border-primary/20">
+                          <Button asChild variant="outline" size="sm" className="h-7 flex-1 border-primary/20 px-2 text-xs">
                             <a href={ap.linkedin_url.startsWith("http") ? ap.linkedin_url : `https://${ap.linkedin_url}`} target="_blank" rel="noopener noreferrer">
-                              <Linkedin className="mr-1.5 h-4 w-4" /> LinkedIn
+                              <Linkedin className="mr-1 h-3.5 w-3.5" /> LinkedIn
                             </a>
                           </Button>
                         )}
