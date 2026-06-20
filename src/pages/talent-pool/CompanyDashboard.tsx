@@ -1127,7 +1127,7 @@ const CompanyDashboardContent = () => {
                           </div>
 
                           <div className="flex flex-col gap-2 pt-2">
-                            {student.cv_url && (
+                            {student.cv_url ? (
                               <Button
                                 size="sm"
                                 variant="outline"
@@ -1141,8 +1141,13 @@ const CompanyDashboardContent = () => {
                                 Curriculum Vitae
                                 <Download className="h-3 w-3" />
                               </Button>
+                            ) : (
+                              <Button size="sm" variant="outline" disabled className="w-full flex items-center justify-center gap-2 opacity-50">
+                                <FileText className="h-4 w-4" />
+                                CV not available
+                              </Button>
                             )}
-                            {student.cover_letter_url && (
+                            {student.cover_letter_url ? (
                               <Button
                                 size="sm"
                                 variant="outline"
@@ -1155,6 +1160,11 @@ const CompanyDashboardContent = () => {
                                 <FileText className="h-4 w-4" />
                                 Cover Letter
                                 <Download className="h-3 w-3" />
+                              </Button>
+                            ) : (
+                              <Button size="sm" variant="outline" disabled className="w-full flex items-center justify-center gap-2 opacity-50">
+                                <FileText className="h-4 w-4" />
+                                Cover letter not available
                               </Button>
                             )}
                             {student.presentation_video_url && (
@@ -1281,14 +1291,22 @@ const CompanyDashboardContent = () => {
 
                             {/* Documents */}
                             <div className="flex flex-wrap gap-2">
-                              {student.cv_url && (
+                              {student.cv_url ? (
                                 <Button size="sm" variant="outline" onClick={() => downloadFile(student.cv_url, `${student.first_name}_${student.last_name}_CV.pdf`)}>
                                   <FileText className="h-4 w-4 mr-1" /> CV <Download className="h-3 w-3 ml-1" />
                                 </Button>
+                              ) : (
+                                <Button size="sm" variant="outline" disabled className="opacity-50">
+                                  <FileText className="h-4 w-4 mr-1" /> CV not available
+                                </Button>
                               )}
-                              {student.cover_letter_url && (
+                              {student.cover_letter_url ? (
                                 <Button size="sm" variant="outline" onClick={() => downloadFile(student.cover_letter_url, `${student.first_name}_${student.last_name}_CoverLetter.pdf`)}>
                                   <FileText className="h-4 w-4 mr-1" /> Cover <Download className="h-3 w-3 ml-1" />
+                                </Button>
+                              ) : (
+                                <Button size="sm" variant="outline" disabled className="opacity-50">
+                                  <FileText className="h-4 w-4 mr-1" /> Cover not available
                                 </Button>
                               )}
                             </div>

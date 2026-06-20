@@ -1223,7 +1223,7 @@ const AdminDashboard = () => {
                         <div className="p-3 bg-cloud-white rounded-lg">
                           <p className="text-sm font-semibold text-steel-gray mb-2">📄 Uploaded Documents</p>
                           <div className="flex flex-wrap gap-2">
-                            {student.student_profiles?.[0]?.cv_url && (
+                            {student.student_profiles?.[0]?.cv_url ? (
                               <Button
                                 size="sm"
                                 variant="outline"
@@ -1236,8 +1236,13 @@ const AdminDashboard = () => {
                                 <FileText className="h-4 w-4" />
                                 Download CV
                               </Button>
+                            ) : (
+                              <Button size="sm" variant="outline" disabled className="flex items-center gap-1 opacity-50">
+                                <FileText className="h-4 w-4" />
+                                CV not available
+                              </Button>
                             )}
-                            {student.student_profiles?.[0]?.cover_letter_url && (
+                            {student.student_profiles?.[0]?.cover_letter_url ? (
                               <Button
                                 size="sm"
                                 variant="outline"
@@ -1250,6 +1255,11 @@ const AdminDashboard = () => {
                                 <FileText className="h-4 w-4" />
                                 Download Cover Letter
                               </Button>
+                            ) : (
+                              <Button size="sm" variant="outline" disabled className="flex items-center gap-1 opacity-50">
+                                <FileText className="h-4 w-4" />
+                                Cover letter not available
+                              </Button>
                             )}
                             {student.student_profiles?.[0]?.presentation_video_url && (
                               <Button
@@ -1261,9 +1271,6 @@ const AdminDashboard = () => {
                                 <FileText className="h-4 w-4" />
                                 Open Presentation Video
                               </Button>
-                            )}
-                            {!student.student_profiles?.[0]?.cv_url && !student.student_profiles?.[0]?.cover_letter_url && !student.student_profiles?.[0]?.presentation_video_url && (
-                              <p className="text-sm text-steel-gray">No documents uploaded</p>
                             )}
                           </div>
                         </div>

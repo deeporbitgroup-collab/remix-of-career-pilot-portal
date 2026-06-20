@@ -502,11 +502,11 @@ const StudentDashboard = () => {
       toast({ title: t('studentTalentPool.success.documentDownloaded') });
     } catch (e: any) {
       console.error('Download error:', e);
-      // Fallback: try opening in new tab
-      try { window.open(url, '_blank'); } catch {}
+      // Do NOT fall back to window.open: opening a missing/broken file would
+      // render the browser's "could not load PDF" viewer. Just inform the user.
       toast({
         title: t('studentTalentPool.errors.documentError'),
-        description: e?.message || 'Unable to download the file',
+        description: 'This file could not be loaded. Please re-upload the document.',
         variant: 'destructive'
       });
     }
@@ -575,20 +575,22 @@ const StudentDashboard = () => {
     }
     setUploadingPassport(true);
     try {
-      // Fixed object name so a re-upload replaces the previous scan.
-      const path = `${userInfo.id}/passport`;
-      const { error: upErr } = await supabase.storage
-        .from('talent-pool-passports')
-        .upload(path, file, { upsert: true, contentType: file.type });
-      if (upErr) throw upErr;
-
-      const { error: rpcErr } = await supabase.rpc('talent_pool_update_student_bureaucracy' as any, {
-        _user_id: userInfo.id,
-        _passport_url: path,
+      // The passport bucket is PRIVATE — an anon client can't INSERT via RLS — so
+      // the upload goes through a service-role edge function. Send the file as base64.
+      const fileBase64: string = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result).split(',')[1] || '');
+        reader.onerror = () => reject(new Error('Could not read the file'));
+        reader.readAsDataURL(file);
       });
-      if (rpcErr) throw rpcErr;
 
-      setStudentProfile((prev: any) => prev ? { ...prev, passport_url: path } : prev);
+      const { data, error } = await supabase.functions.invoke('upload-passport', {
+        body: { studentId: userInfo.id, contentType: file.type, fileBase64 },
+      });
+      if (error) throw error;
+      if (!data?.success) throw new Error(data?.error || 'Upload failed');
+
+      setStudentProfile((prev: any) => prev ? { ...prev, passport_url: data.path } : prev);
       toast({ title: "Passport uploaded", description: "Your passport scan has been saved securely." });
     } catch (err: any) {
       console.error('Passport upload error:', err);
@@ -1161,7 +1163,7 @@ const StudentDashboard = () => {
                           <p className="text-xs text-muted-foreground mt-1">File uploaded</p>
                         )}
                       </div>
-                      {studentProfile.cv_url && (
+                      {studentProfile.cv_url ? (
                         <Button
                           variant="outline"
                           size="sm"
@@ -1169,6 +1171,11 @@ const StudentDashboard = () => {
                         >
                           <Download className="h-4 w-4 mr-1" />
                           {t('studentTalentPool.profile.download')}
+                        </Button>
+                      ) : (
+                        <Button variant="outline" size="sm" disabled className="opacity-50">
+                          <Download className="h-4 w-4 mr-1" />
+                          CV not available
                         </Button>
                       )}
                     </div>
@@ -1199,7 +1206,7 @@ const StudentDashboard = () => {
                           <p className="text-xs text-muted-foreground mt-1">File uploaded</p>
                         )}
                       </div>
-                      {studentProfile.cover_letter_url && (
+                      {studentProfile.cover_letter_url ? (
                         <Button
                           variant="outline"
                           size="sm"
@@ -1207,6 +1214,11 @@ const StudentDashboard = () => {
                         >
                           <Download className="h-4 w-4 mr-1" />
                           {t('studentTalentPool.profile.download')}
+                        </Button>
+                      ) : (
+                        <Button variant="outline" size="sm" disabled className="opacity-50">
+                          <Download className="h-4 w-4 mr-1" />
+                          Cover letter not available
                         </Button>
                       )}
                     </div>
