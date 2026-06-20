@@ -297,6 +297,10 @@ const PackageExperience = ({
   const [removed, setRemoved] = useState<Set<string>>(new Set());
   const [packageInfoOpen, setPackageInfoOpen] = useState(false);
   const [bioAssociate, setBioAssociate] = useState<AssociatePreview | null>(null);
+  // Mobile-only: which "face" of the card is showing, and whether the (possibly
+  // long) included list is fully expanded. Desktop ignores both.
+  const [mobileView, setMobileView] = useState<"package" | "associate">("package");
+  const [showAllIncluded, setShowAllIncluded] = useState(false);
 
   const Icon = categoryIcon[pkg.category] || Plane;
   const packageName = `${pkg.code_name} — ${pkg.subtitle}`;
@@ -411,6 +415,10 @@ const PackageExperience = ({
     [associates, selectedAssociateId]
   );
 
+  // Mobile-only: a few faces to reassure (in the "Package" face) that every
+  // package is run 1:1 by a real Associate. Reuses the matched list.
+  const mobileFacePile = useMemo(() => matchableAssociates.slice(0, 4), [matchableAssociates]);
+
   const associateMatchLabel = (a: AssociatePreview) =>
     filterMode === "master"
       ? a.master_program || ""
@@ -507,7 +515,10 @@ const PackageExperience = ({
     <div style={accentStyle}>
       {/* ===================== MOBILE compact layout ===================== */}
       {/* Sits on a solid surface so every label stays legible over the page's
-          dark photo background (desktop uses the separate block below). */}
+          dark photo background (desktop uses the separate block below). The
+          content is split into two "faces" — Package / Associate — toggled by a
+          segmented control so each face fits one screen without long vertical
+          scrolling. The price + CTA stay at the bottom on both faces. */}
       <div className="md:hidden flex flex-col gap-2 rounded-2xl border border-border/50 bg-background/95 p-2.5 shadow-xl backdrop-blur-sm">
         {/* Header */}
         <div className="flex items-center gap-2">
@@ -529,80 +540,208 @@ const PackageExperience = ({
           </button>
         </div>
 
-        {/* What's included (summary) + Customize via bottom-sheet */}
-        <div className="rounded-xl border border-primary/20 bg-card p-2.5 shadow-sm">
-          <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">What's included</p>
-          <ul className="space-y-0.5">
-            {includedCore.map((c) => (
-              <li key={c.id} className="flex items-start gap-1.5 text-[12px] leading-snug">
-                <Check className="mt-0.5 h-3 w-3 shrink-0 text-primary" />
-                <span className="font-medium text-foreground">{c.label || c.service?.name}</span>
-              </li>
-            ))}
-            {coreComponents.filter((c) => removed.has(c.id)).map((c) => (
-              <li key={c.id} className="flex items-start gap-1.5 text-[12px] leading-snug text-muted-foreground line-through">
-                <Check className="mt-0.5 h-3 w-3 shrink-0 opacity-40" />
-                <span>{c.label || c.service?.name}</span>
-              </li>
-            ))}
-          </ul>
-          {coreComponents.some((c) => c.is_removable) && (
-            <Sheet>
-              <SheetTrigger asChild>
-                <Button variant="outline" size="sm" className="mt-1.5 h-7 w-full border-primary/30 text-xs text-primary">
-                  Customize components
-                </Button>
-              </SheetTrigger>
-              <SheetContent side="bottom" className="max-h-[82vh] overflow-y-auto rounded-t-2xl">
-                <SheetHeader>
-                  <SheetTitle>Customize your {pkg.code_name} package</SheetTitle>
-                </SheetHeader>
-                <p className="mb-3 mt-1 text-xs text-muted-foreground">Uncheck what you don't need — the price updates automatically.</p>
-                <ul className="space-y-3">
-                  {coreComponents.map((comp) => {
-                    const isRemoved = removed.has(comp.id);
-                    const label = comp.label || comp.service?.name || "Component";
-                    return (
-                      <li key={comp.id} className="flex items-start gap-2.5 text-sm">
-                        {comp.is_removable ? (
-                          <Checkbox
-                            checked={!isRemoved}
-                            onCheckedChange={(checked) => {
-                              setRemoved((prev) => {
-                                const next = new Set(prev);
-                                if (checked) next.delete(comp.id);
-                                else next.add(comp.id);
-                                return next;
-                              });
-                            }}
-                            className="mt-0.5"
-                            aria-label={`Toggle ${label}`}
-                          />
-                        ) : (
-                          <Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-                        )}
-                        <span className={`flex-1 font-medium ${isRemoved ? "text-muted-foreground line-through" : "text-foreground"}`}>
-                          {label}
-                          {!comp.is_removable && <span className="ml-1.5 text-[10px] font-normal uppercase tracking-wide text-primary/70">included</span>}
-                        </span>
-                        <span className="shrink-0 text-xs text-muted-foreground">€{(Number(comp.internal_price) * comp.quantity).toFixed(0)}</span>
-                      </li>
-                    );
-                  })}
-                </ul>
-                <div className="mt-4 flex items-center justify-between border-t pt-3">
-                  <span className="text-sm text-muted-foreground">Total</span>
-                  <span className="text-xl font-extrabold text-primary">€{total.toFixed(0)}</span>
-                </div>
-                <SheetClose asChild>
-                  <Button className="mt-3 w-full bg-gradient-to-r from-primary to-secondary font-bold">Done</Button>
-                </SheetClose>
-              </SheetContent>
-            </Sheet>
-          )}
+        {/* Segmented control — switch between the package and the associate face */}
+        <div className="grid grid-cols-2 gap-1 rounded-xl bg-muted p-1">
+          <button
+            type="button"
+            onClick={() => setMobileView("package")}
+            className={`flex items-center justify-center gap-1.5 rounded-lg py-2 text-[13px] font-semibold transition-colors ${
+              mobileView === "package" ? "bg-background text-primary shadow-sm" : "text-muted-foreground"
+            }`}
+          >
+            <Sparkles className="h-4 w-4" /> Package
+          </button>
+          <button
+            type="button"
+            onClick={() => setMobileView("associate")}
+            className={`flex items-center justify-center gap-1.5 rounded-lg py-2 text-[13px] font-semibold transition-colors ${
+              mobileView === "associate" ? "bg-background text-primary shadow-sm" : "text-muted-foreground"
+            }`}
+          >
+            <Users className="h-4 w-4" />
+            <span className="max-w-[8ch] truncate">{selectedAssociate ? selectedAssociate.first_name : "Associate"}</span>
+            {selectedAssociate ? (
+              <Check className="h-3.5 w-3.5 shrink-0 text-primary" />
+            ) : (
+              <span className="h-2 w-2 shrink-0 rounded-full bg-amber-500" aria-hidden="true" />
+            )}
+          </button>
         </div>
 
-        {/* Price + add to cart */}
+        {/* ---------- PACKAGE FACE ---------- */}
+        {mobileView === "package" && (
+          <div className="flex flex-col gap-2">
+            {/* What's included — bigger, readable bullets + collapse beyond 5 */}
+            <div className="rounded-xl border border-primary/20 bg-card p-3 shadow-sm">
+              <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">What's included</p>
+              <ul className="space-y-1.5">
+                {(showAllIncluded ? includedCore : includedCore.slice(0, 5)).map((c) => (
+                  <li key={c.id} className="flex items-start gap-2 text-sm leading-snug">
+                    <Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                    <span className="font-medium text-foreground">{c.label || c.service?.name}</span>
+                  </li>
+                ))}
+                {coreComponents.filter((c) => removed.has(c.id)).map((c) => (
+                  <li key={c.id} className="flex items-start gap-2 text-sm leading-snug text-muted-foreground line-through">
+                    <Check className="mt-0.5 h-4 w-4 shrink-0 opacity-40" />
+                    <span>{c.label || c.service?.name}</span>
+                  </li>
+                ))}
+              </ul>
+              {includedCore.length > 5 && (
+                <button
+                  type="button"
+                  onClick={() => setShowAllIncluded((v) => !v)}
+                  className="mt-2 text-xs font-medium text-primary underline-offset-4 hover:underline"
+                >
+                  {showAllIncluded ? "Show less" : `+${includedCore.length - 5} more included`}
+                </button>
+              )}
+              {coreComponents.some((c) => c.is_removable) && (
+                <Sheet>
+                  <SheetTrigger asChild>
+                    <Button variant="outline" size="sm" className="mt-2 h-8 w-full border-primary/30 text-xs text-primary">
+                      Customize components
+                    </Button>
+                  </SheetTrigger>
+                  <SheetContent side="bottom" className="max-h-[82vh] overflow-y-auto rounded-t-2xl">
+                    <SheetHeader>
+                      <SheetTitle>Customize your {pkg.code_name} package</SheetTitle>
+                    </SheetHeader>
+                    <p className="mb-3 mt-1 text-xs text-muted-foreground">Uncheck what you don't need — the price updates automatically.</p>
+                    <ul className="space-y-3">
+                      {coreComponents.map((comp) => {
+                        const isRemoved = removed.has(comp.id);
+                        const label = comp.label || comp.service?.name || "Component";
+                        return (
+                          <li key={comp.id} className="flex items-start gap-2.5 text-sm">
+                            {comp.is_removable ? (
+                              <Checkbox
+                                checked={!isRemoved}
+                                onCheckedChange={(checked) => {
+                                  setRemoved((prev) => {
+                                    const next = new Set(prev);
+                                    if (checked) next.delete(comp.id);
+                                    else next.add(comp.id);
+                                    return next;
+                                  });
+                                }}
+                                className="mt-0.5"
+                                aria-label={`Toggle ${label}`}
+                              />
+                            ) : (
+                              <Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                            )}
+                            <span className={`flex-1 font-medium ${isRemoved ? "text-muted-foreground line-through" : "text-foreground"}`}>
+                              {label}
+                              {!comp.is_removable && <span className="ml-1.5 text-[10px] font-normal uppercase tracking-wide text-primary/70">included</span>}
+                            </span>
+                            <span className="shrink-0 text-xs text-muted-foreground">€{(Number(comp.internal_price) * comp.quantity).toFixed(0)}</span>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                    <div className="mt-4 flex items-center justify-between border-t pt-3">
+                      <span className="text-sm text-muted-foreground">Total</span>
+                      <span className="text-xl font-extrabold text-primary">€{total.toFixed(0)}</span>
+                    </div>
+                    <SheetClose asChild>
+                      <Button className="mt-3 w-full bg-gradient-to-r from-primary to-secondary font-bold">Done</Button>
+                    </SheetClose>
+                  </SheetContent>
+                </Sheet>
+              )}
+            </div>
+
+            {/* Associate reassurance — small face pile makes it obvious every
+                package is run 1:1 by a real Associate. Taps through to the picker. */}
+            {mobileFacePile.length > 0 && (
+              <button
+                type="button"
+                onClick={() => setMobileView("associate")}
+                className="flex items-center gap-3 rounded-xl border border-secondary/30 bg-secondary/5 p-2.5 text-left"
+              >
+                <div className="flex shrink-0 items-center">
+                  {mobileFacePile.map((a, i) => (
+                    <span
+                      key={a.id}
+                      className={`flex h-7 w-7 items-center justify-center overflow-hidden rounded-full border-2 border-background bg-primary/10 text-[10px] font-semibold text-primary ${i > 0 ? "-ml-2" : ""}`}
+                    >
+                      {a.photo_url ? (
+                        <img src={a.photo_url} alt="" className="h-full w-full object-cover object-top" />
+                      ) : (
+                        <>
+                          {(a.first_name?.[0] ?? "").toUpperCase()}
+                          {(a.last_name?.[0] ?? "").toUpperCase()}
+                        </>
+                      )}
+                    </span>
+                  ))}
+                  {matchableAssociates.length > mobileFacePile.length && (
+                    <span className="-ml-2 flex h-7 w-7 items-center justify-center rounded-full border-2 border-background bg-primary text-[10px] font-bold text-primary-foreground">
+                      +{matchableAssociates.length - mobileFacePile.length}
+                    </span>
+                  )}
+                </div>
+                <span className="flex-1 text-xs leading-snug text-foreground/80">
+                  <span className="font-semibold text-foreground">Always guided 1:1 by a real Associate.</span> Tap to choose yours.
+                </span>
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* ---------- ASSOCIATE FACE ---------- */}
+        {mobileView === "associate" && (
+          <div className="rounded-xl border border-secondary/30 bg-card p-2.5">
+            <p className="mb-1.5 flex items-center gap-1.5 text-[13px] font-semibold">
+              <Users className="h-4 w-4 text-primary" /> Choose your Associate
+            </p>
+            <Select value={associateFilter || "__all__"} onValueChange={(v) => setAssociateFilter(v === "__all__" ? "" : v)}>
+              <SelectTrigger className="h-9 w-full border-primary/20 text-sm"><SelectValue placeholder="Pick from the list" /></SelectTrigger>
+              <SelectContent className="max-h-72">
+                <SelectItem value="__all__">All {filterLabel.toLowerCase()}</SelectItem>
+                {availableValues.map((v) => (<SelectItem key={v} value={v}>{v}</SelectItem>))}
+              </SelectContent>
+            </Select>
+            <div className="mt-2">
+              {filteredAssociates.length === 0 ? (
+                <p className="py-6 text-center text-sm text-muted-foreground">No associates match yet. Try another filter.</p>
+              ) : (
+                <AssociateChoiceCarousel
+                  associates={filteredAssociates}
+                  fillHeight
+                  compact
+                  isSelected={(a) => selectedAssociateId === a.id}
+                  onToggle={(a) => setSelectedAssociateId((prev) => (prev === a.id ? null : a.id))}
+                  getSectors={(a) => {
+                    const ap = a as AssociatePreview;
+                    return [ap.sector, ap.sector_2].filter((s): s is string => !!s && s.trim() !== "");
+                  }}
+                  renderActions={(a) => {
+                    const ap = a as AssociatePreview;
+                    return (
+                      <>
+                        <Button variant="outline" size="sm" className="flex-1 border-primary/20" onClick={(e) => { e.stopPropagation(); setBioAssociate(ap); }}>
+                          <FileText className="mr-1.5 h-4 w-4" /> Overview
+                        </Button>
+                        {ap.linkedin_url && (
+                          <Button asChild variant="outline" size="sm" className="flex-1 border-primary/20">
+                            <a href={ap.linkedin_url.startsWith("http") ? ap.linkedin_url : `https://${ap.linkedin_url}`} target="_blank" rel="noopener noreferrer">
+                              <Linkedin className="mr-1.5 h-4 w-4" /> LinkedIn
+                            </a>
+                          </Button>
+                        )}
+                      </>
+                    );
+                  }}
+                />
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Price + add to cart — stays visible on both faces */}
         <div className="rounded-xl border border-primary/20 bg-primary/5 p-2.5">
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-baseline gap-2">
@@ -613,58 +752,20 @@ const PackageExperience = ({
               <Badge variant="secondary" className="bg-amber-100 text-amber-700">Customized</Badge>
             )}
           </div>
-          <Button className="mt-2 h-10 w-full bg-gradient-to-r from-primary to-secondary text-sm font-bold shadow-md" onClick={addPackageToCart}>
+          <Button
+            className="mt-2 h-10 w-full bg-gradient-to-r from-primary to-secondary text-sm font-bold shadow-md"
+            onClick={() => {
+              if (!selectedAssociate) {
+                setMobileView("associate");
+                toast.info("Pick your Associate to continue.");
+                return;
+              }
+              addPackageToCart();
+            }}
+          >
             <ShoppingCart className="mr-2 h-4 w-4" />
-            {selectedAssociate ? `Add with ${selectedAssociate.first_name}` : "Pick an Associate below"}
+            {selectedAssociate ? `Add with ${selectedAssociate.first_name}` : "Choose your Associate"}
           </Button>
-        </div>
-
-        {/* Choose your Associate */}
-        <div className="rounded-xl border border-secondary/30 bg-card p-2.5">
-          <p className="mb-1.5 flex items-center gap-1.5 text-[13px] font-semibold">
-            <Users className="h-4 w-4 text-primary" /> Choose your Associate
-          </p>
-          <Select value={associateFilter || "__all__"} onValueChange={(v) => setAssociateFilter(v === "__all__" ? "" : v)}>
-            <SelectTrigger className="h-9 w-full border-primary/20 text-sm"><SelectValue placeholder="Pick from the list" /></SelectTrigger>
-            <SelectContent className="max-h-72">
-              <SelectItem value="__all__">All {filterLabel.toLowerCase()}</SelectItem>
-              {availableValues.map((v) => (<SelectItem key={v} value={v}>{v}</SelectItem>))}
-            </SelectContent>
-          </Select>
-          <div className="mt-2">
-            {filteredAssociates.length === 0 ? (
-              <p className="py-6 text-center text-sm text-muted-foreground">No associates match yet. Try another filter.</p>
-            ) : (
-              <AssociateChoiceCarousel
-                associates={filteredAssociates}
-                fillHeight
-                compact
-                isSelected={(a) => selectedAssociateId === a.id}
-                onToggle={(a) => setSelectedAssociateId((prev) => (prev === a.id ? null : a.id))}
-                getSectors={(a) => {
-                  const ap = a as AssociatePreview;
-                  return [ap.sector, ap.sector_2].filter((s): s is string => !!s && s.trim() !== "");
-                }}
-                renderActions={(a) => {
-                  const ap = a as AssociatePreview;
-                  return (
-                    <>
-                      <Button variant="outline" size="sm" className="flex-1 border-primary/20" onClick={(e) => { e.stopPropagation(); setBioAssociate(ap); }}>
-                        <FileText className="mr-1.5 h-4 w-4" /> Overview
-                      </Button>
-                      {ap.linkedin_url && (
-                        <Button asChild variant="outline" size="sm" className="flex-1 border-primary/20">
-                          <a href={ap.linkedin_url.startsWith("http") ? ap.linkedin_url : `https://${ap.linkedin_url}`} target="_blank" rel="noopener noreferrer">
-                            <Linkedin className="mr-1.5 h-4 w-4" /> LinkedIn
-                          </a>
-                        </Button>
-                      )}
-                    </>
-                  );
-                }}
-              />
-            )}
-          </div>
         </div>
       </div>
 
