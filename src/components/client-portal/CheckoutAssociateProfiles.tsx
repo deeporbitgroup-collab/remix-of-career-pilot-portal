@@ -22,7 +22,6 @@ export interface CheckoutProfilesEntry {
   serviceItemId: string;
   serviceLabel: string;
   primaryId: string;
-  backupId?: string | null;
 }
 
 interface Props {
@@ -135,7 +134,7 @@ const CheckoutAssociateProfiles = ({ entries }: Props) => {
 
   // Collect unique IDs (skip composite IDs from comparative services that contain commas)
   const idsKey = entries
-    .flatMap((e) => [e.primaryId, e.backupId])
+    .map((e) => e.primaryId)
     .filter((id): id is string => !!id && !id.includes(","))
     .sort()
     .join("|");
@@ -192,7 +191,6 @@ const CheckoutAssociateProfiles = ({ entries }: Props) => {
       <div className="space-y-3">
         {entries.map((entry) => {
           const primary = profiles[entry.primaryId];
-          const backup = entry.backupId ? profiles[entry.backupId] : null;
           return (
             <div
               key={entry.serviceItemId}
@@ -205,10 +203,9 @@ const CheckoutAssociateProfiles = ({ entries }: Props) => {
                 <ProfileRow associate={primary} role="primary" />
               ) : (
                 <p className="text-xs text-muted-foreground italic">
-                  {loading ? "Loading primary associate…" : "Primary associate unavailable"}
+                  {loading ? "Loading associate…" : "Associate unavailable"}
                 </p>
               )}
-              {backup && <ProfileRow associate={backup} role="backup" />}
             </div>
           );
         })}

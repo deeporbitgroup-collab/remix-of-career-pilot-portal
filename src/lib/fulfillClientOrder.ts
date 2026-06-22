@@ -87,7 +87,6 @@ export async function fulfillClientOrder(payload: PendingClientOrder): Promise<{
 
     const resolvedAssociateId = item.resolvedAssociateId;
     const isCvRewriteNoMeeting = item.isCvRewriteNoMeeting;
-    const hasBackup = !!(resolvedAssociateId && item.backupAssociateId);
 
     const { data: project, error: projectError } = await sb
       .from("client_projects")
@@ -96,8 +95,8 @@ export async function fulfillClientOrder(payload: PendingClientOrder): Promise<{
         order_id: order.id,
         service_id: item.serviceId,
         associate_id: resolvedAssociateId,
-        backup_associate_id: isCvRewriteNoMeeting ? null : item.backupAssociateId,
         active_associate_id: resolvedAssociateId,
+        backup_associate_id: null,
         scheduling_status: isCvRewriteNoMeeting
           ? "no_meeting_requested"
           : resolvedAssociateId
@@ -129,7 +128,7 @@ export async function fulfillClientOrder(payload: PendingClientOrder): Promise<{
       }
     }
 
-    // Meeting slots (primary + backup) when an associate is set and a meeting is required
+    // Meeting slots when an associate is set and a meeting is required
     if (resolvedAssociateId && project && !isCvRewriteNoMeeting) {
       for (const slot of item.slots) {
         await sb.from("client_meeting_slots").insert({
@@ -140,19 +139,6 @@ export async function fulfillClientOrder(payload: PendingClientOrder): Promise<{
           proposed_time: slot.proposedTime,
           status: "proposed",
         });
-      }
-
-      if (hasBackup) {
-        for (const slot of item.backupSlots) {
-          await sb.from("client_meeting_slots").insert({
-            project_id: project.id,
-            associate_id: item.backupAssociateId,
-            slot_role: "client_for_backup",
-            proposed_date: slot.proposedDate,
-            proposed_time: slot.proposedTime,
-            status: "proposed",
-          });
-        }
       }
 
       await sb.from("client_projects").update({ status: "slots_proposed" }).eq("id", project.id);

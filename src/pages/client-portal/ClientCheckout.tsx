@@ -19,7 +19,6 @@ import bcrypt from "bcryptjs";
 import bgImage from "@/assets/client-portal-bg.jpeg";
 import { BriefOverviewForm, BriefOverviewData } from "@/components/client-portal/BriefOverviewForm";
 import OutreachDocumentsUpload from "@/components/client-portal/OutreachDocumentsUpload";
-import BackupAssociateBlock, { BackupSelection } from "@/components/client-portal/BackupAssociateBlock";
 import CheckoutAssociateProfiles, { CheckoutProfilesEntry } from "@/components/client-portal/CheckoutAssociateProfiles";
 import { type PendingClientOrder, type PendingOrderItem, type PendingMeetingSlot, type PendingSharedDoc } from "@/lib/fulfillClientOrder";
 
@@ -82,12 +81,6 @@ interface GuestCartItem {
   packageRole?: "component" | "addon";
 }
 
-// Per-service availability slots
-interface ServiceAvailability {
-  serviceItemId: string;
-  slots: AvailabilitySlot[];
-}
-
 const ClientCheckout = () => {
   const navigate = useNavigate();
   const [cartItems, setCartItems] = useState<GuestCartItem[]>([]);
@@ -95,12 +88,15 @@ const ClientCheckout = () => {
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
   const [activeTab, setActiveTab] = useState<"login" | "signup">("signup");
   
-  // Per-service availability slots (each service that requires an associate gets 3 time slots)
-  const [serviceAvailabilities, setServiceAvailabilities] = useState<ServiceAvailability[]>([]);
-  // Per-service backup associate selection + 3 slots
-  const [backupSelections, setBackupSelections] = useState<Record<string, BackupSelection>>({});
-  // Per-service number of available backup candidates (0 = backup hidden/not required)
-  const [backupCandidatesCount, setBackupCandidatesCount] = useState<Record<string, number>>({});
+  // One set of 3 availability slots for the whole order. The client picks 3
+  // preferred date/time windows once and they apply to every meeting in the
+  // order — a single Associate runs the package, so per-service slots made no
+  // sense; comparative's 2nd Associate reuses the same windows.
+  const [orderSlots, setOrderSlots] = useState<AvailabilitySlot[]>([
+    { date: undefined, timeSlot: "" },
+    { date: undefined, timeSlot: "" },
+    { date: undefined, timeSlot: "" },
+  ]);
   
   // Login form
   const [loginData, setLoginData] = useState({ email: "", password: "" });
@@ -147,65 +143,22 @@ const ClientCheckout = () => {
   const itemsNeedingMeeting = (items: GuestCartItem[]) =>
     items.filter(item => item.associate && !(isCvRewriteItem(item) && cvRewriteSkipMeeting[item.id]));
 
-  // Initialize serviceAvailabilities when cart items change
-  useEffect(() => {
-    const servicesWithAssociates = itemsNeedingMeeting(cartItems);
-    const newAvailabilities: ServiceAvailability[] = servicesWithAssociates.map(item => {
-      // Check if we already have availability for this item
-      const existing = serviceAvailabilities.find(sa => sa.serviceItemId === item.id);
-      if (existing) return existing;
-      return {
-        serviceItemId: item.id,
-        slots: [
-          { date: undefined, timeSlot: "" },
-          { date: undefined, timeSlot: "" },
-          { date: undefined, timeSlot: "" },
-        ]
-      };
-    });
-    setServiceAvailabilities(newAvailabilities);
-  }, [cartItems, cvRewriteSkipMeeting]);
-
-  const updateServiceAvailabilitySlot = (serviceItemId: string, slotIndex: number, field: 'date' | 'timeSlot', value: Date | string | undefined) => {
-    setServiceAvailabilities(prev => prev.map(sa => {
-      if (sa.serviceItemId !== serviceItemId) return sa;
-      const updatedSlots = [...sa.slots];
-      if (field === 'date') {
-        updatedSlots[slotIndex] = { ...updatedSlots[slotIndex], date: value as Date | undefined };
-      } else {
-        updatedSlots[slotIndex] = { ...updatedSlots[slotIndex], timeSlot: value as string };
-      }
-      return { ...sa, slots: updatedSlots };
+  const updateOrderSlot = (slotIndex: number, field: 'date' | 'timeSlot', value: Date | string | undefined) => {
+    setOrderSlots(prev => prev.map((slot, i) => {
+      if (i !== slotIndex) return slot;
+      return field === 'date'
+        ? { ...slot, date: value as Date | undefined }
+        : { ...slot, timeSlot: value as string };
     }));
   };
-  
+
   const hasValidAvailability = () => {
-    // Check if each service with an associate has ALL slots filled (and on different days)
-    const servicesWithAssociates = itemsNeedingMeeting(cartItems);
-    if (servicesWithAssociates.length === 0) return true;
-
-    return servicesWithAssociates.every(item => {
-      const serviceAvail = serviceAvailabilities.find(sa => sa.serviceItemId === item.id);
-      if (!serviceAvail) return false;
-      // All 3 primary slots must be filled
-      const primaryComplete = serviceAvail.slots.every(slot => slot.date && slot.timeSlot);
-      if (!primaryComplete) return false;
-      // Primary slots must be on 3 different days
-      const primaryDates = serviceAvail.slots.map(s => format(s.date!, "yyyy-MM-dd"));
-      if (new Set(primaryDates).size !== 3) return false;
-
-      // If backup candidates exist for this primary, backup must be fully selected
-      const candidates = backupCandidatesCount[item.id] ?? 0;
-      if (candidates > 0) {
-        const backup = backupSelections[item.id];
-        if (!backup?.associateId) return false;
-        const backupComplete = backup.slots?.every(s => s?.date && s?.timeSlot);
-        if (!backupComplete) return false;
-        const backupDates = backup.slots.map(s => format(s.date!, "yyyy-MM-dd"));
-        if (new Set(backupDates).size !== 3) return false;
-      }
-      return true;
-    });
+    // Only required when at least one item in the order needs a meeting.
+    if (itemsNeedingMeeting(cartItems).length === 0) return true;
+    // All 3 order slots must be filled and fall on 3 different days.
+    if (!orderSlots.every(slot => slot.date && slot.timeSlot)) return false;
+    const days = orderSlots.map(s => format(s.date!, "yyyy-MM-dd"));
+    return new Set(days).size === 3;
   };
 
   useEffect(() => {
@@ -416,7 +369,7 @@ const ClientCheckout = () => {
 
     
     if (!hasValidAvailability()) {
-      toast.error("Please complete all 3 time slots (on different days) for both your primary and backup associate.");
+      toast.error("Please complete all 3 time slots, each on a different day.");
       setAvailabilityNeedsAttention(true);
       window.setTimeout(() => setAvailabilityNeedsAttention(false), 1200);
       availabilitySectionRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -474,11 +427,6 @@ const ClientCheckout = () => {
       // and any CV-rewrite documents uploaded to a pre-payment path).
       const pendingItems: PendingOrderItem[] = [];
       for (const item of cartItems) {
-        const backupSel = backupSelections[item.id];
-        const backupCount = backupCandidatesCount[item.id] ?? 0;
-        const hasBackup = !!(item.associate?.id && backupCount > 0 && backupSel?.associateId);
-        const backupAssociateId = hasBackup ? backupSel!.associateId : null;
-
         const isCvRewriteNoMeeting = isCvRewriteItem(item) && !!cvRewriteSkipMeeting[item.id];
 
         // For Comparative items the deliverable is produced by the 2nd associate.
@@ -512,25 +460,14 @@ const ClientCheckout = () => {
           }
         }
 
-        // Primary meeting slots
+        // Meeting slots — the single order-level availability applies to every
+        // meeting in the order (same Associate, or comparative's 2nd Associate).
         const slots: PendingMeetingSlot[] = [];
         if (resolvedAssociateId && !isCvRewriteNoMeeting) {
-          const serviceAvail = serviceAvailabilities.find(sa => sa.serviceItemId === item.id);
-          for (const slot of serviceAvail?.slots ?? []) {
+          for (const slot of orderSlots) {
             if (slot.date && slot.timeSlot) {
               const dateStr = format(slot.date, "yyyy-MM-dd");
               slots.push({ proposedDate: dateStr, proposedTime: `${dateStr} ${slot.timeSlot}` });
-            }
-          }
-        }
-
-        // Backup meeting slots
-        const backupSlots: PendingMeetingSlot[] = [];
-        if (resolvedAssociateId && !isCvRewriteNoMeeting && hasBackup) {
-          for (const slot of backupSel!.slots) {
-            if (slot.date && slot.timeSlot) {
-              const dateStr = format(slot.date, "yyyy-MM-dd");
-              backupSlots.push({ proposedDate: dateStr, proposedTime: `${dateStr} ${slot.timeSlot}` });
             }
           }
         }
@@ -544,8 +481,8 @@ const ClientCheckout = () => {
           additionalCallReason: (item as any).additionalCallReason || null,
           packageName: item.packageName || null,
           slots,
-          backupAssociateId,
-          backupSlots,
+          backupAssociateId: null,
+          backupSlots: [],
           cvRewriteDocs,
         });
       }
@@ -996,126 +933,67 @@ const ClientCheckout = () => {
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="px-5 pb-4 space-y-6">
-                  {itemsNeedingMeeting(cartItems).map((item) => {
-                    const serviceAvail = serviceAvailabilities.find(sa => sa.serviceItemId === item.id);
-                    if (!serviceAvail) return null;
-                    
-                    const isComparative = item.associates && item.associates.length === 2;
-                    
-                    const isAltitudeItem = (item.service.category || '').toLowerCase() === 'altitude';
-                    return (
-                      <div key={item.id} className="space-y-3">
-                        <div className="flex items-center gap-2">
-                          <h4 className="font-medium text-sm">{item.service.name}</h4>
-                          {isComparative ? (
-                            <span className="text-xs text-muted-foreground">
-                              ({item.associates![0].first_name} {item.associates![0].last_name} & {item.associates![1].first_name} {item.associates![1].last_name})
-                            </span>
-                          ) : item.associate && (
-                            <span className="text-xs text-muted-foreground">
-                              ({item.associate.first_name} {item.associate.last_name})
-                            </span>
-                          )}
-                        </div>
-                        {isAltitudeItem && (
-                          <div className="rounded-md border border-amber-300 bg-amber-50 text-amber-900 text-xs p-2">
-                            <strong>Tip:</strong> For Altitude services, we recommend scheduling meetings on the <strong>weekend</strong>. Associates are usually busy with work during weekdays.
-                          </div>
-                        )}
-                        <p className="text-xs text-muted-foreground">
-                          Pick 3 time slots, each on a different day.
-                        </p>
-                        {/* Mobile: stack the 3 slots full-width for usable pickers; 3-up from sm on (desktop unchanged) */}
-                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-                          {[0, 1, 2].map((slotIndex) => {
-                            const usedDateKeys = serviceAvail.slots.map(s => s.date ? format(s.date, "yyyy-MM-dd") : null);
-                            return (
-                            <div key={slotIndex} className="space-y-2">
-                              <Label className="text-xs font-medium">Slot {slotIndex + 1}</Label>
-                              <Popover>
-                                <PopoverTrigger asChild>
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className={cn(
-                                      "w-full justify-start text-left font-normal text-xs",
-                                      !serviceAvail.slots[slotIndex].date && "text-muted-foreground"
-                                    )}
-                                  >
-                                    <CalendarIcon className="mr-1 h-3 w-3" />
-                                    {serviceAvail.slots[slotIndex].date 
-                                      ? format(serviceAvail.slots[slotIndex].date!, "dd/MM")
-                                      : "Date"}
-                                  </Button>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-auto p-0" align="start">
-                                  <Calendar
-                                    mode="single"
-                                    selected={serviceAvail.slots[slotIndex].date}
-                                    onSelect={(date) => updateServiceAvailabilitySlot(item.id, slotIndex, 'date', date)}
-                                    disabled={(date) => {
-                                      if (date < minDate) return true;
-                                      const k = format(date, "yyyy-MM-dd");
-                                      return usedDateKeys.some((u, idx) => idx !== slotIndex && u === k);
-                                    }}
-                                    initialFocus
-                                    className={cn("p-3 pointer-events-auto")}
-                                  />
-                                </PopoverContent>
-                              </Popover>
-                              <Select
-                                value={serviceAvail.slots[slotIndex].timeSlot}
-                                onValueChange={(value) => updateServiceAvailabilitySlot(item.id, slotIndex, 'timeSlot', value)}
-                              >
-                                <SelectTrigger className="h-8 text-xs">
-                                  <Clock className="mr-1 h-3 w-3" />
-                                  <SelectValue placeholder="Time" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {TIME_SLOTS.map((slot) => (
-                                    <SelectItem key={slot.value} value={slot.value}>
-                                      {slot.label}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                            </div>
-                            );
-                          })}
-                        </div>
-
-                        {/* Backup associate (only for non-comparative items where primary is a single associate) */}
-                        {!isComparative && item.associate?.id && (
-                          <BackupAssociateBlock
-                            primaryAssociateId={item.associate.id}
-                            serviceItemId={item.id}
-                            serviceLabel={item.service.name}
-                            serviceCategory={item.service.category}
-                            serviceSector={item.sector}
-                            minDate={minDate}
-                            value={
-                              backupSelections[item.id] || {
-                                associateId: null,
-                                slots: [
-                                  { date: undefined, timeSlot: "" },
-                                  { date: undefined, timeSlot: "" },
-                                  { date: undefined, timeSlot: "" },
-                                ],
-                              }
-                            }
-                            onChange={(next) =>
-                              setBackupSelections((prev) => ({ ...prev, [item.id]: next }))
-                            }
-                            onCandidatesLoaded={(count) =>
-                              setBackupCandidatesCount((prev) =>
-                                prev[item.id] === count ? prev : { ...prev, [item.id]: count }
-                              )
-                            }
-                          />
-                        )}
+                  <p className="text-xs text-muted-foreground">
+                    Pick 3 time slots, each on a different day. The same availability is used for every meeting in your order.
+                  </p>
+                  {/* Mobile: stack the 3 slots full-width for usable pickers; 3-up from sm on (desktop unchanged) */}
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                    {[0, 1, 2].map((slotIndex) => {
+                      const usedDateKeys = orderSlots.map(s => s.date ? format(s.date, "yyyy-MM-dd") : null);
+                      return (
+                      <div key={slotIndex} className="space-y-2">
+                        <Label className="text-xs font-medium">Slot {slotIndex + 1}</Label>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className={cn(
+                                "w-full justify-start text-left font-normal text-xs",
+                                !orderSlots[slotIndex].date && "text-muted-foreground"
+                              )}
+                            >
+                              <CalendarIcon className="mr-1 h-3 w-3" />
+                              {orderSlots[slotIndex].date
+                                ? format(orderSlots[slotIndex].date!, "dd/MM")
+                                : "Date"}
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar
+                              mode="single"
+                              selected={orderSlots[slotIndex].date}
+                              onSelect={(date) => updateOrderSlot(slotIndex, 'date', date)}
+                              disabled={(date) => {
+                                if (date < minDate) return true;
+                                const k = format(date, "yyyy-MM-dd");
+                                return usedDateKeys.some((u, idx) => idx !== slotIndex && u === k);
+                              }}
+                              initialFocus
+                              className={cn("p-3 pointer-events-auto")}
+                            />
+                          </PopoverContent>
+                        </Popover>
+                        <Select
+                          value={orderSlots[slotIndex].timeSlot}
+                          onValueChange={(value) => updateOrderSlot(slotIndex, 'timeSlot', value)}
+                        >
+                          <SelectTrigger className="h-8 text-xs">
+                            <Clock className="mr-1 h-3 w-3" />
+                            <SelectValue placeholder="Time" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {TIME_SLOTS.map((slot) => (
+                              <SelectItem key={slot.value} value={slot.value}>
+                                {slot.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </div>
-                    );
-                  })}
+                      );
+                    })}
+                  </div>
                   <p className="text-xs text-muted-foreground">
                     * Dates available from {format(minDate, "dd MMM yyyy")}
                   </p>
@@ -1341,7 +1219,6 @@ const ClientCheckout = () => {
                         serviceItemId: item.id,
                         serviceLabel: item.service.name,
                         primaryId: item.associate!.id,
-                        backupId: backupSelections[item.id]?.associateId || null,
                       }));
                     return entries.length > 0 ? (
                       <CheckoutAssociateProfiles entries={entries} />
