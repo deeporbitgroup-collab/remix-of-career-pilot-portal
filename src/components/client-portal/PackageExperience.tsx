@@ -441,6 +441,55 @@ const PackageExperience = ({
     return orderAssociatesForCategory(matched, pkg.category);
   }, [associates, filterMode, pkg.category]);
 
+  // A small set of real Associate faces shown under the price as a trust signal
+  // ("these are the people who'll mentor you"). Ordered for this vertical and
+  // capped so the row stays tidy. They all carry a photo (the page only loads
+  // associates with a photo_url), with initials as a graceful fallback.
+  const trustAssociates = useMemo(
+    () => matchableAssociates.slice(0, 5),
+    [matchableAssociates]
+  );
+
+  const renderTrustAvatars = (size: "sm" | "md" = "md") => {
+    if (trustAssociates.length === 0) return null;
+    const dim = size === "sm" ? "h-6 w-6" : "h-7 w-7";
+    const txt = size === "sm" ? "text-[8px]" : "text-[9px]";
+    return (
+      <div className="flex items-center gap-2">
+        <div className="flex -space-x-2">
+          {trustAssociates.map((a) => (
+            <span
+              key={a.id}
+              title={`${a.first_name} ${a.last_name}`}
+              className={cn(
+                "inline-flex items-center justify-center overflow-hidden rounded-full bg-primary/10 font-bold text-primary ring-2 ring-background",
+                dim,
+                txt
+              )}
+            >
+              {a.photo_url ? (
+                <img
+                  src={a.photo_url}
+                  alt={`${a.first_name} ${a.last_name}`}
+                  loading="lazy"
+                  className="h-full w-full object-cover object-top"
+                />
+              ) : (
+                <>
+                  {(a.first_name?.[0] ?? "").toUpperCase()}
+                  {(a.last_name?.[0] ?? "").toUpperCase()}
+                </>
+              )}
+            </span>
+          ))}
+        </div>
+        <span className="text-[11px] font-medium leading-tight text-muted-foreground">
+          Mentored 1:1 by our Associates
+        </span>
+      </div>
+    );
+  };
+
   const filteredAssociates = useMemo(() => {
     const q = associateFilter.trim().toLowerCase();
     if (!q) return matchableAssociates;
@@ -756,6 +805,11 @@ const PackageExperience = ({
             )}
           </div>
         </div>
+
+        {/* Trust strip — real Associate faces right under the price */}
+        {trustAssociates.length > 0 && (
+          <div className="-mt-1">{renderTrustAvatars("sm")}</div>
+        )}
 
         {/* Included services + bullets — clean, compact rows (no chunky boxes) */}
         <ul className="flex flex-col gap-0.5">
@@ -1151,6 +1205,11 @@ const PackageExperience = ({
                   </Badge>
                 )}
               </div>
+
+              {/* Trust strip — real Associate faces right under the price */}
+              {trustAssociates.length > 0 && (
+                <div className="mt-2">{renderTrustAvatars("md")}</div>
+              )}
 
               {selectedAssociate && (
                 <p className="mt-1.5 text-xs text-muted-foreground">

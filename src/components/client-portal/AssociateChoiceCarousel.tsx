@@ -135,7 +135,9 @@ const AssociateChoiceCarousel = ({
                         ? "h-20"
                         : fillHeight
                         ? "h-[20vh] min-h-[128px] max-h-[240px]"
-                        : "h-64 sm:h-72"
+                        : // Default (dialog) variant: stay small on phones so the whole
+                          // card fits the viewport, then grow on larger screens.
+                          "h-40 sm:h-60 md:h-72"
                     )}
                   >
                     {associate.photo_url ? (
@@ -168,15 +170,15 @@ const AssociateChoiceCarousel = ({
 
                     {/* Name (ALWAYS visible) — company now lives in a tidy box below */}
                     <div className={cn("absolute inset-x-0 bottom-0", compact ? "p-2" : "p-4")}>
-                      <h3 className={cn("font-bold leading-tight text-white drop-shadow-sm", compact ? "text-[15px]" : "text-xl sm:text-2xl")}>
+                      <h3 className={cn("font-bold leading-tight text-white drop-shadow-sm", compact ? "text-[15px]" : "text-lg sm:text-xl md:text-2xl")}>
                         {associate.first_name} {associate.last_name}
                       </h3>
                     </div>
                   </div>
 
                   {/* ---- Key info (ALWAYS visible) ---- */}
-                  <div className={cn("flex flex-1 flex-col", compact ? "gap-1 p-1.5" : fillHeight ? "gap-2 p-3" : "gap-3 p-4")}>
-                    <div className={cn("flex flex-col", compact ? "gap-1" : fillHeight ? "gap-1.5" : "gap-2.5")}>
+                  <div className={cn("flex flex-1 flex-col", compact ? "gap-1 p-1.5" : fillHeight ? "gap-2 p-3" : "gap-2 p-3 sm:gap-3 sm:p-4")}>
+                    <div className={cn("flex flex-col", compact ? "gap-1" : fillHeight ? "gap-1.5" : "gap-1.5 sm:gap-2.5")}>
                       {(associate.university || associate.university_2) && (
                         <div className="flex items-start gap-1.5">
                           <GraduationCap className={cn("mt-0.5 shrink-0 text-primary", compact ? "h-3.5 w-3.5" : "h-4 w-4")} aria-label="University" />
