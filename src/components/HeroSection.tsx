@@ -11,6 +11,9 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { useScrollAnimation } from "@/hooks/useScrollAnimation";
 import AutoScrollCarousel from "./AutoScrollCarousel";
 import VerticalAutoScrollCarousel from "./VerticalAutoScrollCarousel";
+// Canonical, correctly-mapped logos (same source as the "Our Experts" section)
+// — used by the mobile hero marquees so the faces never mismatch.
+import { universities as coveredUniversities, companies as coveredCompanies } from "@/data/coveredLogos";
 
 // Import university logos
 import lseLogo from "@/assets/logos/universities/lse.svg";
@@ -344,8 +347,8 @@ const HeroSection = () => {
               <div className="relative overflow-hidden">
                 <div className="pointer-events-none absolute inset-y-0 left-0 w-8 bg-gradient-to-r from-white to-transparent z-10" />
                 <div className="pointer-events-none absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-white to-transparent z-10" />
-                <div className="flex gap-6 animate-scroll-carousel py-0.5" style={{ animationDuration: '34s', width: 'max-content' }}>
-                  {[...universities, ...universities, ...universities].map((u, i) => (
+                <div className="flex gap-6 animate-scroll-carousel py-0.5" style={{ animationDuration: '64s', width: 'max-content' }}>
+                  {[...coveredUniversities, ...coveredUniversities, ...coveredUniversities].map((u, i) => (
                     <div key={`m-uni-${i}`} className="flex-shrink-0 flex items-center justify-center h-7" title={u.name}>
                       <img src={u.logo} alt={u.name} className="h-full w-auto max-w-[68px] object-contain grayscale opacity-70" loading="lazy" />
                     </div>
@@ -361,8 +364,8 @@ const HeroSection = () => {
               <div className="relative overflow-hidden">
                 <div className="pointer-events-none absolute inset-y-0 left-0 w-8 bg-gradient-to-r from-white to-transparent z-10" />
                 <div className="pointer-events-none absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-white to-transparent z-10" />
-                <div className="flex gap-6 animate-scroll-carousel py-0.5" style={{ animationDuration: '38s', animationDirection: 'reverse', width: 'max-content' }}>
-                  {[...companies, ...companies, ...companies].map((c, i) => (
+                <div className="flex gap-6 animate-scroll-carousel py-0.5" style={{ animationDuration: '70s', animationDirection: 'reverse', width: 'max-content' }}>
+                  {[...coveredCompanies, ...coveredCompanies, ...coveredCompanies].map((c, i) => (
                     <div key={`m-co-${i}`} className="flex-shrink-0 flex items-center justify-center h-7" title={c.name}>
                       <img src={c.logo} alt={c.name} className="h-full w-auto max-w-[72px] object-contain grayscale opacity-70" loading="lazy" />
                     </div>
