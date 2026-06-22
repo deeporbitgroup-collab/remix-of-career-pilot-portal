@@ -241,7 +241,7 @@ const HeroSection = () => {
             <img
               src="/lovable-uploads/ef00a41f-dd9a-4450-9fd7-a5ca64906fb8.png"
               alt="Career Pilot"
-              className="max-h-[84px] w-auto object-contain drop-shadow-[0_10px_30px_hsla(215,100%,60%,0.25)]"
+              className="max-h-[96px] w-auto object-contain drop-shadow-[0_10px_30px_hsla(215,100%,60%,0.25)]"
             />
             <h1 className="sr-only">Career Pilot</h1>
           </div>
