@@ -228,7 +228,7 @@ const HeroSection = () => {
         <div className="absolute inset-0 bg-white" />
 
         {/* ============== MOBILE LAYOUT ============== */}
-        <div className="md:hidden relative z-10 w-full h-full flex flex-col overflow-hidden px-4 pt-3 pb-3">
+        <div className="md:hidden relative z-10 w-full h-full flex flex-col justify-center gap-4 overflow-hidden px-4 pt-3 pb-3">
           {/* Decorative gradient blobs */}
           <div className="pointer-events-none absolute inset-0 overflow-hidden">
             <div className="absolute -top-24 -left-20 w-72 h-72 rounded-full bg-primary/15 blur-3xl animate-pulse" style={{ animationDuration: '6s' }} />
@@ -241,14 +241,14 @@ const HeroSection = () => {
             <img
               src="/lovable-uploads/ef00a41f-dd9a-4450-9fd7-a5ca64906fb8.png"
               alt="Career Pilot"
-              className="max-h-[96px] w-auto object-contain drop-shadow-[0_10px_30px_hsla(215,100%,60%,0.25)]"
+              className="max-h-[110px] w-auto object-contain drop-shadow-[0_10px_30px_hsla(215,100%,60%,0.25)]"
             />
             <h1 className="sr-only">Career Pilot</h1>
           </div>
 
           {/* Center group: trust faces + check-in box + two pathways — fills the
               screen between the logo and the social-proof marquees, no scroll. */}
-          <div className="relative z-10 flex-1 min-h-0 flex flex-col justify-center gap-3 animate-fade-in opacity-0 w-full max-w-[420px] mx-auto" style={{ animationDelay: '0.3s', animationFillMode: 'forwards' }}>
+          <div className="relative z-10 shrink-0 flex flex-col gap-3 animate-fade-in opacity-0 w-full max-w-[420px] mx-auto" style={{ animationDelay: '0.3s', animationFillMode: 'forwards' }}>
             {/* Book free check-in — primary box, opens the same booking modal as desktop */}
             <button
               onClick={() => setIsBookingOpen(true)}
@@ -338,7 +338,7 @@ const HeroSection = () => {
           {/* Social proof footer: two gentle, moving marquees — universities our
               mentors come from + companies they've worked at. Non-invasive, but
               they make the credibility of the network instantly visible. */}
-          <div className="relative z-10 shrink-0 flex flex-col gap-1.5 pt-2 animate-fade-in opacity-0" style={{ animationDelay: '0.5s', animationFillMode: 'forwards' }}>
+          <div className="relative z-10 shrink-0 flex flex-col gap-1.5 animate-fade-in opacity-0" style={{ animationDelay: '0.5s', animationFillMode: 'forwards' }}>
             {/* Universities */}
             <div className="flex flex-col gap-0.5">
               <p className="text-center text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground/75">
