@@ -869,19 +869,52 @@ const PackageExperience = ({
           </div>
         )}
 
-        {/* Associate — a real pill CTA (not a grey tab) that opens the picker */}
-        <button
-          type="button"
-          onClick={() => setAssociateSheetOpen(true)}
-          className={cn(
-            "flex items-center gap-2.5 rounded-full px-3 py-2.5 text-sm font-semibold shadow-sm transition-colors",
-            selectedAssociate
-              ? "border border-primary/30 bg-primary/5 text-foreground"
-              : "bg-gradient-to-r from-primary to-secondary text-primary-foreground"
-          )}
-        >
-          {selectedAssociate ? (
-            <>
+        {/* Associate + cart — ONE combined CTA while nothing is picked: the
+            avatar stack signals "many mentors to choose from" and the cart
+            icon signals "this is the way to the cart". Once a mentor is
+            chosen it splits into a Change pill + an Add-to-cart button. */}
+        {!selectedAssociate ? (
+          <button
+            type="button"
+            onClick={() => setAssociateSheetOpen(true)}
+            className="flex w-full items-center gap-3 rounded-2xl bg-gradient-to-r from-primary to-secondary px-3.5 py-3 text-left text-primary-foreground shadow-md transition-transform active:scale-[0.99]"
+          >
+            {/* People graphic — real associate faces */}
+            <span className="flex shrink-0 -space-x-2.5">
+              {associates.slice(0, 4).map((a, i) => (
+                <span
+                  key={a.id ?? i}
+                  className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-white/20 text-[10px] font-bold ring-2 ring-white"
+                >
+                  {a.photo_url ? (
+                    <img src={a.photo_url} alt="" className="h-full w-full object-cover object-top" />
+                  ) : (
+                    <>
+                      {(a.first_name?.[0] ?? "").toUpperCase()}
+                      {(a.last_name?.[0] ?? "").toUpperCase()}
+                    </>
+                  )}
+                </span>
+              ))}
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block text-sm font-bold leading-tight">Choose your Associate</span>
+              <span className="block text-[11px] font-medium text-primary-foreground/85">
+                Required to add to cart
+              </span>
+            </span>
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/20">
+              <ShoppingCart className="h-4 w-4" />
+            </span>
+          </button>
+        ) : (
+          <>
+            {/* Selected associate — pill that re-opens the picker to change */}
+            <button
+              type="button"
+              onClick={() => setAssociateSheetOpen(true)}
+              className="flex items-center gap-2.5 rounded-full border border-primary/30 bg-primary/5 px-3 py-2.5 text-sm font-semibold text-foreground shadow-sm transition-colors"
+            >
               <span className="flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary/10 text-[11px] font-bold text-primary">
                 {selectedAssociate.photo_url ? (
                   <img src={selectedAssociate.photo_url} alt="" className="h-full w-full object-cover object-top" />
@@ -901,31 +934,18 @@ const PackageExperience = ({
                 )}
               </span>
               <span className="shrink-0 text-[12px] font-semibold text-primary">Change</span>
-            </>
-          ) : (
-            <>
-              <Users className="h-5 w-5 shrink-0" />
-              <span className="flex-1 text-left">Choose your Associate</span>
-              <span className="h-2 w-2 shrink-0 rounded-full bg-amber-300" aria-hidden="true" />
-            </>
-          )}
-        </button>
+            </button>
 
-        {/* Add to cart */}
-        <Button
-          className="h-11 w-full rounded-xl bg-gradient-to-r from-primary to-secondary text-sm font-bold shadow-md"
-          onClick={() => {
-            if (!selectedAssociate) {
-              setAssociateSheetOpen(true);
-              toast.info("Pick your Associate to continue.");
-              return;
-            }
-            addPackageToCart();
-          }}
-        >
-          <ShoppingCart className="mr-2 h-4 w-4" />
-          {selectedAssociate ? `Add — €${total.toFixed(0)}` : "Choose your Associate"}
-        </Button>
+            {/* Add to cart */}
+            <Button
+              className="h-11 w-full rounded-xl bg-gradient-to-r from-primary to-secondary text-sm font-bold shadow-md"
+              onClick={addPackageToCart}
+            >
+              <ShoppingCart className="mr-2 h-4 w-4" />
+              Add — €{total.toFixed(0)}
+            </Button>
+          </>
+        )}
 
         {/* Full details */}
         <button
