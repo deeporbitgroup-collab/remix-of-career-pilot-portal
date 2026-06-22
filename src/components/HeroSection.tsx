@@ -248,10 +248,7 @@ const HeroSection = () => {
 
           {/* Center group: trust faces + check-in box + two pathways — fills the
               screen between the logo and the social-proof marquees, no scroll. */}
-          <div className="relative z-10 flex-1 min-h-0 flex flex-col animate-fade-in opacity-0 w-full max-w-[420px] mx-auto" style={{ animationDelay: '0.3s', animationFillMode: 'forwards' }}>
-            {/* Core: primary CTA + the two service tiles, centered in the upper
-                portion of the available space. */}
-            <div className="flex flex-1 flex-col justify-center gap-3">
+          <div className="relative z-10 flex-1 min-h-0 flex flex-col justify-center gap-3 animate-fade-in opacity-0 w-full max-w-[420px] mx-auto" style={{ animationDelay: '0.3s', animationFillMode: 'forwards' }}>
             {/* Book free check-in — primary box, opens the same booking modal as desktop */}
             <button
               onClick={() => setIsBookingOpen(true)}
@@ -312,13 +309,11 @@ const HeroSection = () => {
                 </span>
               </button>
             </div>
-            </div>
 
-            {/* Trust: real Associate faces — centered in the lower portion so
-                they sit midway between the service tiles and the first marquee. */}
+            {/* Trust: real Associate faces — nudged a little below the two
+                service tiles so they read as a separate trust signal. */}
             {associatePhotos.length > 0 && (
-              <div className="flex flex-1 items-center justify-center">
-                <div className="flex items-center justify-center gap-2">
+              <div className="mt-3 flex items-center justify-center gap-2">
                 <div className="flex -space-x-2.5">
                   {associatePhotos.slice(0, 6).map((a, i) => (
                     <img
@@ -336,7 +331,6 @@ const HeroSection = () => {
                 <span className="text-[11px] font-semibold tracking-wide text-muted-foreground">
                   {language === 'it' ? 'Mentor verificati' : 'Verified mentors'}
                 </span>
-                </div>
               </div>
             )}
           </div>
