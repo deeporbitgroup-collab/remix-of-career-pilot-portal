@@ -192,15 +192,15 @@ const IndividualProductsSheet = ({
                 )}
               </div>
               <Button
-                className="mt-3 w-full bg-gradient-to-r from-primary to-secondary font-bold"
+                className="mt-3 h-auto w-full whitespace-normal bg-gradient-to-r from-primary to-secondary py-3 text-sm font-bold leading-tight"
                 onClick={() => {
                   onChoose(matched);
                   onOpenChange(false);
                   reset();
                 }}
               >
-                Choose this service & pick your Associate
-                <ArrowRight className="ml-2 h-4 w-4" />
+                <span className="min-w-0 flex-1 text-center">Choose this service &amp; pick your Associate</span>
+                <ArrowRight className="ml-2 h-4 w-4 shrink-0" />
               </Button>
               </div>
             </div>
