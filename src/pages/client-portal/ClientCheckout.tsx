@@ -633,10 +633,16 @@ const ClientCheckout = () => {
   };
 
   const handleRemoveItem = (itemId: string) => {
-    const newItems = cartItems.filter(item => item.id !== itemId);
+    // Package components share one packageGroupId — removing any of them clears
+    // the whole package so nothing is left behind.
+    const target = cartItems.find(item => item.id === itemId);
+    const groupId = target?.packageGroupId;
+    const newItems = groupId
+      ? cartItems.filter(item => item.packageGroupId !== groupId)
+      : cartItems.filter(item => item.id !== itemId);
     setCartItems(newItems);
     localStorage.setItem('guest_cart', JSON.stringify(newItems));
-    
+
     if (newItems.length === 0) {
       navigate('/client-portal/services');
     }
@@ -709,16 +715,49 @@ const ClientCheckout = () => {
               <CardContent className="space-y-4 px-5 pb-4">
                 {cartItems.map((item) => {
                   const isComparative = item.associates && item.associates.length === 2;
+                  const gid = item.packageGroupId;
+                  const inPackage = !!gid;
+                  const groupItems = inPackage ? cartItems.filter((i) => i.packageGroupId === gid) : [];
+                  const isFirstOfGroup = inPackage && groupItems[0]?.id === item.id;
+                  const groupTotal = groupItems.reduce((s, i) => s + Number(i.service.price), 0);
                   return (
-                    <div key={item.id} className="flex justify-between items-start border-b pb-3">
-                      <div className="flex-1">
-                        {item.packageName && (
+                    <div key={item.id}>
+                      {isFirstOfGroup && (
+                        <div className="mb-2 flex items-start justify-between gap-2 rounded-lg border border-primary/30 bg-primary/5 px-3 py-2">
+                          <div className="min-w-0">
+                            <p className="text-[10px] font-bold uppercase tracking-wide text-primary">Package</p>
+                            <h4 className="font-semibold leading-tight">{item.packageName || "Package"}</h4>
+                            {item.associate && (
+                              <p className="text-xs text-muted-foreground">
+                                with {item.associate.first_name} {item.associate.last_name}
+                              </p>
+                            )}
+                            <p className="mt-0.5 text-[11px] text-muted-foreground">
+                              {groupItems.length} item{groupItems.length > 1 ? "s" : ""} included
+                            </p>
+                          </div>
+                          <div className="flex shrink-0 flex-col items-end gap-1">
+                            <span className="text-lg font-bold">€{groupTotal.toFixed(2)}</span>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-7 text-destructive hover:text-destructive"
+                              onClick={() => handleRemoveItem(item.id)}
+                            >
+                              <Trash2 className="mr-1 h-4 w-4" /> Remove
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+                      <div className={cn("flex items-start justify-between gap-2", inPackage ? "pb-2 pl-3" : "border-b pb-3")}>
+                      <div className="flex-1 min-w-0">
+                        {!inPackage && item.packageName && (
                           <Badge variant="outline" className="mb-1 border-primary/40 text-primary text-[10px]">
                             {item.packageRole === "addon" ? "Add-on" : "Package"}: {item.packageName}
                           </Badge>
                         )}
                         <h4 className="font-medium">{item.service.name}</h4>
-                        <p className="text-sm text-muted-foreground">{item.service.category}</p>
+                        {!inPackage && <p className="text-sm text-muted-foreground">{item.service.category}</p>}
                         {isComparative ? (
                           <div className="space-y-2 mt-2">
                             {item.associates!.map((assoc, idx) => (
@@ -871,11 +910,14 @@ const ClientCheckout = () => {
                         )}
                       </div>
 
-                      <div className="flex items-center gap-2">
-                        <span className="font-bold text-lg">€{item.service.price.toFixed(2)}</span>
-                        <Button variant="ghost" size="icon" onClick={() => handleRemoveItem(item.id)}>
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
+                      {!inPackage && (
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold text-lg">€{item.service.price.toFixed(2)}</span>
+                          <Button variant="ghost" size="icon" onClick={() => handleRemoveItem(item.id)}>
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        </div>
+                      )}
                       </div>
                     </div>
                   );
@@ -896,6 +938,26 @@ const ClientCheckout = () => {
                     <span>Total:</span>
                     <span>€{total.toFixed(2)}</span>
                   </div>
+                </div>
+
+                {/* Clear next-step choice: keep shopping or move on to account/payment */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-3">
+                  <Button variant="outline" onClick={() => navigate('/client-portal/services')}>
+                    <ArrowLeft className="h-4 w-4 mr-2" />
+                    Browse other services
+                  </Button>
+                  <Button
+                    onClick={() => {
+                      if (clientUser) {
+                        handleCheckout();
+                      } else {
+                        document.getElementById('checkout-account')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                      }
+                    }}
+                  >
+                    Proceed to checkout
+                    <CreditCard className="h-4 w-4 ml-2" />
+                  </Button>
                 </div>
               </CardContent>
             </Card>
@@ -1064,7 +1126,7 @@ const ClientCheckout = () => {
           </div>
 
           {/* Account & Payment */}
-          <div className="flex flex-col gap-4 min-h-0">
+          <div id="checkout-account" className="flex flex-col gap-4 min-h-0 scroll-mt-4">
             {clientUser ? (
               /* Logged in - show payment */
               <Card className="backdrop-blur-sm bg-background/95 shadow-lg">

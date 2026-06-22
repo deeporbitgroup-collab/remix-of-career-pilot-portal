@@ -450,6 +450,10 @@ const ClientServicesPage = () => {
       const indexB = categoryOrder.indexOf(b);
       return indexA - indexB;
     });
+  // On phones we take the user straight to the cart page after adding, so the
+  // next step (browse more or check out) is unmistakable.
+  const isMobileViewport = () => typeof window !== 'undefined' && window.innerWidth < 768;
+
   const handleAddToCart = (item: GuestCartItem) => {
     const goToCheckout = checkoutAfterAdvisorAddRef.current;
     setCartItems(prev => {
@@ -461,6 +465,8 @@ const ClientServicesPage = () => {
     setSelectedService(null);
     if (goToCheckout) {
       checkoutAfterAdvisorAddRef.current = false;
+      navigate('/client-portal/checkout');
+    } else if (isMobileViewport()) {
       navigate('/client-portal/checkout');
     }
   };
@@ -477,10 +483,21 @@ const ClientServicesPage = () => {
       return next;
     });
     toast.success("Added to cart!");
-    if (goToCheckout) navigate('/client-portal/checkout');
+    if (goToCheckout || isMobileViewport()) navigate('/client-portal/checkout');
   };
+  // Removing a package-component item clears the whole package group (all its
+  // bundled line items share one packageGroupId) — otherwise the siblings would
+  // stay behind and look like the item "wouldn't delete".
   const handleRemoveFromCart = (itemId: string) => {
-    setCartItems(prev => prev.filter(item => item.id !== itemId));
+    setCartItems(prev => {
+      const target = prev.find(i => i.id === itemId);
+      const groupId = target?.packageGroupId;
+      const next = groupId
+        ? prev.filter(i => i.packageGroupId !== groupId)
+        : prev.filter(i => i.id !== itemId);
+      localStorage.setItem('guest_cart', JSON.stringify(next));
+      return next;
+    });
     toast.success("Removed from cart");
   };
   const handleCheckout = () => {
