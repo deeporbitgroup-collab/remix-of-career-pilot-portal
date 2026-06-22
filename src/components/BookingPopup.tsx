@@ -198,7 +198,7 @@ const BookingPopup = ({ isOpen, onClose }: BookingPopupProps) => {
             </Select>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 items-end gap-3">
             <div className="space-y-1">
               <Label htmlFor="date" className="text-steel-gray flex items-center gap-1.5 text-xs font-medium">
                 <Calendar className="h-3.5 w-3.5" />
@@ -209,14 +209,14 @@ const BookingPopup = ({ isOpen, onClose }: BookingPopupProps) => {
                 type="date"
                 value={date}
                 onChange={(e) => setDate(e.target.value)}
-                min={new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]}
+                min={new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]}
                 className="h-10 rounded-lg text-[16px]"
               />
             </div>
 
             <div className="space-y-1">
-              <Label htmlFor="time" className="text-steel-gray text-xs font-medium">
-                {language === 'it' ? 'Orario (Londra)' : 'Time (London)'}
+              <Label htmlFor="time" className="text-steel-gray text-xs font-medium whitespace-nowrap">
+                {language === 'it' ? 'Orario (Milano, Italia)' : 'Time (Milan, Italy)'}
               </Label>
               <Select value={time} onValueChange={setTime}>
                 <SelectTrigger className="h-10 rounded-lg text-[16px]">
