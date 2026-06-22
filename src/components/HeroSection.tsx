@@ -228,7 +228,7 @@ const HeroSection = () => {
         <div className="absolute inset-0 bg-white" />
 
         {/* ============== MOBILE LAYOUT ============== */}
-        <div className="md:hidden relative z-10 w-full min-h-[calc(100svh-56px)] flex flex-col justify-center gap-6 px-4 pt-5 pb-8">
+        <div className="md:hidden relative z-10 w-full min-h-[calc(100svh-56px)] flex flex-col justify-start gap-6 px-4 pt-5 pb-10">
           {/* Decorative gradient blobs */}
           <div className="pointer-events-none absolute inset-0 overflow-hidden">
             <div className="absolute -top-24 -left-20 w-72 h-72 rounded-full bg-primary/15 blur-3xl animate-pulse" style={{ animationDuration: '6s' }} />
