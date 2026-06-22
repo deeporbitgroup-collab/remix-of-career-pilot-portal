@@ -2,20 +2,17 @@ import { useEffect, useState, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Download, Linkedin, ShoppingCart, FileText } from "lucide-react";
 import AssociateChoiceCarousel from "./AssociateChoiceCarousel";
 import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface Associate {
   id: string;
@@ -115,9 +112,6 @@ const GuestAssociateSelector = ({ service, onClose, onAddToCart }: GuestAssociat
   const [sector, setSector] = useState("");
   const [showAssociates, setShowAssociates] = useState(false);
   const [selectedAssociates, setSelectedAssociates] = useState<Associate[]>([]);
-  const [universityOpen, setUniversityOpen] = useState(false);
-  const [university2Open, setUniversity2Open] = useState(false);
-  const [sectorOpen, setSectorOpen] = useState(false);
 
   // Check if this is a Comparative service (requires exactly 2 associates, price includes both)
   const isComparativeService = service.name.toLowerCase().includes('comparative');
@@ -477,96 +471,34 @@ const GuestAssociateSelector = ({ service, onClose, onAddToCart }: GuestAssociat
                           ? "University of Interest"
                           : "University / Master Program of Interest"}
                   </Label>
-                  <Popover open={universityOpen} onOpenChange={setUniversityOpen}>
-                    <PopoverTrigger asChild>
-                      <Input
-                        value={university}
-                        onChange={(e) => setUniversity(e.target.value)}
-                        placeholder={isSummitService ? "e.g., MBA, MiM" : "e.g., Harvard, LSE"}
-                        onClick={() => setUniversityOpen(true)}
-                      />
-                    </PopoverTrigger>
-                    <PopoverContent portalled={false} className="w-[300px] p-0" align="start">
-                      <Command>
-                        <CommandInput 
-                          placeholder={isSummitService ? "Search master programs..." : "Search universities..."} 
-                          value={university}
-                          onValueChange={setUniversity}
-                        />
-                        <CommandList
-                          className="h-[250px] overscroll-contain overflow-y-auto touch-pan-y"
-                          onWheelCapture={(e) => e.stopPropagation()}
-                          onTouchMove={(e) => e.stopPropagation()}
-                        >
-                          <CommandEmpty>Type to add custom value</CommandEmpty>
-                          <CommandGroup>
-                            {(isSummitService ? availableMasterPrograms : availableUniversities)
-                              .filter(u => u.toLowerCase().includes(university.toLowerCase()))
-                              .map((item) => (
-                                <CommandItem
-                                  key={item}
-                                  value={item}
-                                  onSelect={(value) => {
-                                    setUniversity(value);
-                                    setUniversityOpen(false);
-                                  }}
-                                >
-                                  {item}
-                                </CommandItem>
-                              ))}
-                          </CommandGroup>
-                        </CommandList>
-                      </Command>
-                    </PopoverContent>
-                  </Popover>
+                  <Select value={university} onValueChange={setUniversity}>
+                    <SelectTrigger>
+                      <SelectValue placeholder={isSummitService ? "Select a master program" : "Select a university"} />
+                    </SelectTrigger>
+                    <SelectContent className="max-h-72">
+                      {(isSummitService ? availableMasterPrograms : availableUniversities).map((item) => (
+                        <SelectItem key={item} value={item}>{item}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 {/* Second university field for Comparative services */}
                 {isComparativeService && (
                   <div className="space-y-2">
                     <Label>Second University of Interest</Label>
-                    <Popover open={university2Open} onOpenChange={setUniversity2Open}>
-                      <PopoverTrigger asChild>
-                        <Input
-                          value={university2}
-                          onChange={(e) => setUniversity2(e.target.value)}
-                          placeholder={isSummitService ? "e.g., MBA, MiM" : "e.g., Oxford, Cambridge"}
-                          onClick={() => setUniversity2Open(true)}
-                        />
-                      </PopoverTrigger>
-                      <PopoverContent portalled={false} className="w-[300px] p-0" align="start">
-                        <Command>
-                          <CommandInput 
-                            placeholder={isSummitService ? "Search master programs..." : "Search universities..."} 
-                            value={university2}
-                            onValueChange={setUniversity2}
-                          />
-                          <CommandList
-                            className="h-[250px] overscroll-contain overflow-y-auto touch-pan-y"
-                            onWheelCapture={(e) => e.stopPropagation()}
-                            onTouchMove={(e) => e.stopPropagation()}
-                          >
-                            <CommandEmpty>Type to add custom value</CommandEmpty>
-                            <CommandGroup>
-                              {(isSummitService ? availableMasterPrograms : availableUniversities)
-                                .filter(u => u.toLowerCase().includes(university2.toLowerCase()) && u.toLowerCase() !== university.toLowerCase())
-                                .map((item) => (
-                                  <CommandItem
-                                    key={item}
-                                    value={item}
-                                    onSelect={(value) => {
-                                      setUniversity2(value);
-                                      setUniversity2Open(false);
-                                    }}
-                                  >
-                                    {item}
-                                  </CommandItem>
-                                ))}
-                            </CommandGroup>
-                          </CommandList>
-                        </Command>
-                      </PopoverContent>
-                    </Popover>
+                    <Select value={university2} onValueChange={setUniversity2}>
+                      <SelectTrigger>
+                        <SelectValue placeholder={isSummitService ? "Select a second program" : "Select a second university"} />
+                      </SelectTrigger>
+                      <SelectContent className="max-h-72">
+                        {(isSummitService ? availableMasterPrograms : availableUniversities)
+                          .filter((u) => u.toLowerCase() !== university.toLowerCase())
+                          .map((item) => (
+                            <SelectItem key={item} value={item}>{item}</SelectItem>
+                          ))}
+                      </SelectContent>
+                    </Select>
                     {university && university2 && university.toLowerCase() === university2.toLowerCase() && (
                       <p className="text-sm text-destructive">Please select two different universities</p>
                     )}
@@ -578,48 +510,16 @@ const GuestAssociateSelector = ({ service, onClose, onAddToCart }: GuestAssociat
             {service.requires_sector && (
               <div className="space-y-2">
                 <Label>Professional Sector of Interest</Label>
-                <Popover open={sectorOpen} onOpenChange={setSectorOpen}>
-                  <PopoverTrigger asChild>
-                    <Input
-                      value={sector}
-                      onChange={(e) => setSector(e.target.value)}
-                      placeholder="e.g., Investment Banking, Consulting"
-                      onClick={() => setSectorOpen(true)}
-                    />
-                  </PopoverTrigger>
-                  <PopoverContent portalled={false} className="w-[300px] p-0" align="start">
-                    <Command>
-                      <CommandInput 
-                        placeholder="Search sectors..." 
-                        value={sector}
-                        onValueChange={setSector}
-                      />
-                      <CommandList
-                        className="h-[250px] overscroll-contain overflow-y-auto touch-pan-y"
-                        onWheelCapture={(e) => e.stopPropagation()}
-                        onTouchMove={(e) => e.stopPropagation()}
-                      >
-                        <CommandEmpty>Type to add custom value</CommandEmpty>
-                        <CommandGroup>
-                          {availableSectors
-                            .filter(s => s.toLowerCase().includes(sector.toLowerCase()))
-                            .map((sec) => (
-                              <CommandItem
-                                key={sec}
-                                value={sec}
-                                onSelect={(value) => {
-                                  setSector(value);
-                                  setSectorOpen(false);
-                                }}
-                              >
-                                {sec}
-                              </CommandItem>
-                            ))}
-                        </CommandGroup>
-                      </CommandList>
-                    </Command>
-                  </PopoverContent>
-                </Popover>
+                <Select value={sector} onValueChange={setSector}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a sector" />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-72">
+                    {availableSectors.map((sec) => (
+                      <SelectItem key={sec} value={sec}>{sec}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             )}
 

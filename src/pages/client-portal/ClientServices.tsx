@@ -993,6 +993,7 @@ const ClientServicesPage = () => {
           onChoose={(s) => setSelectedService(s as any)}
           onDownloadDemo={handleDownloadPdf}
           hasDemo={hasDemoPdf}
+          getPreviewImage={(category, name) => getServicePreview(category, name)}
         />
 
         {/* Floating Cart Button for Mobile */}

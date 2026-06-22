@@ -69,6 +69,7 @@ interface IndividualProductsSheetProps {
   onChoose: (svc: Svc) => void;
   onDownloadDemo: (name: string, category: string) => void;
   hasDemo: (name: string, category: string) => boolean;
+  getPreviewImage?: (category: string, name: string) => string | undefined;
 }
 
 const IndividualProductsSheet = ({
@@ -79,6 +80,7 @@ const IndividualProductsSheet = ({
   onChoose,
   onDownloadDemo,
   hasDemo,
+  getPreviewImage,
 }: IndividualProductsSheetProps) => {
   const [phase, setPhase] = useState<Phase | null>(null);
   const [matched, setMatched] = useState<Svc | null>(null);
@@ -158,9 +160,26 @@ const IndividualProductsSheet = ({
             <button onClick={() => setMatched(null)} className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground">
               <ChevronLeft className="h-4 w-4" /> Back
             </button>
-            <div className="rounded-xl border border-primary/30 bg-primary/5 p-4">
+            <div className="overflow-hidden rounded-xl border border-primary/30 bg-primary/5">
+              {(() => {
+                const img = getPreviewImage?.(matched.category, matched.name);
+                const PhaseIcon = phase.icon;
+                return (
+                  <div className="relative h-36 w-full overflow-hidden bg-gradient-to-br from-primary/15 to-secondary/15">
+                    {img ? (
+                      <img src={img} alt={matched.name} loading="lazy" className="absolute inset-0 h-full w-full object-cover object-top" />
+                    ) : (
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <PhaseIcon className="h-12 w-12 text-primary/30" />
+                      </div>
+                    )}
+                    <div className="pointer-events-none absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-primary/5 to-transparent" />
+                  </div>
+                );
+              })()}
+              <div className="p-4">
               <p className="text-[10px] font-semibold uppercase tracking-wide text-primary/70">{phase.label}</p>
-              <h3 className="mt-0.5 text-lg font-extrabold text-primary">{matched.name}</h3>
+              <h3 className="mt-0.5 break-words text-lg font-extrabold text-primary">{matched.name}</h3>
               <p className="mt-1 text-sm text-muted-foreground line-clamp-3">{matched.description}</p>
               <div className="mt-3 flex flex-wrap gap-2">
                 <Button variant="outline" size="sm" onClick={() => onInfo(matched)}>
@@ -183,6 +202,7 @@ const IndividualProductsSheet = ({
                 Choose this service & pick your Associate
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
+              </div>
             </div>
           </div>
         )}

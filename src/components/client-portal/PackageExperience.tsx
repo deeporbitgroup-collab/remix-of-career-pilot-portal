@@ -304,6 +304,9 @@ const PackageExperience = ({
   // Comparative analysis is run by two specialists (one per university), so when
   // it's selected we force a *second* Associate dedicated to the comparison.
   const [secondAssociateId, setSecondAssociateId] = useState<string | null>(null);
+  // Mobile 2nd-Associate picker: first pick the comparison university/master
+  // from a dropdown, then pick an Associate from that school.
+  const [secondUniFilter, setSecondUniFilter] = useState("");
   // Mobile: the Associate picker opens in a focused bottom sheet behind a real
   // pill CTA (replaces the old grey segmented tab).
   const [associateSheetOpen, setAssociateSheetOpen] = useState(false);
@@ -401,7 +404,10 @@ const PackageExperience = ({
       return next;
     });
     // Dropping the last comparative add-on clears the now-pointless 2nd Associate.
-    if (!on && isComparativeAddon(comp)) setSecondAssociateId(null);
+    if (!on && isComparativeAddon(comp)) {
+      setSecondAssociateId(null);
+      setSecondUniFilter("");
+    }
   };
 
   // Distinct match values for the dropdown.
@@ -460,10 +466,44 @@ const PackageExperience = ({
     () => associates.find((a) => a.id === secondAssociateId) || null,
     [associates, secondAssociateId]
   );
-  const secondAssociateOptions = useMemo(
-    () => matchableAssociates.filter((a) => a.id !== selectedAssociateId),
-    [matchableAssociates, selectedAssociateId]
-  );
+  // Associates whose university / master / sector matches a chosen value — used
+  // by the mobile 2nd-Associate picker (pick the comparison school, then its
+  // Associate) so the user never scrolls one long flat list.
+  const associatesForValue = (val: string): AssociatePreview[] => {
+    const q = val.trim().toLowerCase();
+    if (!q) return [];
+    return matchableAssociates.filter((a) => {
+      const vals =
+        filterMode === "master"
+          ? [a.master_program]
+          : filterMode === "sector"
+          ? [a.sector, a.sector_2]
+          : [a.university, a.university_2];
+      return vals.some((v) => (v || "").toLowerCase().includes(q));
+    });
+  };
+
+  // Desktop comparative: the right-hand carousel selects up to TWO Associates
+  // (one per university). Removing the primary promotes the second so the slots
+  // never end up out of order. Non-comparative stays single-select.
+  const handleAssociateToggle = (id: string) => {
+    if (!comparativeSelected) {
+      setSelectedAssociateId((prev) => (prev === id ? null : id));
+      return;
+    }
+    if (selectedAssociateId === id) {
+      setSelectedAssociateId(secondAssociateId);
+      setSecondAssociateId(null);
+      return;
+    }
+    if (secondAssociateId === id) {
+      setSecondAssociateId(null);
+      return;
+    }
+    if (!selectedAssociateId) setSelectedAssociateId(id);
+    else setSecondAssociateId(id); // fills the 2nd slot (or replaces it when full)
+  };
+  const comparativeCount = (selectedAssociateId ? 1 : 0) + (secondAssociateId ? 1 : 0);
 
   const associateMatchLabel = (a: AssociatePreview) =>
     filterMode === "master"
@@ -629,6 +669,8 @@ const PackageExperience = ({
   // explaining *why* a second Associate is required, plus the picker for it.
   const renderSecondAssociatePicker = () => {
     if (!comparativeSelected) return null;
+    const schoolWord = filterMode === "master" ? "master" : filterMode === "sector" ? "sector" : "university";
+    const secondCandidates = associatesForValue(secondUniFilter).filter((a) => a.id !== selectedAssociateId);
     return (
       <div className="space-y-2 rounded-xl border border-secondary/40 bg-secondary/5 p-3">
         <div className="flex items-start gap-2">
@@ -638,24 +680,48 @@ const PackageExperience = ({
           <div className="min-w-0">
             <p className="text-sm font-semibold text-foreground">A second Associate for your comparison</p>
             <p className="text-xs leading-snug text-muted-foreground">
-              Your comparison looks at two universities, and each one is analysed by an Associate who
-              actually studied there. Choose the Associate for your comparison university.
+              A comparison looks at two {schoolWord === "sector" ? "sectors" : schoolWord === "master" ? "programs" : "universities"}, each
+              analysed by an Associate who was actually there. Pick the comparison {schoolWord}, then its Associate.
             </p>
           </div>
         </div>
-        <Select value={secondAssociateId || ""} onValueChange={(v) => setSecondAssociateId(v || null)}>
+        {/* Step 1 — choose the comparison school/master from a clean dropdown */}
+        <Select
+          value={secondUniFilter || ""}
+          onValueChange={(v) => {
+            setSecondUniFilter(v);
+            setSecondAssociateId(null);
+          }}
+        >
           <SelectTrigger className="h-9 w-full border-secondary/30 text-sm">
-            <SelectValue placeholder="Choose your second Associate" />
+            <SelectValue placeholder={`Choose the comparison ${schoolWord}`} />
           </SelectTrigger>
           <SelectContent className="max-h-72">
-            {secondAssociateOptions.map((a) => (
-              <SelectItem key={a.id} value={a.id}>
-                {a.first_name} {a.last_name}
-                {associateMatchLabel(a) ? ` · ${associateMatchLabel(a)}` : ""}
-              </SelectItem>
+            {availableValues.map((v) => (
+              <SelectItem key={v} value={v}>{v}</SelectItem>
             ))}
           </SelectContent>
         </Select>
+        {/* Step 2 — choose the Associate from that school */}
+        {secondUniFilter && (
+          <Select value={secondAssociateId || ""} onValueChange={(v) => setSecondAssociateId(v || null)}>
+            <SelectTrigger className="h-9 w-full border-secondary/30 text-sm">
+              <SelectValue placeholder="Choose the Associate" />
+            </SelectTrigger>
+            <SelectContent className="max-h-72">
+              {secondCandidates.length === 0 ? (
+                <div className="px-3 py-2 text-xs text-muted-foreground">No other Associate for this {schoolWord}.</div>
+              ) : (
+                secondCandidates.map((a) => (
+                  <SelectItem key={a.id} value={a.id}>
+                    {a.first_name} {a.last_name}
+                    {associateMatchLabel(a) ? ` · ${associateMatchLabel(a)}` : ""}
+                  </SelectItem>
+                ))
+              )}
+            </SelectContent>
+          </Select>
+        )}
       </div>
     );
   };
@@ -1143,6 +1209,17 @@ const PackageExperience = ({
               </Select>
             </div>
 
+            {/* Comparative: turn the picker into a two-Associate selection
+                (one specialist per university), with a clear "1 of 2" counter. */}
+            {comparativeSelected && (
+              <div className="rounded-lg border border-secondary/40 bg-secondary/5 px-3 py-2 text-xs leading-snug">
+                <span className="font-semibold text-foreground">Comparative analysis needs two Associates.</span>{" "}
+                Each {filterMode === "master" ? "program" : filterMode === "sector" ? "sector" : "university"} is
+                reviewed by someone who was actually there — pick a second one.{" "}
+                <span className="font-semibold text-secondary">{comparativeCount} of 2 selected</span>
+              </div>
+            )}
+
             {filteredAssociates.length === 0 ? (
               <div className="py-8 text-center text-sm text-muted-foreground">
                 No associates match yet. Try another search, or clear the filter.
@@ -1151,10 +1228,12 @@ const PackageExperience = ({
               <AssociateChoiceCarousel
                 associates={filteredAssociates}
                 fillHeight
-                isSelected={(a) => selectedAssociateId === a.id}
-                onToggle={(a) =>
-                  setSelectedAssociateId((prev) => (prev === a.id ? null : a.id))
+                isSelected={(a) =>
+                  comparativeSelected
+                    ? selectedAssociateId === a.id || secondAssociateId === a.id
+                    : selectedAssociateId === a.id
                 }
+                onToggle={(a) => handleAssociateToggle(a.id)}
                 getSectors={(a) => {
                   const ap = a as AssociatePreview;
                   return [ap.sector, ap.sector_2].filter((s): s is string => !!s && s.trim() !== "");
@@ -1197,8 +1276,6 @@ const PackageExperience = ({
                 }}
               />
             )}
-
-            {comparativeSelected && renderSecondAssociatePicker()}
 
             <div className="mt-auto">
               {selectedAssociate ? (
