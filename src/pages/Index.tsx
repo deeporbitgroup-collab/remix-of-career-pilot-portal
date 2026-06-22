@@ -51,7 +51,7 @@ const Index = () => {
         />
       </div>
       {/* Discreet hint — mobile only */}
-      <p className="md:hidden px-4 py-4 text-center text-[11px] text-muted-foreground">
+      <p className="md:hidden px-4 py-4 text-center text-[12px] text-muted-foreground">
         For the full experience, the team recommends viewing on desktop.
       </p>
       <Footer />

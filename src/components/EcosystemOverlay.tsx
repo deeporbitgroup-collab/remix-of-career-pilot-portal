@@ -263,7 +263,7 @@ const SectionLabel = ({ icon: Icon, text }: { icon: typeof Compass; text: string
 );
 
 const FormatChip = ({ icon: Icon, label }: { icon: typeof Compass; label: string }) => (
-  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-muted/60 border border-border/60 text-[9px] md:text-[10px] font-medium text-foreground/80">
+  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-muted/60 border border-border/60 text-[10px] md:text-[11px] font-medium text-foreground/80">
     <Icon className="h-2.5 w-2.5 text-secondary" />
     {label}
   </span>

@@ -1142,7 +1142,7 @@ const ClientCheckout = () => {
 
                     <TabsContent value="signup" className="space-y-3 mt-4">
                       <form onSubmit={handleSignup} className="space-y-3">
-                        <div className="grid grid-cols-2 gap-3">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                           <div>
                             <Label htmlFor="firstName">First Name</Label>
                             <Input
@@ -1162,7 +1162,7 @@ const ClientCheckout = () => {
                             />
                           </div>
                         </div>
-                        <div className="grid grid-cols-2 gap-3">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                           <div>
                             <Label htmlFor="signup-email">Email</Label>
                             <Input
@@ -1219,7 +1219,7 @@ const ClientCheckout = () => {
                           />
                         )}
                         
-                        <div className="grid grid-cols-2 gap-3">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                           <div>
                             <Label htmlFor="signup-password">Password</Label>
                             <Input

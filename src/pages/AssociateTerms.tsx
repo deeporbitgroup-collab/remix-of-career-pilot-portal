@@ -26,7 +26,7 @@ const AssociateTerms = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <ScrollArea className="h-[600px] pr-4">
+            <ScrollArea className="h-[60vh] md:h-[600px] pr-4">
               <div className="prose prose-sm max-w-none space-y-6">
                 <section>
                   <h2 className="text-xl font-semibold text-primary mb-3">Introduction</h2>

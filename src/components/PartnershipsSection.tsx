@@ -119,7 +119,7 @@ const PartnershipsSection = () => {
                     <span className="text-[10px] font-bold text-primary text-center leading-tight line-clamp-1 w-full">
                       {partner.name}
                     </span>
-                    <span className="text-[8px] text-muted-foreground text-center leading-tight mt-0.5 line-clamp-2">
+                    <span className="text-[10px] text-muted-foreground text-center leading-tight mt-0.5 line-clamp-2">
                       {partnerData.services?.[0]}
                     </span>
                   </div>

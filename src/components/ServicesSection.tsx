@@ -462,7 +462,7 @@ const ServicesSection = () => {
                 <div
                   key={index}
                   className="flex-none snap-center"
-                  style={{ width: '92%' }}
+                  style={{ width: 'min(92%, 360px)' }}
                 >
                   <Card 
                     className="bg-white shadow-card-custom h-full"

@@ -157,19 +157,20 @@ const [overviewOpen, setOverviewOpen] = useState(false);
               <Badge className="bg-primary text-primary-foreground text-xs font-bold uppercase tracking-wider px-3 py-1 animate-pulse">New</Badge>
             </div>
             <p className="text-muted-foreground text-base max-w-2xl mx-auto">{tierMode ? "Internship Placement prep material — PDF guides, Excel models and ready-made packages." : "Exclusive digital resources & Prep Material to accelerate your academic and career journey."}</p>
-            <div className="flex items-center justify-center gap-3 mt-3">
+            <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3 mt-3">
               {tierMode ? (
-                <Button variant="outline" size="sm" onClick={() => navigate("/talent-pool/student/dashboard")}>
-                  <ArrowLeft className="mr-2 h-4 w-4" /> Back to Talent Pool
+                <Button variant="outline" size="sm" className="h-auto whitespace-normal text-center leading-tight" onClick={() => navigate("/talent-pool/student/dashboard")}>
+                  <ArrowLeft className="mr-2 h-4 w-4 shrink-0" /> Back to Talent Pool
                 </Button>
               ) : fromEcosystem ? (
                 <>
                   <Button
                     variant="outline"
                     size="sm"
+                    className="h-auto whitespace-normal text-center leading-tight"
                     onClick={() => navigate("/?openEcosystem=1")}
                   >
-                    <ArrowLeft className="mr-2 h-4 w-4" /> Back to Softwares & Preparation
+                    <ArrowLeft className="mr-2 h-4 w-4 shrink-0" /> Back to Softwares & Preparation
                   </Button>
                   <Button variant="outline" size="sm" onClick={() => navigate("/admin/knowledge-base")}>
                     <Shield className="mr-2 h-4 w-4" /> Admin

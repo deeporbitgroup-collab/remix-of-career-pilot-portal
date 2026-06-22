@@ -892,7 +892,7 @@ const PackageExperience = ({
                   </>
                 )}
               </span>
-              <span className="flex-1 truncate text-left leading-tight">
+              <span className="flex-1 text-left leading-tight line-clamp-2">
                 {selectedAssociate.first_name} {selectedAssociate.last_name}
                 {comparativeSelected && (
                   <span className="block truncate text-[11px] font-normal text-muted-foreground">

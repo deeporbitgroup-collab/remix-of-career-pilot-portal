@@ -225,7 +225,7 @@ const HeroSection = () => {
         <div className="absolute inset-0 bg-white" />
 
         {/* ============== MOBILE LAYOUT ============== */}
-        <div className="md:hidden relative z-10 w-full h-full flex flex-col overflow-hidden px-4 pt-4 pb-4">
+        <div className="md:hidden relative z-10 w-full h-full flex flex-col overflow-hidden px-4 pt-3 pb-3">
           {/* Decorative gradient blobs */}
           <div className="pointer-events-none absolute inset-0 overflow-hidden">
             <div className="absolute -top-24 -left-20 w-72 h-72 rounded-full bg-primary/15 blur-3xl animate-pulse" style={{ animationDuration: '6s' }} />
@@ -234,21 +234,45 @@ const HeroSection = () => {
           </div>
 
           {/* Logo — top */}
-          <div className="relative z-10 flex justify-center pt-2 shrink-0 animate-fade-in opacity-0" style={{ animationDelay: '0.1s', animationFillMode: 'forwards' }}>
+          <div className="relative z-10 flex justify-center pt-1 shrink-0 animate-fade-in opacity-0" style={{ animationDelay: '0.1s', animationFillMode: 'forwards' }}>
             <img
               src="/lovable-uploads/ef00a41f-dd9a-4450-9fd7-a5ca64906fb8.png"
               alt="Career Pilot"
-              className="max-h-[120px] w-auto object-contain drop-shadow-[0_10px_30px_hsla(215,100%,60%,0.25)]"
+              className="max-h-[84px] w-auto object-contain drop-shadow-[0_10px_30px_hsla(215,100%,60%,0.25)]"
             />
             <h1 className="sr-only">Career Pilot</h1>
           </div>
 
-          {/* Center group: check-in box + two pathways — fills the screen, no scroll */}
-          <div className="relative z-10 flex-1 flex flex-col justify-center gap-4 animate-fade-in opacity-0 w-full max-w-[420px] mx-auto" style={{ animationDelay: '0.3s', animationFillMode: 'forwards' }}>
+          {/* Center group: trust faces + check-in box + two pathways — fills the
+              screen between the logo and the social-proof marquees, no scroll. */}
+          <div className="relative z-10 flex-1 min-h-0 flex flex-col justify-center gap-3 animate-fade-in opacity-0 w-full max-w-[420px] mx-auto" style={{ animationDelay: '0.3s', animationFillMode: 'forwards' }}>
+            {/* Trust: real Associate faces — small, noticeable, not invasive */}
+            {associatePhotos.length > 0 && (
+              <div className="flex items-center justify-center gap-2">
+                <div className="flex -space-x-2.5">
+                  {associatePhotos.slice(0, 6).map((a, i) => (
+                    <img
+                      key={i}
+                      src={a.photo_url}
+                      alt={`${a.first_name} ${a.last_name}`}
+                      loading="lazy"
+                      className="h-8 w-8 rounded-full ring-2 ring-white object-cover object-top shadow-sm"
+                    />
+                  ))}
+                  <div className="h-8 w-8 rounded-full ring-2 ring-white bg-primary text-primary-foreground flex items-center justify-center text-[9px] font-bold shadow-sm">
+                    {language === 'it' ? '+altri' : '+more'}
+                  </div>
+                </div>
+                <span className="text-[11px] font-semibold tracking-wide text-muted-foreground">
+                  {language === 'it' ? 'Mentor verificati' : 'Verified mentors'}
+                </span>
+              </div>
+            )}
+
             {/* Book free check-in — primary box, opens the same booking modal as desktop */}
             <button
               onClick={() => setIsBookingOpen(true)}
-              className="group relative w-full overflow-hidden rounded-3xl bg-gradient-to-br from-primary via-primary to-secondary text-primary-foreground px-5 py-6 text-left active:scale-[0.98] transition-transform"
+              className="group relative w-full overflow-hidden rounded-3xl bg-gradient-to-br from-primary via-primary to-secondary text-primary-foreground px-5 py-5 text-left active:scale-[0.98] transition-transform"
               style={{ boxShadow: '0 0 36px hsla(215, 100%, 60%, 0.45), 0 12px 28px hsla(223, 83%, 27%, 0.4)' }}
             >
               <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/15 to-transparent -translate-x-full group-active:translate-x-full transition-transform duration-700" />
@@ -257,8 +281,12 @@ const HeroSection = () => {
                   <Star className="h-6 w-6" />
                 </span>
                 <div className="min-w-0 flex-1">
-                  <p className="text-lg font-extrabold leading-tight">Book free check-in</p>
-                  <p className="text-xs font-medium text-primary-foreground/85">A free 1:1 call to map out your plan</p>
+                  <p className="text-lg font-extrabold leading-tight">
+                    {language === 'it' ? 'Check-in gratuito' : 'Book free check-in'}
+                  </p>
+                  <p className="text-xs font-medium text-primary-foreground/85">
+                    {language === 'it' ? 'Una call 1:1 gratuita per il tuo piano' : 'A free 1:1 call to map out your plan'}
+                  </p>
                 </div>
                 <ArrowRight className="h-6 w-6 shrink-0" />
               </div>
@@ -266,8 +294,8 @@ const HeroSection = () => {
 
             {/* Two product pathways: Mentoring + Talent Pool — bold, filled
                 tiles so it's instantly clear they open our two services. */}
-            <p className="text-center text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground">
-              Explore our two services
+            <p className="text-center text-[11px] font-bold uppercase tracking-[0.16em] text-muted-foreground">
+              {language === 'it' ? 'Esplora i nostri due servizi' : 'Explore our two services'}
             </p>
             <div className="grid grid-cols-2 gap-3">
               <button
@@ -303,7 +331,45 @@ const HeroSection = () => {
             </div>
           </div>
 
-
+          {/* Social proof footer: two gentle, moving marquees — universities our
+              mentors come from + companies they've worked at. Non-invasive, but
+              they make the credibility of the network instantly visible. */}
+          <div className="relative z-10 shrink-0 flex flex-col gap-1.5 pt-2 animate-fade-in opacity-0" style={{ animationDelay: '0.5s', animationFillMode: 'forwards' }}>
+            {/* Universities */}
+            <div className="flex flex-col gap-0.5">
+              <p className="text-center text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground/75">
+                {language === 'it' ? 'Le università dei nostri mentor' : 'Where our mentors studied'}
+              </p>
+              <div className="relative overflow-hidden">
+                <div className="pointer-events-none absolute inset-y-0 left-0 w-8 bg-gradient-to-r from-white to-transparent z-10" />
+                <div className="pointer-events-none absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-white to-transparent z-10" />
+                <div className="flex gap-6 animate-scroll-carousel py-0.5" style={{ animationDuration: '34s', width: 'max-content' }}>
+                  {[...universities, ...universities, ...universities].map((u, i) => (
+                    <div key={`m-uni-${i}`} className="flex-shrink-0 flex items-center justify-center h-7" title={u.name}>
+                      <img src={u.logo} alt={u.name} className="h-full w-auto max-w-[68px] object-contain grayscale opacity-70" loading="lazy" />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+            {/* Companies — scrolls the opposite way for a lively, balanced strip */}
+            <div className="flex flex-col gap-0.5">
+              <p className="text-center text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground/75">
+                {language === 'it' ? 'Le aziende dove hanno lavorato' : 'Companies they’ve worked at'}
+              </p>
+              <div className="relative overflow-hidden">
+                <div className="pointer-events-none absolute inset-y-0 left-0 w-8 bg-gradient-to-r from-white to-transparent z-10" />
+                <div className="pointer-events-none absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-white to-transparent z-10" />
+                <div className="flex gap-6 animate-scroll-carousel py-0.5" style={{ animationDuration: '38s', animationDirection: 'reverse', width: 'max-content' }}>
+                  {[...companies, ...companies, ...companies].map((c, i) => (
+                    <div key={`m-co-${i}`} className="flex-shrink-0 flex items-center justify-center h-7" title={c.name}>
+                      <img src={c.logo} alt={c.name} className="h-full w-auto max-w-[72px] object-contain grayscale opacity-70" loading="lazy" />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* ============== DESKTOP LAYOUT ============== */}
