@@ -31,8 +31,6 @@ const AboutSection = () => {
   const teamCard2Animation = useScrollAnimation({ delay: 200 });
   const mobileScrollerRef = useRef<HTMLDivElement>(null);
   const [mobileIdx, setMobileIdx] = useState(0);
-  const mobileMarketingRef = useRef<HTMLDivElement>(null);
-  const [mobileMarketingIdx, setMobileMarketingIdx] = useState(0);
 
   const founders: Member[] = [
     {
@@ -101,11 +99,6 @@ const AboutSection = () => {
     const el = mobileScrollerRef.current;
     if (!el) return;
     setMobileIdx(Math.round(el.scrollLeft / el.clientWidth));
-  };
-  const handleMobileMarketingScroll = () => {
-    const el = mobileMarketingRef.current;
-    if (!el) return;
-    setMobileMarketingIdx(Math.round(el.scrollLeft / el.clientWidth));
   };
 
   const imgClass = (m: Member) =>
@@ -229,56 +222,52 @@ const AboutSection = () => {
             </p>
           </div>
 
-          {/* MOBILE: compact horizontal scroll */}
-          <div className="md:hidden">
-            <div
-              ref={mobileMarketingRef}
-              onScroll={handleMobileMarketingScroll}
-              className="flex gap-2 overflow-x-auto snap-x snap-mandatory -mx-4 px-4 pb-2"
-              style={{ scrollSnapType: "x mandatory", WebkitOverflowScrolling: "touch", scrollbarWidth: "none" }}
-            >
-              {skaleTeam.map((member) => (
-                <Card key={member.name} className="snap-center flex-none w-[65%] bg-white shadow-sm border border-border/60 overflow-hidden rounded-xl">
-                  <div className="relative w-full aspect-[3/4] bg-muted overflow-hidden">
+          {/* MOBILE: small centered strip — all three fit, no scroll. These are
+              the Skale Studio (marketing) folks, kept visually secondary. */}
+          <div className="md:hidden flex justify-center gap-2.5 px-2">
+            {skaleTeam.map((member) => (
+              <a
+                key={member.name}
+                href={member.linkedin}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group block w-[28%] max-w-[120px]"
+              >
+                <Card className="bg-white shadow-sm border border-border/60 overflow-hidden rounded-xl">
+                  <div className="relative w-full aspect-[4/5] bg-muted overflow-hidden">
                     <img src={member.image} alt={member.name} className={imgClass(member)} loading="lazy" />
-                    <div className="absolute inset-x-0 bottom-0 h-14 bg-gradient-to-t from-black/70 to-transparent" />
-                    <div className="absolute bottom-2 left-2.5 right-2.5">
-                      <h4 className="text-white text-[13px] font-bold leading-tight drop-shadow">{member.name}</h4>
-                      <p className="text-white/90 text-[10px] font-medium leading-tight">{member.role}</p>
-                    </div>
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
                   </div>
                 </Card>
-              ))}
-            </div>
-            <div className="flex justify-center gap-1 mt-2">
-              {skaleTeam.map((_, i) => (
-                <button
-                  key={i}
-                  onClick={() => mobileMarketingRef.current?.scrollTo({ left: i * mobileMarketingRef.current.clientWidth, behavior: "smooth" })}
-                  className={`rounded-full transition-all duration-300 ${mobileMarketingIdx === i ? "w-1.5 h-1.5 bg-primary" : "w-1.5 h-1.5 bg-primary/25"}`}
-                  aria-label={`Slide ${i + 1}`}
-                />
-              ))}
-            </div>
+                <p className="mt-1 text-center text-[10px] font-bold leading-tight text-primary truncate">{member.name}</p>
+                <p className="text-center text-[9px] leading-tight text-steel-gray truncate">{member.role}</p>
+              </a>
+            ))}
           </div>
 
-          {/* DESKTOP: compact grid */}
-          <div ref={marketingAnim.ref as any} className={`hidden md:grid grid-cols-3 gap-4 max-w-3xl mx-auto ${marketingAnim.className}`}>
+          {/* DESKTOP: small centered strip, clearly smaller than the founders. */}
+          <div ref={marketingAnim.ref as any} className={`hidden md:flex justify-center gap-5 ${marketingAnim.className}`}>
             {skaleTeam.map((member) => (
-              <Card key={member.name} className="group bg-white shadow-sm border border-border/60 hover:shadow-md transition-all duration-300 overflow-hidden rounded-xl">
-                <div className="relative w-full aspect-[3/4] bg-muted overflow-hidden">
-                  <img
-                    src={member.image}
-                    alt={member.name}
-                    className={`${imgClass(member)} transition-transform duration-700 group-hover:scale-105`}
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
-                  <div className="absolute bottom-0 left-0 right-0 p-3">
-                    <h4 className="text-white text-sm font-bold leading-tight drop-shadow">{member.name}</h4>
-                    <p className="text-white/90 text-[11px] font-semibold tracking-wide uppercase mt-0.5">{member.role}</p>
+              <a
+                key={member.name}
+                href={member.linkedin}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group block w-36"
+              >
+                <Card className="bg-white shadow-sm border border-border/60 hover:shadow-md transition-all duration-300 overflow-hidden rounded-xl">
+                  <div className="relative w-full aspect-[4/5] bg-muted overflow-hidden">
+                    <img
+                      src={member.image}
+                      alt={member.name}
+                      className={`${imgClass(member)} transition-transform duration-700 group-hover:scale-105`}
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-black/5 to-transparent" />
                   </div>
-                </div>
-              </Card>
+                </Card>
+                <p className="mt-2 text-center text-xs font-bold leading-tight text-primary">{member.name}</p>
+                <p className="text-center text-[10px] uppercase tracking-wide text-steel-gray">{member.role}</p>
+              </a>
             ))}
           </div>
         </div>
