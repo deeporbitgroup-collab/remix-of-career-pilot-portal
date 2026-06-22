@@ -313,8 +313,10 @@ All colors MUST be HSL.
       @apply max-w-[640px] px-4;
     }
     
-    /* Buttons - Accessible touch targets (exclude minimal carousel dot indicators) */
-    button:not([aria-label^="Slide"]):not([aria-label^="Go to"]):not([aria-label^="Vai"]):not(.carousel-dot-btn), .btn {
+    /* Buttons - Accessible touch targets (exclude minimal carousel dot
+       indicators and role-based controls like checkboxes/switches, which set
+       their own small fixed size and must not be stretched to 44px). */
+    button:not([aria-label^="Slide"]):not([aria-label^="Go to"]):not([aria-label^="Vai"]):not(.carousel-dot-btn):not([role="checkbox"]):not([role="switch"]), .btn {
       @apply min-h-[44px];
     }
     

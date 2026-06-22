@@ -633,7 +633,17 @@ const ClientServicesPage = () => {
             Desktop: vertical stack (unchanged). Mobile: the package verticals
             become a horizontal swipe; the à-la-carte accordions are desktop-only
             (they reappear on mobile via the upcoming "Individual products" flow). */}
-        <div className="md:space-y-4 max-md:-mx-4 max-md:flex max-md:snap-x max-md:snap-mandatory max-md:gap-3 max-md:overflow-x-auto max-md:px-4 max-md:pb-3">
+        <div
+          className={
+            isPackageView
+              ? // Single deep-linked package: clean, full-width block flow (no
+                // horizontal swipe / negative-margin bleed that can clip the card).
+                "space-y-4"
+              : // Browsing all categories: mobile horizontal swipe with a peek of
+                // the next package.
+                "md:space-y-4 max-md:-mx-4 max-md:flex max-md:snap-x max-md:snap-mandatory max-md:gap-3 max-md:overflow-x-auto max-md:px-4 max-md:pb-3"
+          }
+        >
           {sortedCategories.map(category => {
           const Icon = categoryIcons[category] || Globe;
           const categoryServices = orderedGroupedServices[category];
@@ -643,7 +653,12 @@ const ClientServicesPage = () => {
           if (PACKAGE_CATEGORIES.includes(category)) {
             if (!pkg) return null;
             return (
-              <div key={category} className="max-md:snap-center max-md:shrink-0 max-md:w-[88vw]">
+              <div
+                key={category}
+                className={`max-md:snap-center max-md:shrink-0 max-md:min-w-0 ${
+                  isPackageView ? "max-md:w-full" : "max-md:w-[88vw]"
+                }`}
+              >
                 <PackageExperience
                   pkg={pkg}
                   components={packageComponents.filter((c) => c.package_id === pkg.id)}

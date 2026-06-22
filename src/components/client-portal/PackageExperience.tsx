@@ -11,7 +11,8 @@ import {
 } from "@/components/ui/accordion";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Sheet, SheetClose, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import {
   Plane,
@@ -297,13 +298,15 @@ const PackageExperience = ({
   const [removed, setRemoved] = useState<Set<string>>(new Set());
   const [packageInfoOpen, setPackageInfoOpen] = useState(false);
   const [bioAssociate, setBioAssociate] = useState<AssociatePreview | null>(null);
-  // Comparative add-on opt-in (mobile face). Default OFF — checking adds it to
-  // the cart as a packaged add-on and bumps the displayed total.
-  const [comparativeOn, setComparativeOn] = useState(false);
-  // Mobile-only: which "face" of the card is showing, and whether the (possibly
-  // long) included list is fully expanded. Desktop ignores both.
-  const [mobileView, setMobileView] = useState<"package" | "associate">("package");
-  const [showAllIncluded, setShowAllIncluded] = useState(false);
+  // Optional add-ons now live *inside* the package (no separate section). Each is
+  // a checkbox, OFF by default; selecting one bumps the displayed total.
+  const [selectedAddons, setSelectedAddons] = useState<Set<string>>(new Set());
+  // Comparative analysis is run by two specialists (one per university), so when
+  // it's selected we force a *second* Associate dedicated to the comparison.
+  const [secondAssociateId, setSecondAssociateId] = useState<string | null>(null);
+  // Mobile: the Associate picker opens in a focused bottom sheet behind a real
+  // pill CTA (replaces the old grey segmented tab).
+  const [associateSheetOpen, setAssociateSheetOpen] = useState(false);
 
   const Icon = categoryIcon[pkg.category] || Plane;
   const packageName = `${pkg.code_name} — ${pkg.subtitle}`;
@@ -362,20 +365,44 @@ const PackageExperience = ({
     return Array.from(names);
   }, [services, coreComponents, hasDemo]);
 
-  // The Comparative add-on (if present) can be opted in from the mobile face.
-  const comparativeAddon = useMemo(
-    () => addonComponents.find((c) => c.addon_type === "comparative") || null,
-    [addonComponents]
+  const isOutreachAddon = (c: PackageComponent) => c.addon_type === "outreach";
+  const isComparativeAddon = (c: PackageComponent) => c.addon_type === "comparative";
+
+  // Is at least one comparative add-on selected? That's what forces a 2nd Associate.
+  const comparativeSelected = useMemo(
+    () => addonComponents.some((c) => isComparativeAddon(c) && selectedAddons.has(c.id)),
+    [addonComponents, selectedAddons]
   );
-  const comparativeSurcharge = comparativeAddon ? Number(comparativeAddon.addon_price || 0) : 0;
+
+  // Surcharge for selected add-ons. Outreach add-ons are €0 upfront (billed per
+  // result), so they never move the package total.
+  const addonSurcharge = useMemo(
+    () =>
+      addonComponents.reduce(
+        (sum, c) =>
+          selectedAddons.has(c.id) && !isOutreachAddon(c) ? sum + Number(c.addon_price || 0) : sum,
+        0
+      ),
+    [addonComponents, selectedAddons]
+  );
 
   const total = useMemo(
     () =>
-      includedCore.reduce((sum, c) => sum + Number(c.internal_price) * c.quantity, 0) +
-      (comparativeOn ? comparativeSurcharge : 0),
-    [includedCore, comparativeOn, comparativeSurcharge]
+      includedCore.reduce((sum, c) => sum + Number(c.internal_price) * c.quantity, 0) + addonSurcharge,
+    [includedCore, addonSurcharge]
   );
   const fullPrice = Number(pkg.price);
+
+  const toggleAddon = (comp: PackageComponent, on: boolean) => {
+    setSelectedAddons((prev) => {
+      const next = new Set(prev);
+      if (on) next.add(comp.id);
+      else next.delete(comp.id);
+      return next;
+    });
+    // Dropping the last comparative add-on clears the now-pointless 2nd Associate.
+    if (!on && isComparativeAddon(comp)) setSecondAssociateId(null);
+  };
 
   // Distinct match values for the dropdown.
   const availableValues = useMemo(() => {
@@ -427,9 +454,16 @@ const PackageExperience = ({
     [associates, selectedAssociateId]
   );
 
-  // Mobile-only: a few faces to reassure (in the "Package" face) that every
-  // package is run 1:1 by a real Associate. Reuses the matched list.
-  const mobileFacePile = useMemo(() => matchableAssociates.slice(0, 4), [matchableAssociates]);
+  // The second Associate (comparison university specialist) and the list of
+  // candidates for it — anyone except the already-chosen primary Associate.
+  const secondAssociate = useMemo(
+    () => associates.find((a) => a.id === secondAssociateId) || null,
+    [associates, secondAssociateId]
+  );
+  const secondAssociateOptions = useMemo(
+    () => matchableAssociates.filter((a) => a.id !== selectedAssociateId),
+    [matchableAssociates, selectedAssociateId]
+  );
 
   const associateMatchLabel = (a: AssociatePreview) =>
     filterMode === "master"
@@ -455,6 +489,15 @@ const PackageExperience = ({
     }
     if (includedCore.length === 0) {
       toast.info("Keep at least one component in your package.");
+      return;
+    }
+    if (comparativeSelected && !secondAssociate) {
+      toast.info("Comparative analysis needs a second Associate for your comparison university.");
+      setAssociateSheetOpen(true);
+      return;
+    }
+    if (comparativeSelected && secondAssociate?.id === selectedAssociate.id) {
+      toast.info("Your second Associate must be different from the first.");
       return;
     }
     const groupId = `pkg-${pkg.id}-${Date.now()}`;
@@ -486,43 +529,39 @@ const PackageExperience = ({
       }
     });
 
-    // Comparative add-on opt-in (mobile): bill as a packaged add-on at addon_price.
-    if (comparativeOn && comparativeAddon?.service) {
+    // Selected optional add-ons. Comparative goes to the 2nd Associate (its own
+    // university specialist), outreach is billed per result (€0 upfront), and any
+    // other add-on stays with the primary Associate.
+    addonComponents.forEach((comp) => {
+      if (!comp.service || !selectedAddons.has(comp.id)) return;
+      const comparative = isComparativeAddon(comp);
+      const outreach = isOutreachAddon(comp);
+      const addonAssociate = comparative ? secondAssociate : outreach ? null : selectedAssociate;
       const addonService: Service = {
-        ...comparativeAddon.service,
-        price: Number(comparativeAddon.addon_price || 0),
+        ...comp.service,
+        price: outreach ? 0 : Number(comp.addon_price || 0),
       };
+      const addonMatch =
+        comparative && secondAssociate ? associateMatchLabel(secondAssociate) : matchValue;
       onAddToCart({
-        id: `${groupId}-${comparativeAddon.id}-addon`,
+        id: `${groupId}-${comp.id}-addon`,
         service: addonService,
-        associate: {
-          id: selectedAssociate.id,
-          first_name: selectedAssociate.first_name,
-          last_name: selectedAssociate.last_name,
-        },
-        university: filterMode === "sector" ? undefined : matchValue,
-        sector: filterMode === "sector" ? matchValue : undefined,
+        associate: addonAssociate
+          ? {
+              id: addonAssociate.id,
+              first_name: addonAssociate.first_name,
+              last_name: addonAssociate.last_name,
+            }
+          : null,
+        university: filterMode === "sector" ? undefined : addonMatch,
+        sector: filterMode === "sector" ? addonMatch : undefined,
         packageGroupId: groupId,
         packageName,
         packageRole: "addon",
       });
-    }
+    });
 
     toast.success(`${pkg.code_name} package added to cart!`);
-  };
-
-  // Add an Outreach-style add-on (pay-per-interview): €0 upfront, billed per result.
-  const addOutreachAddon = (comp: PackageComponent) => {
-    if (!comp.service) return;
-    const zeroService: Service = { ...comp.service, price: 0 };
-    onAddToCart({
-      id: `addon-${comp.id}-${Date.now()}`,
-      service: zeroService,
-      associate: null,
-      packageName,
-      packageRole: "addon",
-    });
-    toast.success("Outreach Power Pack added — billed €250 per interview secured.");
   };
 
   // Bullets: Study Plan / Entry Plan sits right under the Timeline/Roadmap row;
@@ -551,262 +590,317 @@ const PackageExperience = ({
     </li>
   );
 
+  // Optional add-on row — a clean, compact checkbox that lives inside the package
+  // (no separate add-ons section). OFF by default; the price sits on the right.
+  const renderAddonRow = (comp: PackageComponent) => {
+    const on = selectedAddons.has(comp.id);
+    const outreach = isOutreachAddon(comp);
+    const label = comp.label || comp.service?.name || "Add-on";
+    const priceTag = outreach
+      ? `€${Number(comp.addon_price || 0).toFixed(0)}/interview`
+      : `+€${Number(comp.addon_price || 0).toFixed(0)}`;
+    return (
+      <li
+        key={comp.id}
+        className={cn(
+          "flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm leading-snug transition-colors",
+          on
+            ? "bg-secondary/10 ring-1 ring-secondary/40"
+            : "bg-muted/40 ring-1 ring-border/40 hover:ring-secondary/30"
+        )}
+      >
+        <Checkbox
+          checked={on}
+          onCheckedChange={(c) => toggleAddon(comp, !!c)}
+          className="h-4 w-4 shrink-0 rounded-[5px]"
+          aria-label={`Add ${label}`}
+        />
+        <span className={cn("flex-1 font-medium", on ? "text-foreground" : "text-muted-foreground")}>
+          {label}
+        </span>
+        <span className="shrink-0 text-[11px] font-bold uppercase tracking-wide text-secondary">
+          {priceTag}
+        </span>
+      </li>
+    );
+  };
+
+  // Shown whenever a comparative add-on is selected: an elegant, minimal note
+  // explaining *why* a second Associate is required, plus the picker for it.
+  const renderSecondAssociatePicker = () => {
+    if (!comparativeSelected) return null;
+    return (
+      <div className="space-y-2 rounded-xl border border-secondary/40 bg-secondary/5 p-3">
+        <div className="flex items-start gap-2">
+          <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-secondary/15 text-secondary">
+            <Users className="h-3.5 w-3.5" />
+          </span>
+          <div className="min-w-0">
+            <p className="text-sm font-semibold text-foreground">A second Associate for your comparison</p>
+            <p className="text-xs leading-snug text-muted-foreground">
+              Your comparison looks at two universities, and each one is analysed by an Associate who
+              actually studied there. Choose the Associate for your comparison university.
+            </p>
+          </div>
+        </div>
+        <Select value={secondAssociateId || ""} onValueChange={(v) => setSecondAssociateId(v || null)}>
+          <SelectTrigger className="h-9 w-full border-secondary/30 text-sm">
+            <SelectValue placeholder="Choose your second Associate" />
+          </SelectTrigger>
+          <SelectContent className="max-h-72">
+            {secondAssociateOptions.map((a) => (
+              <SelectItem key={a.id} value={a.id}>
+                {a.first_name} {a.last_name}
+                {associateMatchLabel(a) ? ` · ${associateMatchLabel(a)}` : ""}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+    );
+  };
+
   return (
     <div style={accentStyle}>
       {/* ===================== MOBILE compact layout ===================== */}
-      {/* Sits on a solid surface so every label stays legible over the page's
-          dark photo background (desktop uses the separate block below). The
-          content is split into two "faces" — Package / Associate — toggled by a
-          segmented control so each face fits one screen without long vertical
-          scrolling. The price + CTA stay at the bottom on both faces. */}
-      <div className="md:hidden flex flex-col gap-2 rounded-2xl border border-border/50 bg-background/95 p-2.5 shadow-xl backdrop-blur-sm">
-        {/* Header */}
-        <div className="flex items-center gap-2">
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/15 text-primary">
-            <Icon className="h-4 w-4" />
+      {/* One tight card read at a glance: name → price → included & optional
+          services. The Associate picker lives behind a real pill CTA that opens
+          a focused bottom sheet, so the card itself stays short and scannable. */}
+      <div className="md:hidden flex w-full min-w-0 max-w-full flex-col gap-3 overflow-hidden rounded-2xl border border-border/50 bg-background/95 p-3 shadow-xl backdrop-blur-sm">
+        {/* Name + price — the two things that matter most, side by side up top */}
+        <div className="flex items-start gap-2.5">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/15 text-primary">
+            <Icon className="h-5 w-5" />
           </div>
-          <div className="min-w-0">
+          <div className="min-w-0 flex-1">
             <h2 className="text-lg font-extrabold uppercase leading-tight tracking-wide text-primary">
               <span className="inline-block border-b-2 border-secondary pb-0.5">{pkg.code_name}</span>
             </h2>
-            <p className="truncate text-[11px] text-foreground/70">{pkg.subtitle}</p>
+            <p className="truncate text-[11px] text-foreground/60">{pkg.subtitle}</p>
           </div>
-          <button
-            type="button"
-            onClick={() => setPackageInfoOpen(true)}
-            className="ml-auto inline-flex shrink-0 items-center gap-1 rounded-full border border-primary/20 px-2 py-0.5 text-[11px] font-medium text-primary"
-          >
-            <Info className="h-3.5 w-3.5" /> Info
-          </button>
-        </div>
-
-        {/* Segmented control — switch between the package and the associate face */}
-        <div className="grid grid-cols-2 gap-1 rounded-xl bg-muted p-1">
-          <button
-            type="button"
-            onClick={() => setMobileView("package")}
-            className={`flex items-center justify-center gap-1.5 rounded-lg py-2 text-[13px] font-semibold transition-colors ${
-              mobileView === "package" ? "bg-background text-primary shadow-sm" : "text-muted-foreground"
-            }`}
-          >
-            <Sparkles className="h-4 w-4" /> Package
-          </button>
-          <button
-            type="button"
-            onClick={() => setMobileView("associate")}
-            className={`flex items-center justify-center gap-1.5 rounded-lg py-2 text-[13px] font-semibold transition-colors ${
-              mobileView === "associate" ? "bg-background text-primary shadow-sm" : "text-muted-foreground"
-            }`}
-          >
-            <Users className="h-4 w-4" />
-            <span className="max-w-[8ch] truncate">{selectedAssociate ? selectedAssociate.first_name : "Associate"}</span>
-            {selectedAssociate ? (
-              <Check className="h-3.5 w-3.5 shrink-0 text-primary" />
-            ) : (
-              <span className="h-2 w-2 shrink-0 rounded-full bg-amber-500" aria-hidden="true" />
+          <div className="shrink-0 text-right">
+            <div className="text-2xl font-extrabold leading-none text-primary">€{total.toFixed(0)}</div>
+            {total < fullPrice && (
+              <div className="text-[11px] text-muted-foreground line-through">€{fullPrice.toFixed(0)}</div>
             )}
-          </button>
+            {removed.size > 0 && (
+              <span className="mt-0.5 inline-block rounded-full bg-amber-100 px-1.5 text-[10px] font-semibold text-amber-700">
+                Customized
+              </span>
+            )}
+          </div>
         </div>
 
-        {/* ---------- PACKAGE FACE ---------- */}
-        {mobileView === "package" && (
-          <div className="flex flex-col gap-2">
-            {/* What's included — inline checkboxes on removable rows, plus
-                the descriptive package bullets (Study Plan, live presentations,
-                WhatsApp). Tap a checkbox to drop a component and shrink the
-                price live. */}
-            <div className="rounded-xl border border-border/50 bg-gradient-to-br from-card to-muted/30 p-2.5 shadow-sm">
-              <p className="mb-2 flex items-center justify-between text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-                <span>What's included</span>
-                <span className="font-normal normal-case text-muted-foreground/70">uncheck to remove</span>
-              </p>
-              <ul className="grid grid-cols-1 gap-1.5">
-                {coreComponents.map((comp) => {
-                  const isRemoved = removed.has(comp.id);
-                  const label = comp.label || comp.service?.name || "Component";
-                  return (
-                    <li
-                      key={comp.id}
-                      className={`flex items-center gap-2 rounded-lg border px-2.5 py-1.5 text-sm leading-snug shadow-sm transition-colors ${
-                        isRemoved
-                          ? "border-border/30 bg-muted/20 text-muted-foreground"
-                          : comp.is_removable
-                          ? "border-border/40 bg-background/80 hover:border-primary/30"
-                          : "border-border/40 bg-background/80"
-                      }`}
-                    >
-                      {comp.is_removable ? (
-                        <Checkbox
-                          checked={!isRemoved}
-                          onCheckedChange={(checked) => {
-                            setRemoved((prev) => {
-                              const next = new Set(prev);
-                              if (checked) next.delete(comp.id);
-                              else next.add(comp.id);
-                              return next;
-                            });
-                          }}
-                          className="h-4 w-4 shrink-0"
-                          aria-label={`Toggle ${label}`}
-                        />
-                      ) : (
-                        <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary">
-                          <Check className="h-2.5 w-2.5" strokeWidth={3} />
-                        </span>
-                      )}
-                      <span className={`flex-1 font-medium ${isRemoved ? "line-through" : ""}`}>
-                        {label}
-                      </span>
-                    </li>
-                  );
-                })}
-
-                {/* Descriptive bullets that belong to the package (Study Plan,
-                    "Projects presented live online", "Dedicated WhatsApp group"). */}
-                {(pkg.bullets || []).map((b) => renderBulletRow(b))}
-
-                {/* Comparative add-on — opt in to compare a 2nd target.
-                    Off by default; toggling on adds the surcharge to the total. */}
-                {comparativeAddon && (
-                  <li
-                    className={`flex items-center gap-2 rounded-lg border px-2.5 py-1.5 text-sm leading-snug shadow-sm transition-colors ${
-                      comparativeOn
-                        ? "border-secondary/40 bg-secondary/10"
-                        : "border-border/40 bg-background/80 hover:border-secondary/30"
-                    }`}
-                  >
-                    <Checkbox
-                      checked={comparativeOn}
-                      onCheckedChange={(checked) => setComparativeOn(!!checked)}
-                      className="h-4 w-4 shrink-0"
-                      aria-label="Toggle Comparative Presentation"
-                    />
-                    <span className={`flex-1 font-medium ${comparativeOn ? "text-foreground" : "text-muted-foreground"}`}>
-                      {comparativeAddon.label || comparativeAddon.service?.name || "Comparative Presentation"}
-                    </span>
-                    <span className="text-[10px] font-semibold uppercase tracking-wide text-secondary">
-                      +€{Number(comparativeAddon.addon_price || 0).toFixed(0)}
-                    </span>
-                  </li>
+        {/* Included services + bullets — clean, compact rows (no chunky boxes) */}
+        <ul className="flex flex-col gap-0.5">
+          {coreComponents.map((comp) => {
+            const isRemoved = removed.has(comp.id);
+            const label = comp.label || comp.service?.name || "Component";
+            return (
+              <li key={comp.id} className="flex items-center gap-2.5 px-1 py-1.5 text-[13px] leading-snug">
+                {comp.is_removable ? (
+                  <Checkbox
+                    checked={!isRemoved}
+                    onCheckedChange={(checked) => {
+                      setRemoved((prev) => {
+                        const next = new Set(prev);
+                        if (checked) next.delete(comp.id);
+                        else next.add(comp.id);
+                        return next;
+                      });
+                    }}
+                    className="h-4 w-4 shrink-0 rounded-[5px]"
+                    aria-label={`Toggle ${label}`}
+                  />
+                ) : (
+                  <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary">
+                    <Check className="h-2.5 w-2.5" strokeWidth={3} />
+                  </span>
                 )}
-              </ul>
-            </div>
-
-            {/* Associate reassurance — small face pile makes it obvious every
-                package is run 1:1 by a real Associate. Taps through to the picker. */}
-            {mobileFacePile.length > 0 && (
-              <button
-                type="button"
-                onClick={() => setMobileView("associate")}
-                className="flex items-center gap-3 rounded-xl border border-secondary/30 bg-secondary/5 p-2.5 text-left"
-              >
-                <div className="flex shrink-0 items-center">
-                  {mobileFacePile.map((a, i) => (
-                    <span
-                      key={a.id}
-                      className={`flex h-7 w-7 items-center justify-center overflow-hidden rounded-full border-2 border-background bg-primary/10 text-[10px] font-semibold text-primary ${i > 0 ? "-ml-2" : ""}`}
-                    >
-                      {a.photo_url ? (
-                        <img src={a.photo_url} alt="" className="h-full w-full object-cover object-top" />
-                      ) : (
-                        <>
-                          {(a.first_name?.[0] ?? "").toUpperCase()}
-                          {(a.last_name?.[0] ?? "").toUpperCase()}
-                        </>
-                      )}
-                    </span>
-                  ))}
-                  {matchableAssociates.length > mobileFacePile.length && (
-                    <span className="-ml-2 flex h-7 w-7 items-center justify-center rounded-full border-2 border-background bg-primary text-[10px] font-bold text-primary-foreground">
-                      +{matchableAssociates.length - mobileFacePile.length}
-                    </span>
-                  )}
-                </div>
-                <span className="flex-1 text-xs leading-snug text-foreground/80">
-                  <span className="font-semibold text-foreground">Always guided 1:1 by a real Associate.</span> Tap to choose yours.
+                <span className={cn("flex-1 font-medium text-foreground/90", isRemoved && "text-muted-foreground line-through")}>
+                  {label}
                 </span>
-              </button>
-            )}
+              </li>
+            );
+          })}
+          {(pkg.bullets || []).map((b) => (
+            <li key={b.label} className="flex items-center gap-2.5 px-1 py-1.5 text-[13px] leading-snug">
+              <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary">
+                <Check className="h-2.5 w-2.5" strokeWidth={3} />
+              </span>
+              <span className="flex-1 font-medium text-foreground/90">
+                {b.label}
+                {isWhatsAppBullet(b.label) && <WhatsAppMark />}
+              </span>
+            </li>
+          ))}
+        </ul>
+
+        {/* Optional add-ons — now inside the package, OFF by default */}
+        {addonComponents.length > 0 && (
+          <div className="space-y-1.5">
+            <p className="px-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+              Optional add-ons
+            </p>
+            <ul className="flex flex-col gap-1.5">
+              {addonComponents.map((comp) => (comp.service ? renderAddonRow(comp) : null))}
+            </ul>
+            {comparativeSelected && <div className="pt-0.5">{renderSecondAssociatePicker()}</div>}
           </div>
         )}
 
-        {/* ---------- ASSOCIATE FACE ---------- */}
-        {mobileView === "associate" && (
-          <div className="rounded-xl border border-secondary/30 bg-card p-2">
-            <p className="mb-1 flex items-center gap-1.5 text-xs font-semibold">
-              <Users className="h-3.5 w-3.5 text-primary" /> Choose your Associate
+        {/* Associate — a real pill CTA (not a grey tab) that opens the picker */}
+        <button
+          type="button"
+          onClick={() => setAssociateSheetOpen(true)}
+          className={cn(
+            "flex items-center gap-2.5 rounded-full px-3 py-2.5 text-sm font-semibold shadow-sm transition-colors",
+            selectedAssociate
+              ? "border border-primary/30 bg-primary/5 text-foreground"
+              : "bg-gradient-to-r from-primary to-secondary text-primary-foreground"
+          )}
+        >
+          {selectedAssociate ? (
+            <>
+              <span className="flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary/10 text-[11px] font-bold text-primary">
+                {selectedAssociate.photo_url ? (
+                  <img src={selectedAssociate.photo_url} alt="" className="h-full w-full object-cover object-top" />
+                ) : (
+                  <>
+                    {(selectedAssociate.first_name?.[0] ?? "").toUpperCase()}
+                    {(selectedAssociate.last_name?.[0] ?? "").toUpperCase()}
+                  </>
+                )}
+              </span>
+              <span className="flex-1 truncate text-left leading-tight">
+                {selectedAssociate.first_name} {selectedAssociate.last_name}
+                {comparativeSelected && (
+                  <span className="block truncate text-[11px] font-normal text-muted-foreground">
+                    {secondAssociate ? `+ ${secondAssociate.first_name} · comparison` : "Pick your 2nd Associate"}
+                  </span>
+                )}
+              </span>
+              <span className="shrink-0 text-[12px] font-semibold text-primary">Change</span>
+            </>
+          ) : (
+            <>
+              <Users className="h-5 w-5 shrink-0" />
+              <span className="flex-1 text-left">Choose your Associate</span>
+              <span className="h-2 w-2 shrink-0 rounded-full bg-amber-300" aria-hidden="true" />
+            </>
+          )}
+        </button>
+
+        {/* Add to cart */}
+        <Button
+          className="h-11 w-full rounded-xl bg-gradient-to-r from-primary to-secondary text-sm font-bold shadow-md"
+          onClick={() => {
+            if (!selectedAssociate) {
+              setAssociateSheetOpen(true);
+              toast.info("Pick your Associate to continue.");
+              return;
+            }
+            addPackageToCart();
+          }}
+        >
+          <ShoppingCart className="mr-2 h-4 w-4" />
+          {selectedAssociate ? `Add — €${total.toFixed(0)}` : "Choose your Associate"}
+        </Button>
+
+        {/* Full details */}
+        <button
+          type="button"
+          onClick={() => setPackageInfoOpen(true)}
+          className="inline-flex items-center justify-center gap-1.5 text-[12px] font-medium text-primary"
+        >
+          <Info className="h-3.5 w-3.5" /> See full details
+        </button>
+      </div>
+
+      {/* Mobile Associate picker — a focused bottom sheet behind the pill CTA.
+          Roomy photos (so faces aren't cropped) and one clear card at a time. */}
+      <Sheet open={associateSheetOpen} onOpenChange={setAssociateSheetOpen}>
+        <SheetContent
+          side="bottom"
+          style={accentStyle}
+          className="md:hidden flex h-[90vh] flex-col gap-0 rounded-t-2xl p-0"
+        >
+          <SheetHeader className="space-y-1 border-b px-4 py-3 text-left">
+            <SheetTitle className="flex items-center gap-2 text-base">
+              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-secondary text-primary-foreground">
+                <Users className="h-4 w-4" />
+              </span>
+              Choose your Associate
+            </SheetTitle>
+            <p className="text-xs text-muted-foreground">
+              Your mentor already did exactly what you want to do — they run your {pkg.code_name} 1:1.
             </p>
+          </SheetHeader>
+
+          <div className="flex-1 space-y-3 overflow-y-auto px-4 py-3">
             <Select value={associateFilter || "__all__"} onValueChange={(v) => setAssociateFilter(v === "__all__" ? "" : v)}>
-              <SelectTrigger className="h-8 w-full border-primary/20 text-xs"><SelectValue placeholder="Pick from the list" /></SelectTrigger>
+              <SelectTrigger className="h-9 w-full border-primary/20 text-sm">
+                <SelectValue placeholder="Pick from the list" />
+              </SelectTrigger>
               <SelectContent className="max-h-72">
                 <SelectItem value="__all__">All {filterLabel.toLowerCase()}</SelectItem>
-                {availableValues.map((v) => (<SelectItem key={v} value={v}>{v}</SelectItem>))}
+                {availableValues.map((v) => (
+                  <SelectItem key={v} value={v}>{v}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
-            <div className="mt-1.5">
-              {filteredAssociates.length === 0 ? (
-                <p className="py-4 text-center text-xs text-muted-foreground">No associates match yet. Try another filter.</p>
-              ) : (
-                <AssociateChoiceCarousel
-                  associates={filteredAssociates}
-                  fillHeight
-                  compact
-                  isSelected={(a) => selectedAssociateId === a.id}
-                  onToggle={(a) => setSelectedAssociateId((prev) => (prev === a.id ? null : a.id))}
-                  getSectors={(a) => {
-                    const ap = a as AssociatePreview;
-                    return [ap.sector, ap.sector_2].filter((s): s is string => !!s && s.trim() !== "");
-                  }}
-                  renderActions={(a) => {
-                    const ap = a as AssociatePreview;
-                    return (
-                      <>
-                        <Button variant="outline" size="sm" className="h-7 flex-1 border-primary/20 px-2 text-xs" onClick={(e) => { e.stopPropagation(); setBioAssociate(ap); }}>
-                          <FileText className="mr-1 h-3.5 w-3.5" /> Overview
-                        </Button>
-                        {ap.linkedin_url && (
-                          <Button asChild variant="outline" size="sm" className="h-7 flex-1 border-primary/20 px-2 text-xs">
-                            <a href={ap.linkedin_url.startsWith("http") ? ap.linkedin_url : `https://${ap.linkedin_url}`} target="_blank" rel="noopener noreferrer">
-                              <Linkedin className="mr-1 h-3.5 w-3.5" /> LinkedIn
-                            </a>
-                          </Button>
-                        )}
-                      </>
-                    );
-                  }}
-                />
-              )}
-            </div>
-          </div>
-        )}
 
-        {/* Price + add to cart — stays visible on both faces */}
-        <div className="rounded-xl border border-primary/20 bg-primary/5 p-2.5">
-          <div className="flex items-center justify-between gap-2">
-            <div className="flex items-baseline gap-2">
-              <span className="text-2xl font-extrabold text-primary">€{total.toFixed(0)}</span>
-              {total < fullPrice && <span className="text-xs text-muted-foreground line-through">€{fullPrice.toFixed(0)}</span>}
-            </div>
-            {removed.size > 0 && (
-              <Badge variant="secondary" className="bg-amber-100 text-amber-700">Customized</Badge>
+            {filteredAssociates.length === 0 ? (
+              <p className="py-10 text-center text-sm text-muted-foreground">
+                No associates match yet. Try another filter.
+              </p>
+            ) : (
+              <AssociateChoiceCarousel
+                associates={filteredAssociates}
+                isSelected={(a) => selectedAssociateId === a.id}
+                onToggle={(a) => setSelectedAssociateId((prev) => (prev === a.id ? null : a.id))}
+                getSectors={(a) => {
+                  const ap = a as AssociatePreview;
+                  return [ap.sector, ap.sector_2].filter((s): s is string => !!s && s.trim() !== "");
+                }}
+                renderActions={(a) => {
+                  const ap = a as AssociatePreview;
+                  return (
+                    <>
+                      <Button variant="outline" size="sm" className="flex-1 border-primary/20" onClick={(e) => { e.stopPropagation(); setBioAssociate(ap); }}>
+                        <FileText className="mr-1.5 h-4 w-4" /> Overview
+                      </Button>
+                      {ap.linkedin_url && (
+                        <Button asChild variant="outline" size="sm" className="flex-1 border-primary/20">
+                          <a href={ap.linkedin_url.startsWith("http") ? ap.linkedin_url : `https://${ap.linkedin_url}`} target="_blank" rel="noopener noreferrer">
+                            <Linkedin className="mr-1.5 h-4 w-4" /> LinkedIn
+                          </a>
+                        </Button>
+                      )}
+                    </>
+                  );
+                }}
+              />
             )}
+
+            {renderSecondAssociatePicker()}
           </div>
-          <Button
-            className="mt-2 h-10 w-full bg-gradient-to-r from-primary to-secondary text-sm font-bold shadow-md"
-            onClick={() => {
-              if (!selectedAssociate) {
-                setMobileView("associate");
-                toast.info("Pick your Associate to continue.");
-                return;
-              }
-              addPackageToCart();
-            }}
-          >
-            <ShoppingCart className="mr-2 h-4 w-4" />
-            {selectedAssociate ? `Add with ${selectedAssociate.first_name}` : "Choose your Associate"}
-          </Button>
-        </div>
-      </div>
+
+          <div className="border-t p-3">
+            <Button
+              className="h-11 w-full rounded-xl bg-gradient-to-r from-primary to-secondary text-sm font-bold"
+              disabled={!selectedAssociate || (comparativeSelected && !secondAssociate)}
+              onClick={() => setAssociateSheetOpen(false)}
+            >
+              {!selectedAssociate
+                ? "Select an Associate"
+                : comparativeSelected && !secondAssociate
+                ? "Pick your 2nd Associate above"
+                : `Done — ${selectedAssociate.first_name}`}
+            </Button>
+          </div>
+        </SheetContent>
+      </Sheet>
 
       {/* ===================== DESKTOP layout (unchanged) ===================== */}
       <div className="hidden md:block space-y-3">
@@ -904,6 +998,19 @@ const PackageExperience = ({
                 })}
                 {trailingBullets.map(renderBulletRow)}
               </ul>
+
+              {/* Optional add-ons — same place as the rest of the services, OFF by
+                  default. Selecting one updates the price above live. */}
+              {addonComponents.length > 0 && (
+                <div className="mt-2.5 border-t border-border/40 pt-2.5">
+                  <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                    Optional add-ons
+                  </p>
+                  <ul className="grid grid-cols-1 gap-1.5">
+                    {addonComponents.map((comp) => (comp.service ? renderAddonRow(comp) : null))}
+                  </ul>
+                </div>
+              )}
             </div>
 
             <button
@@ -1091,12 +1198,17 @@ const PackageExperience = ({
               />
             )}
 
+            {comparativeSelected && renderSecondAssociatePicker()}
+
             <div className="mt-auto">
               {selectedAssociate ? (
                 <div className="flex items-center gap-2 rounded-lg border border-primary/30 bg-primary/5 px-3 py-2 text-sm">
                   <Check className="h-4 w-4 shrink-0 text-primary" />
                   <span className="text-foreground">
                     <span className="font-semibold">{selectedAssociate.first_name} {selectedAssociate.last_name}</span> will manage your {pkg.code_name} package.
+                    {comparativeSelected && secondAssociate && (
+                      <> Comparison led by <span className="font-semibold">{secondAssociate.first_name} {secondAssociate.last_name}</span>.</>
+                    )}
                   </span>
                 </div>
               ) : (
@@ -1170,80 +1282,6 @@ const PackageExperience = ({
             </div>
           </AccordionContent>
         </AccordionItem>
-
-        {addonComponents.length > 0 && (
-          <AccordionItem value="extensions" className="rounded-lg border-none backdrop-blur-sm bg-background/90 shadow-lg overflow-hidden">
-            <AccordionTrigger className="px-6 py-3 hover:no-underline bg-gradient-to-r from-secondary/10 to-transparent hover:from-secondary/20">
-              <div className="flex items-center gap-3 text-left">
-                <Sparkles className="h-5 w-5 text-secondary" />
-                <div>
-                  <span className="text-xl font-bold text-secondary">Extensions</span>
-                  <p className="text-sm text-muted-foreground mt-0.5">Optional add-ons to supercharge your {pkg.code_name}.</p>
-                </div>
-              </div>
-            </AccordionTrigger>
-            <AccordionContent className="px-6 pb-6 pt-2 space-y-4">
-              {addonComponents.map((comp) => {
-                const svc = comp.service;
-                if (!svc) return null;
-                const isOutreach = comp.addon_type === "outreach";
-                return (
-                  <Card key={comp.id} className="group flex flex-col overflow-hidden border-secondary/20 transition-all hover:border-secondary/50 hover:shadow-xl md:flex-row">
-                    <div className="relative h-40 w-full overflow-hidden bg-gradient-to-br from-secondary/15 to-primary/15 md:h-auto md:w-56 md:shrink-0">
-                      {getPreviewImage?.(svc.name) ? (
-                        <>
-                          <img src={getPreviewImage(svc.name)} alt={svc.name} loading="lazy" className="absolute inset-0 h-full w-full object-cover object-top transition-transform duration-500 group-hover:scale-105" />
-                          <div className="absolute inset-0 bg-gradient-to-t from-card via-card/30 to-transparent md:bg-gradient-to-r" />
-                        </>
-                      ) : (
-                        <div className="absolute inset-0 flex items-center justify-center">
-                          <Users className="h-12 w-12 text-secondary/30" />
-                        </div>
-                      )}
-                    </div>
-                    <div className="flex flex-1 flex-col p-5">
-                      <div className="flex items-start justify-between gap-3">
-                        <div>
-                          <h3 className="text-lg font-semibold">{comp.label || svc.name}</h3>
-                          <p className="mt-1 text-sm text-muted-foreground line-clamp-3">{svc.description}</p>
-                        </div>
-                        <Badge className="bg-secondary text-secondary-foreground font-bold shadow shrink-0">
-                          {isOutreach ? `€${Number(comp.addon_price).toFixed(0)}/interview` : `+€${Number(comp.addon_price).toFixed(0)}`}
-                        </Badge>
-                      </div>
-                      <p className="mt-2 inline-flex items-center gap-1.5 text-xs font-medium text-secondary">
-                        {isOutreach ? (
-                          <><Sparkles className="h-3.5 w-3.5" />€0 upfront — you only pay per interview secured.</>
-                        ) : (
-                          <><Users className="h-3.5 w-3.5" />Includes a 2nd university &amp; a 2nd Associate — you'll pick both in the next step.</>
-                        )}
-                      </p>
-                      <div className="mt-auto flex flex-wrap gap-2 pt-4">
-                        <Button variant="outline" size="sm" className="border-secondary/30 hover:bg-secondary/5 hover:text-secondary" onClick={() => onShowInfo(svc)}>
-                          <Info className="mr-1.5 h-3.5 w-3.5" />
-                          Details
-                        </Button>
-                        {hasDemo?.(svc.name) && (
-                          <Button variant="outline" size="sm" className="border-secondary/30 hover:bg-secondary/5 hover:text-secondary" onClick={() => onDownloadPdf(svc.name, pkg.category)}>
-                            <FileText className="mr-1.5 h-3.5 w-3.5" />
-                            Demo
-                          </Button>
-                        )}
-                        <Button
-                          className="ml-auto bg-gradient-to-r from-secondary to-primary font-semibold shadow-md hover:opacity-90"
-                          onClick={() => (isOutreach ? addOutreachAddon(comp) : onSelectService(svc))}
-                        >
-                          <ShoppingCart className="mr-2 h-4 w-4" />
-                          Add Extension
-                        </Button>
-                      </div>
-                    </div>
-                  </Card>
-                );
-              })}
-            </AccordionContent>
-          </AccordionItem>
-        )}
       </Accordion>
       </div>
       {/* ===================== END DESKTOP layout ===================== */}
