@@ -218,7 +218,7 @@ const HeroSection = () => {
   };
 
   return (
-    <section ref={heroRef} className="relative mt-[56px] h-[calc(100svh-56px)] md:mt-16 md:h-[calc(100vh-4rem)] flex flex-col md:flex-row overflow-hidden">
+    <section ref={heroRef} className="relative mt-[56px] min-h-[calc(100svh-56px)] md:mt-16 md:h-[calc(100vh-4rem)] flex flex-col md:flex-row overflow-visible md:overflow-hidden">
 
       {/* Right Section - full width (platforms panel removed) */}
       <div className={`relative flex items-center min-h-full md:min-h-0 transition-all duration-500 ease-in-out ${
@@ -228,7 +228,7 @@ const HeroSection = () => {
         <div className="absolute inset-0 bg-white" />
 
         {/* ============== MOBILE LAYOUT ============== */}
-        <div className="md:hidden relative z-10 w-full h-full flex flex-col justify-center gap-4 overflow-hidden px-4 pt-3 pb-3">
+        <div className="md:hidden relative z-10 w-full min-h-[calc(100svh-56px)] flex flex-col justify-center gap-6 px-4 pt-5 pb-8">
           {/* Decorative gradient blobs */}
           <div className="pointer-events-none absolute inset-0 overflow-hidden">
             <div className="absolute -top-24 -left-20 w-72 h-72 rounded-full bg-primary/15 blur-3xl animate-pulse" style={{ animationDuration: '6s' }} />
