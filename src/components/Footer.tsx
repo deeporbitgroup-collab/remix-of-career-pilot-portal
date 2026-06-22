@@ -73,6 +73,20 @@ const Footer = () => {
                   ? 'Opportunità, scadenze e aggiornamenti — direttamente nella tua inbox.'
                   : 'Opportunities, deadlines and updates — straight to your inbox.'}
               </p>
+              {/* What the newsletter covers — quick topic chips */}
+              <ul className="mb-3 flex flex-wrap gap-2">
+                {(language === 'it'
+                  ? ['Ranking università', 'Articoli di esperti & studenti', 'Codici sconto sui servizi', 'Visti & burocrazia', 'Job market']
+                  : ['University rankings', 'Expert & student articles', 'Service discount codes', 'Visa & bureaucracy', 'Job market insights']
+                ).map((topic) => (
+                  <li
+                    key={topic}
+                    className="rounded-full border border-white/15 bg-white/5 px-2.5 py-1 text-[11px] font-medium text-gray-200"
+                  >
+                    {topic}
+                  </li>
+                ))}
+              </ul>
               <form onSubmit={handleSubscribe} className="flex flex-col gap-2 sm:flex-row">
                 <input
                   type="email"

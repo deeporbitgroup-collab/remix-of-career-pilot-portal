@@ -98,18 +98,28 @@ const BookingPopup = ({ isOpen, onClose }: BookingPopupProps) => {
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="w-[92vw] max-w-[92vw] sm:max-w-md mx-auto max-h-[88vh] overflow-y-auto p-4 sm:p-6">
-        <DialogHeader className="space-y-1">
-          <DialogTitle className="flex items-center gap-2 text-primary text-base sm:text-xl">
-            <Plane className="h-4 w-4 sm:h-5 sm:w-5" />
-            {language === 'it' ? 'Prenota il tuo Check-in Gratuito' : 'Book Your Free Check-in'}
-          </DialogTitle>
-        </DialogHeader>
+      <DialogContent className="w-[92vw] max-w-[400px] mx-auto max-h-[90vh] overflow-y-auto p-0 gap-0 rounded-2xl overflow-hidden">
+        {/* Gradient header band — compact + reassuring */}
+        <div className="bg-gradient-sky px-5 py-4 text-white">
+          <DialogHeader className="space-y-1 text-left">
+            <DialogTitle className="flex items-center gap-2 text-white text-lg font-bold">
+              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white/20">
+                <Plane className="h-4 w-4" />
+              </span>
+              {language === 'it' ? 'Check-in Gratuito' : 'Free Check-in'}
+            </DialogTitle>
+            <p className="text-[12px] leading-snug text-white/85">
+              {language === 'it'
+                ? 'Una call 1:1 gratuita per fare il punto sul tuo piano. Nessun impegno.'
+                : 'A free 1:1 call to map out your plan. No commitment.'}
+            </p>
+          </DialogHeader>
+        </div>
 
-        <form onSubmit={handleSubmit} className="space-y-2.5 sm:space-y-4">
-          <div>
-            <Label htmlFor="name" className="text-steel-gray flex items-center gap-2 text-[13px] sm:text-base">
-              <User className="h-3.5 w-3.5 md:h-4 md:w-4" />
+        <form onSubmit={handleSubmit} className="space-y-3 px-5 py-4">
+          <div className="space-y-1">
+            <Label htmlFor="name" className="text-steel-gray flex items-center gap-1.5 text-xs font-medium">
+              <User className="h-3.5 w-3.5" />
               {language === 'it' ? 'Nome' : 'Name'}
             </Label>
             <Input
@@ -119,13 +129,13 @@ const BookingPopup = ({ isOpen, onClose }: BookingPopupProps) => {
               onChange={(e) => setName(e.target.value)}
               placeholder={language === 'it' ? 'Il tuo nome completo' : 'Your full name'}
               required
-              className="h-10 sm:min-h-[44px] text-[14px] sm:text-[16px]"
+              className="h-10 rounded-lg text-[16px]"
             />
           </div>
 
-          <div>
-            <Label htmlFor="email" className="text-steel-gray flex items-center gap-2 text-[13px] sm:text-base">
-              <Mail className="h-3.5 w-3.5 md:h-4 md:w-4" />
+          <div className="space-y-1">
+            <Label htmlFor="email" className="text-steel-gray flex items-center gap-1.5 text-xs font-medium">
+              <Mail className="h-3.5 w-3.5" />
               Email
             </Label>
             <Input
@@ -135,13 +145,13 @@ const BookingPopup = ({ isOpen, onClose }: BookingPopupProps) => {
               onChange={(e) => setEmail(e.target.value)}
               placeholder={language === 'it' ? 'il.tuo@email.com' : 'youremail@gmail.com'}
               required
-              className="h-10 sm:min-h-[44px] text-[14px] sm:text-[16px]"
+              className="h-10 rounded-lg text-[16px]"
             />
           </div>
 
-          <div>
-            <Label htmlFor="phone" className="text-steel-gray flex items-center gap-2 text-[13px] sm:text-base">
-              <Phone className="h-3.5 w-3.5 md:h-4 md:w-4" />
+          <div className="space-y-1">
+            <Label htmlFor="phone" className="text-steel-gray flex items-center gap-1.5 text-xs font-medium">
+              <Phone className="h-3.5 w-3.5" />
               {language === 'it' ? 'Telefono' : 'Phone'}
             </Label>
             <Input
@@ -151,47 +161,47 @@ const BookingPopup = ({ isOpen, onClose }: BookingPopupProps) => {
               onChange={(e) => setPhone(e.target.value)}
               placeholder={language === 'it' ? '+39 123 456 7890' : '+1 234 567 8900'}
               required
-              className="h-10 sm:min-h-[44px] text-[14px] sm:text-[16px]"
+              className="h-10 rounded-lg text-[16px]"
             />
           </div>
-          
-          <div>
-            <Label htmlFor="service" className="text-steel-gray text-[13px] sm:text-base">
-              {language === 'it' ? 'Seleziona Servizio' : 'Select Service'}
+
+          <div className="space-y-1">
+            <Label htmlFor="service" className="text-steel-gray text-xs font-medium">
+              {language === 'it' ? 'Servizio' : 'Service'}
             </Label>
             <Select value={service} onValueChange={setService}>
-              <SelectTrigger className="h-10 sm:min-h-[44px] text-[14px] sm:text-[16px]">
+              <SelectTrigger className="h-10 rounded-lg text-[16px]">
                 <SelectValue placeholder={language === 'it' ? 'Scegli il tuo volo...' : 'Choose your flight...'} />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="takeoff">
-                  {language === 'it' 
-                    ? '✈️ Takeoff - Ingresso Universitario' 
+                  {language === 'it'
+                    ? '✈️ Takeoff - Ingresso Universitario'
                     : '✈️ Takeoff - University Admission'}
                 </SelectItem>
                 <SelectItem value="layover">
-                  {language === 'it' 
-                    ? '🔄 Layover - Trasferimento' 
+                  {language === 'it'
+                    ? '🔄 Layover - Trasferimento'
                     : '🔄 Layover - Transfer'}
                 </SelectItem>
                 <SelectItem value="altitude">
-                  {language === 'it' 
-                    ? '🚀 Altitude - Stage & Carriera' 
+                  {language === 'it'
+                    ? '🚀 Altitude - Stage & Carriera'
                     : '🚀 Altitude - Internship & Career'}
                 </SelectItem>
                 <SelectItem value="summit">
-                  {language === 'it' 
-                    ? '🎓 Summit - Università → Master' 
+                  {language === 'it'
+                    ? '🎓 Summit - Università → Master'
                     : '🎓 Summit - University → Master'}
                 </SelectItem>
               </SelectContent>
             </Select>
           </div>
-          
+
           <div className="grid grid-cols-2 gap-3">
-            <div>
-              <Label htmlFor="date" className="text-steel-gray flex items-center gap-2 text-[13px] sm:text-base">
-                <Calendar className="h-3.5 w-3.5 md:h-4 md:w-4" />
+            <div className="space-y-1">
+              <Label htmlFor="date" className="text-steel-gray flex items-center gap-1.5 text-xs font-medium">
+                <Calendar className="h-3.5 w-3.5" />
                 {language === 'it' ? 'Data' : 'Date'}
               </Label>
               <Input
@@ -200,16 +210,16 @@ const BookingPopup = ({ isOpen, onClose }: BookingPopupProps) => {
                 value={date}
                 onChange={(e) => setDate(e.target.value)}
                 min={new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]}
-                className="h-10 sm:min-h-[44px] text-[14px] sm:text-[16px]"
+                className="h-10 rounded-lg text-[16px]"
               />
             </div>
-            
-            <div>
-              <Label htmlFor="time" className="text-steel-gray text-[13px] sm:text-base">
+
+            <div className="space-y-1">
+              <Label htmlFor="time" className="text-steel-gray text-xs font-medium">
                 {language === 'it' ? 'Orario (Londra)' : 'Time (London)'}
               </Label>
               <Select value={time} onValueChange={setTime}>
-                <SelectTrigger className="h-10 sm:min-h-[44px] text-[14px] sm:text-[16px]">
+                <SelectTrigger className="h-10 rounded-lg text-[16px]">
                   <SelectValue placeholder={language === 'it' ? 'Ora' : 'Hour'} />
                 </SelectTrigger>
                 <SelectContent>
@@ -229,38 +239,38 @@ const BookingPopup = ({ isOpen, onClose }: BookingPopupProps) => {
             </div>
           </div>
 
-          <div>
-            <Label htmlFor="notes" className="text-steel-gray flex items-center gap-2 text-[13px] sm:text-base">
-              <MessageSquare className="h-3.5 w-3.5 md:h-4 md:w-4" />
+          <div className="space-y-1">
+            <Label htmlFor="notes" className="text-steel-gray flex items-center gap-1.5 text-xs font-medium">
+              <MessageSquare className="h-3.5 w-3.5" />
               {language === 'it' ? 'Note (opzionale)' : 'Notes (optional)'}
             </Label>
             <Textarea
               id="notes"
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              placeholder={language === 'it' 
-                ? 'Eventuali note o richieste specifiche...' 
-                : 'Any notes or specific requests...'}
-              className="min-h-[64px] sm:min-h-[80px] text-[14px] sm:text-[16px]"
+              placeholder={language === 'it'
+                ? 'Eventuali note o richieste...'
+                : 'Any notes or requests...'}
+              className="min-h-[52px] rounded-lg text-[16px]"
             />
           </div>
-          
-          <div className="flex gap-2 pt-2">
+
+          <div className="flex gap-2 pt-1">
             <Button
               type="button"
               variant="outline"
               onClick={onClose}
-              className="flex-1 h-10 sm:min-h-[48px] text-[14px] sm:text-[16px]"
+              className="h-11 px-4 text-[15px]"
             >
               {language === 'it' ? 'Annulla' : 'Cancel'}
             </Button>
             <Button
               type="submit"
               disabled={isSubmitting}
-              className="flex-1 h-10 sm:min-h-[48px] text-[14px] sm:text-[16px] bg-gradient-sky text-white hover:opacity-90 disabled:opacity-50"
+              className="flex-1 h-11 text-[15px] font-semibold bg-gradient-sky text-white hover:opacity-90 disabled:opacity-50"
             >
-              {isSubmitting 
-                ? (language === 'it' ? 'Invio in corso...' : 'Sending...') 
+              {isSubmitting
+                ? (language === 'it' ? 'Invio...' : 'Sending...')
                 : (language === 'it' ? 'Prenota Check-in' : 'Book Check-in')}
             </Button>
           </div>

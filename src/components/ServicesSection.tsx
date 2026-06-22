@@ -458,7 +458,7 @@ const ServicesSection = () => {
             }}
           >
             <div className="flex gap-3" style={{ paddingBottom: '16px' }}>
-              {services.map((service, index) => (
+              {services.slice(0, 4).map((service, index) => (
                 <div
                   key={index}
                   className="flex-none snap-center"
@@ -762,7 +762,7 @@ const ServicesSection = () => {
 
           {/* Dots Indicator */}
           <div className="flex justify-center gap-2 mt-4">
-            {services.map((_, index) => (
+            {services.slice(0, 4).map((_, index) => (
               <button
                 key={index}
                 onClick={() => scrollToCard(index)}
@@ -777,24 +777,67 @@ const ServicesSection = () => {
           </div>
         </div>
 
-        {/* Mobile: Talent Pool box under the Flight Plans (Area 4) */}
-        <div className="md:hidden mb-10">
-          <div className="rounded-2xl border-2 border-secondary/40 bg-card p-5 shadow-card-custom">
-            <div className="mb-2 flex items-center gap-3">
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gradient-sky text-white">
-                <Users className="h-6 w-6" />
-              </div>
-              <div>
-                <h3 className="text-lg font-bold text-primary">Talent Pool</h3>
-                <p className="text-xs font-semibold text-sky">Get discovered by companies</p>
+        {/* Mobile: Talent Pool + Job Updates Hub — horizontal sneak-peek.
+            Talent Pool is the main card; Job Updates Hub peeks in from the
+            right edge inviting a swipe. Lowered (mt-8) so it clears the
+            services carousel dots above it. */}
+        <div className="md:hidden mt-8 mb-10">
+          <div
+            className="flex gap-3 overflow-x-auto snap-x snap-mandatory -mx-4 px-4 pb-2 services-carousel"
+            style={{ WebkitOverflowScrolling: 'touch' }}
+          >
+            {/* Talent Pool — primary card */}
+            <div className="flex-none snap-center" style={{ width: 'min(86%, 340px)' }}>
+              <div className="flex h-full flex-col rounded-2xl border-2 border-secondary/40 bg-card p-5 shadow-card-custom">
+                <div className="mb-2 flex items-center gap-3">
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gradient-sky text-white">
+                    <Users className="h-6 w-6" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold text-primary">Talent Pool</h3>
+                    <p className="text-xs font-semibold text-sky">
+                      {language === 'it' ? 'Fatti scoprire dalle aziende' : 'Get discovered by companies'}
+                    </p>
+                  </div>
+                </div>
+                <p className="flex-1 text-sm leading-relaxed text-steel-gray">
+                  {language === 'it'
+                    ? 'Crea il tuo profilo: le aziende partner esaminano il tuo CV e ti contattano direttamente con opportunità di stage e lavoro — gratis per gli studenti.'
+                    : 'Create your profile and let partner companies review your CV and reach out directly with internship and job opportunities — free for students.'}
+                </p>
+                <Button className="mt-3 w-full bg-gradient-sky text-white hover:opacity-90" onClick={() => window.location.href = '/talent-pool'}>
+                  {language === 'it' ? 'Vai alla Talent Pool' : 'Go to Talent Pool'} <ArrowRight className="ml-1 h-4 w-4" />
+                </Button>
               </div>
             </div>
-            <p className="text-sm leading-relaxed text-steel-gray">
-              Create your profile and let our partner companies review your CV and reach out directly with internship and job opportunities — free for students.
-            </p>
-            <Button className="mt-3 w-full bg-gradient-sky text-white hover:opacity-90" onClick={() => window.location.href = '/talent-pool'}>
-              Go to Talent Pool <ArrowRight className="ml-1 h-4 w-4" />
-            </Button>
+
+            {/* Job Updates Hub — peeks from the right */}
+            <div className="flex-none snap-center" style={{ width: 'min(86%, 340px)' }}>
+              <div className="flex h-full flex-col rounded-2xl border-2 border-[#25D366]/40 bg-card p-5 shadow-card-custom">
+                <div className="mb-2 flex items-center gap-3">
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#25D366] text-white">
+                    <MessageCircle className="h-6 w-6" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold text-primary">Job Updates Hub</h3>
+                    <p className="text-xs font-semibold text-[#25D366]">
+                      {language === 'it' ? 'Aggiornamenti WhatsApp' : 'WhatsApp Updates'}
+                    </p>
+                  </div>
+                </div>
+                <p className="flex-1 text-sm leading-relaxed text-steel-gray">
+                  {language === 'it'
+                    ? 'Unisciti al gruppo WhatsApp esclusivo: scadenze, nuove offerte e stage in Italia e UK, divisi per settore.'
+                    : 'Join our exclusive WhatsApp group: deadlines, new openings and internships in Italy & the UK, sorted by sector.'}
+                </p>
+                <Button asChild className="mt-3 w-full bg-[#25D366] text-white hover:bg-[#1ea952]">
+                  <a href="https://wa.me/447826932893" target="_blank" rel="noopener noreferrer">
+                    <MessageCircle className="mr-1 h-4 w-4" />
+                    {language === 'it' ? 'Unisciti su WhatsApp' : 'Join on WhatsApp'}
+                  </a>
+                </Button>
+              </div>
+            </div>
           </div>
         </div>
 
