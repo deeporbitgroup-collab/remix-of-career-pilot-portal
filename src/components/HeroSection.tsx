@@ -246,29 +246,6 @@ const HeroSection = () => {
           {/* Center group: trust faces + check-in box + two pathways — fills the
               screen between the logo and the social-proof marquees, no scroll. */}
           <div className="relative z-10 flex-1 min-h-0 flex flex-col justify-center gap-3 animate-fade-in opacity-0 w-full max-w-[420px] mx-auto" style={{ animationDelay: '0.3s', animationFillMode: 'forwards' }}>
-            {/* Trust: real Associate faces — small, noticeable, not invasive */}
-            {associatePhotos.length > 0 && (
-              <div className="flex items-center justify-center gap-2">
-                <div className="flex -space-x-2.5">
-                  {associatePhotos.slice(0, 6).map((a, i) => (
-                    <img
-                      key={i}
-                      src={a.photo_url}
-                      alt={`${a.first_name} ${a.last_name}`}
-                      loading="lazy"
-                      className="h-8 w-8 rounded-full ring-2 ring-white object-cover object-top shadow-sm"
-                    />
-                  ))}
-                  <div className="h-8 w-8 rounded-full ring-2 ring-white bg-primary text-primary-foreground flex items-center justify-center text-[9px] font-bold shadow-sm">
-                    {language === 'it' ? '+altri' : '+more'}
-                  </div>
-                </div>
-                <span className="text-[11px] font-semibold tracking-wide text-muted-foreground">
-                  {language === 'it' ? 'Mentor verificati' : 'Verified mentors'}
-                </span>
-              </div>
-            )}
-
             {/* Book free check-in — primary box, opens the same booking modal as desktop */}
             <button
               onClick={() => setIsBookingOpen(true)}
@@ -329,6 +306,30 @@ const HeroSection = () => {
                 </span>
               </button>
             </div>
+
+            {/* Trust: real Associate faces — sit right under the two service
+                tiles, small and noticeable but not invasive. */}
+            {associatePhotos.length > 0 && (
+              <div className="flex items-center justify-center gap-2">
+                <div className="flex -space-x-2.5">
+                  {associatePhotos.slice(0, 6).map((a, i) => (
+                    <img
+                      key={i}
+                      src={a.photo_url}
+                      alt={`${a.first_name} ${a.last_name}`}
+                      loading="lazy"
+                      className="h-8 w-8 rounded-full ring-2 ring-white object-cover object-top shadow-sm"
+                    />
+                  ))}
+                  <div className="h-8 w-8 rounded-full ring-2 ring-white bg-primary text-primary-foreground flex items-center justify-center text-[9px] font-bold shadow-sm">
+                    {language === 'it' ? '+altri' : '+more'}
+                  </div>
+                </div>
+                <span className="text-[11px] font-semibold tracking-wide text-muted-foreground">
+                  {language === 'it' ? 'Mentor verificati' : 'Verified mentors'}
+                </span>
+              </div>
+            )}
           </div>
 
           {/* Social proof footer: two gentle, moving marquees — universities our
