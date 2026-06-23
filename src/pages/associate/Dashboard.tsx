@@ -441,6 +441,34 @@ const AssociateDashboard = () => {
               {/* Quick onboarding */}
               <QuickOnboarding language={language} />
             </div>
+
+            {/* Need help? — direct WhatsApp line */}
+            <Card className="mt-4 border-[#25D366]/40">
+              <CardContent className="flex flex-col items-start gap-3 p-5 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex items-start gap-3">
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#25D366]/15 text-[#25D366]">
+                    <MessageCircle className="h-6 w-6" />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-semibold">
+                      {isEn ? 'Got a question? We\'re here to help' : 'Hai una domanda? Siamo qui per aiutarti'}
+                    </h3>
+                    <p className="text-sm text-muted-foreground">
+                      {isEn
+                        ? "For anything you need, don't hesitate to write to us on WhatsApp — we'll get back to you quickly."
+                        : 'Per qualsiasi cosa ti serva, non esitare a scriverci su WhatsApp — ti risponderemo a breve.'}
+                    </p>
+                  </div>
+                </div>
+                <Button asChild className="w-full shrink-0 bg-[#25D366] text-white hover:bg-[#1ea952] sm:w-auto">
+                  <a href="https://wa.me/447826932893" target="_blank" rel="noopener noreferrer">
+                    <MessageCircle className="mr-2 h-4 w-4" />
+                    {isEn ? 'Chat on WhatsApp' : 'Scrivici su WhatsApp'}
+                    <span className="ml-2 hidden font-normal opacity-90 sm:inline">+44 7826 932893</span>
+                  </a>
+                </Button>
+              </CardContent>
+            </Card>
           </TabsContent>
 
           {/* === PROFILE === */}

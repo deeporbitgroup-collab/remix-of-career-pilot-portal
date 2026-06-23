@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Building, Users, Shield, Sparkles } from "lucide-react";
+import { Building, Users, Shield } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { TalentPoolLanguageProvider, useTalentPoolLanguage } from "@/contexts/TalentPoolLanguageContext";
 import { useStaggeredAnimation } from "@/hooks/useScrollAnimation";
@@ -65,34 +65,9 @@ const TalentPoolContent = () => {
       </nav>
 
       {/* Main Content */}
-      <div ref={containerRef} className="relative z-10 flex-1 md:min-h-0 flex flex-col justify-start md:justify-center container mx-auto px-4 md:px-6 py-4 md:py-4">
-        {/* WIP / Expansion Banner */}
-        <div className="max-w-4xl mx-auto w-full mb-3 md:mb-4">
-          <div className="relative overflow-hidden rounded-xl border-2 border-amber-400/60 bg-gradient-to-r from-amber-500/15 via-amber-400/10 to-amber-500/15 backdrop-blur-md shadow-xl shadow-amber-500/10 p-4 md:p-5">
-            <div className="absolute -top-10 -right-10 w-32 h-32 bg-amber-400/20 rounded-full blur-2xl" />
-            <div className="relative flex items-start gap-3 md:gap-4">
-              <div className="h-10 w-10 md:h-11 md:w-11 rounded-lg bg-amber-400/20 border border-amber-400/50 flex items-center justify-center flex-shrink-0">
-                <Sparkles className="h-5 w-5 md:h-6 md:w-6 text-amber-300 animate-pulse" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex flex-wrap items-center gap-2 mb-1.5">
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-400/20 border border-amber-400/50 text-amber-200 text-[10px] font-bold tracking-widest uppercase">
-                    Work in Progress
-                  </span>
-                  <h3 className="text-sm md:text-base font-bold text-amber-50 tracking-tight">
-                    Expanding our company partnerships
-                  </h3>
-                </div>
-                <p className="text-xs md:text-sm text-amber-50/90 leading-relaxed">
-                  We are currently adding new partner companies to the Talent Pool to bring you greater opportunities. Early access will open soon — stay tuned.
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-
+      <div ref={containerRef} className="relative z-10 flex-1 md:min-h-0 flex flex-col justify-center container mx-auto px-4 md:px-6 py-6 md:py-4">
         {/* Hero Section */}
-        <div className="text-center mb-3 md:mb-4">
+        <div className="text-center mb-5 md:mb-6">
           <div {...getItemProps(0)} className="inline-flex items-center gap-2 bg-slate-900/70 border border-sky-500/40 text-sky-100 px-4 py-2 rounded text-xs font-bold mb-4 backdrop-blur-sm shadow-lg">
             <Shield className="h-3.5 w-3.5 text-sky-400" />
             {t('landing.hero.badge')}
@@ -111,7 +86,7 @@ const TalentPoolContent = () => {
         </div>
         
         {/* Value Proposition - Elite Style (desktop only; mobile keeps the screen to the access cards) */}
-        <div className="hidden md:grid md:grid-cols-2 gap-4 max-w-4xl mx-auto mb-4">
+        <div className="hidden md:grid md:grid-cols-2 gap-4 max-w-4xl mx-auto mb-6">
           <div {...getItemProps(5)} className="bg-slate-900/50 border border-emerald-500/30 rounded-lg p-5 backdrop-blur-md hover:border-emerald-500/50 transition-all shadow-lg">
             <div className="flex items-center gap-4">
               <div className="h-12 w-12 rounded bg-gradient-to-br from-emerald-500/20 to-emerald-600/10 border border-emerald-500/30 flex items-center justify-center flex-shrink-0">
