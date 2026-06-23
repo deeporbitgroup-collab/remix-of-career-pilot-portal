@@ -32,7 +32,7 @@ const Index = () => {
       <div id="experts">
         <ExpertsSection />
       </div>
-      <div id="partnerships">
+      <div id="partnerships" className="scroll-mt-20">
         <PartnershipsSection />
       </div>
       {/* Mobile redesign: these sections are desktop-only ("Fly higher with us",

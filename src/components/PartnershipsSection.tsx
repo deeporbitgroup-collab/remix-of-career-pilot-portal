@@ -4,6 +4,7 @@ import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious
 import { useLanguage } from "@/contexts/LanguageContext";
 import { translations } from "@/utils/translations";
 import { useScrollAnimation } from "@/hooks/useScrollAnimation";
+import { partnerships } from "@/data/partnerships";
 
 const PartnershipsSection = () => {
   const [api, setApi] = useState<CarouselApi>();
@@ -11,56 +12,11 @@ const PartnershipsSection = () => {
   const [count, setCount] = useState(0);
   const { language } = useLanguage();
   const t = translations[language];
-  
+
   // Scroll animations
   const titleAnimation = useScrollAnimation({ animationClass: 'animate-fade-up', delay: 100 });
   const carouselAnimation = useScrollAnimation({ animationClass: 'animate-scale-up', delay: 200 });
   const benefitsAnimation = useScrollAnimation({ animationClass: 'animate-fade-up', delay: 300 });
-
-  const partnerships = [
-    {
-      name: "CareerBoost",
-      logo: "/lovable-uploads/21bfcf0d-9e21-47fa-8c78-4f617ce0f8f9.png",
-      translationKey: 'careerBoost' as const,
-      color: "from-primary to-primary-light"
-    },
-    {
-      name: "Alpha Test",
-      logo: "/lovable-uploads/fc76acb0-80ad-4df5-a9c2-f8182b9512c0.png",
-      translationKey: 'alphaTest' as const,
-      color: "from-sky-blue to-secondary"
-    },
-    {
-      name: "Astra Network",
-      logo: "/lovable-uploads/263cca68-108a-4d1e-a97f-6baea557b69d.png",
-      translationKey: 'astra' as const,
-      color: "from-secondary to-accent"
-    },
-    {
-      name: "LanguageBoost",
-      logo: "/lovable-uploads/93f6b7f1-52a9-4366-8ca1-0704791a269e.png",
-      translationKey: 'languageBoost' as const,
-      color: "from-accent to-primary"
-    },
-    {
-      name: "PrepScholar",
-      logo: "/lovable-uploads/a632dfab-ff19-4aed-a581-9b6b885a5b48.png",
-      translationKey: 'prepScholar' as const,
-      color: "from-primary to-secondary"
-    },
-    {
-      name: "Talflow.ai",
-      logo: "/lovable-uploads/72e20d3a-ce5f-453c-8561-4d7e39e3d3df.png",
-      translationKey: 'talflow' as const,
-      color: "from-sky-blue to-primary"
-    },
-    {
-      name: "Qora AI",
-      logo: "/lovable-uploads/e49b4817-aef6-4f9b-b693-d089fe82a4fc.png",
-      translationKey: 'qora' as const,
-      color: "from-primary-light to-sky-blue"
-    }
-  ];
 
   useEffect(() => {
     if (!api) {

@@ -31,7 +31,17 @@ import {
 } from "lucide-react";
 import AssociateChoiceCarousel from "./AssociateChoiceCarousel";
 import CoveredLogos from "./CoveredLogos";
+import PartnerMaterials from "./PartnerMaterials";
 import whatsappLogo from "@/assets/whatsapp-logo.png";
+
+// The package's "Study Plan" bullet reads richer than the raw DB label: it
+// promises the month-by-month plan plus access to discounted partner resources.
+// The text wraps inside the card (it's never truncated), so it stays readable
+// without breaking the layout.
+const displayBulletLabel = (label: string): string =>
+  /study plan/i.test(label)
+    ? "Study plan month by month, with access to our best discounted resources"
+    : label;
 
 // The "Dedicated WhatsApp group with your Associate" bullet gets a small
 // WhatsApp glyph rendered inline, sized to the surrounding text and sitting
@@ -624,7 +634,7 @@ const PackageExperience = ({
         <Check className="h-3 w-3" strokeWidth={3} />
       </span>
       <span className="flex-1 font-medium text-foreground/90">
-        {b.label}
+        {displayBulletLabel(b.label)}
         {isWhatsAppBullet(b.label) && <WhatsAppMark />}
       </span>
     </li>
@@ -790,12 +800,12 @@ const PackageExperience = ({
             );
           })}
           {(pkg.bullets || []).map((b) => (
-            <li key={b.label} className="flex items-center gap-2.5 px-1 py-1.5 text-[13px] leading-snug">
-              <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary">
+            <li key={b.label} className="flex items-start gap-2.5 px-1 py-1.5 text-[13px] leading-snug">
+              <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary">
                 <Check className="h-2.5 w-2.5" strokeWidth={3} />
               </span>
               <span className="flex-1 font-medium text-foreground/90">
-                {b.label}
+                {displayBulletLabel(b.label)}
                 {isWhatsAppBullet(b.label) && <WhatsAppMark />}
               </span>
             </li>
@@ -901,6 +911,10 @@ const PackageExperience = ({
         >
           <Info className="h-3.5 w-3.5" /> See full details
         </button>
+
+        {/* Partner materials — minimal strip at the very bottom of the card.
+            Links to the homepage "Our Partnerships" section. */}
+        <PartnerMaterials />
       </div>
 
       {/* Mobile Associate picker — a focused bottom sheet behind the pill CTA.
@@ -1156,6 +1170,11 @@ const PackageExperience = ({
                 the package name, price and bullet list above. */}
             <CoveredLogos kind={pkg.category === "Altitude" ? "companies" : "universities"} />
 
+            {/* Partner materials — minimal, low-emphasis strip of the partner
+                brands whose material ships inside the project. Links to the
+                homepage "Our Partnerships" section. */}
+            <PartnerMaterials />
+
             {/* Price block */}
             <div className="rounded-xl border border-primary/20 bg-primary/5 p-3">
               <div className="flex items-end justify-between">
@@ -1405,7 +1424,7 @@ const PackageExperience = ({
                 <Check className="mt-0.5 h-5 w-5 shrink-0 text-primary/60" />
                 <div>
                   <p className="font-semibold text-foreground">
-                    {b.label}
+                    {displayBulletLabel(b.label)}
                     {isWhatsAppBullet(b.label) && <WhatsAppMark />}
                   </p>
                   <p className="text-sm text-muted-foreground leading-relaxed">{b.info}</p>
