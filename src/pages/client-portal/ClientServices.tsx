@@ -280,18 +280,18 @@ const ClientServicesPage = () => {
     return false;
   };
 
-  // Function to download PDF
+  // Resolve the demo/sample PDF path for a service in a given vertical.
+  const getDemoPdfPath = (serviceName: string, category: string): string | null => {
+    if (category === "Take Off") return getExamplePdf(serviceName);
+    if (category === "Layover") return getLayoverExamplePdf(serviceName);
+    if (category === "Summit") return getSummitExamplePdf(serviceName);
+    if (category === "Altitude") return getAltitudeExamplePdf(serviceName);
+    return null;
+  };
+
+  // Function to download a single PDF
   const handleDownloadPdf = (serviceName: string, category: string) => {
-    let pdfPath: string | null = null;
-    if (category === "Take Off") {
-      pdfPath = getExamplePdf(serviceName);
-    } else if (category === "Layover") {
-      pdfPath = getLayoverExamplePdf(serviceName);
-    } else if (category === "Summit") {
-      pdfPath = getSummitExamplePdf(serviceName);
-    } else if (category === "Altitude") {
-      pdfPath = getAltitudeExamplePdf(serviceName);
-    }
+    const pdfPath = getDemoPdfPath(serviceName, category);
     if (pdfPath) {
       const link = document.createElement('a');
       link.href = pdfPath;
@@ -685,6 +685,7 @@ const ClientServicesPage = () => {
                   onAddToCart={handleAddToCart}
                   onShowInfo={(svc) => setInfoService(svc)}
                   onDownloadPdf={handleDownloadPdf}
+                  getDemoPdfPath={getDemoPdfPath}
                   getPreviewImage={(name) => getServicePreview(category, name)}
                   hasDemo={(name) => hasDemoPdf(name, category)}
                 />

@@ -33,6 +33,7 @@ import {
 import AssociateChoiceCarousel from "./AssociateChoiceCarousel";
 import CoveredLogos from "./CoveredLogos";
 import PartnerMaterials from "./PartnerMaterials";
+import { zipFiles, type ZipEntry } from "@/lib/zipFiles";
 import whatsappLogo from "@/assets/whatsapp-logo.png";
 
 // The package's "Study Plan" bullet reads richer than the raw DB label: it
@@ -132,6 +133,8 @@ interface PackageExperienceProps {
   onAddToCart: (item: GuestCartItem) => void;
   onShowInfo: (service: Service) => void;
   onDownloadPdf: (name: string, category: string) => void;
+  /** Resolve a demo PDF path so all demos can be bundled into one .zip. */
+  getDemoPdfPath?: (name: string, category: string) => string | null;
   getPreviewImage?: (name: string) => string | undefined;
   hasDemo?: (name: string) => boolean;
 }
@@ -301,6 +304,7 @@ const PackageExperience = ({
   onAddToCart,
   onShowInfo,
   onDownloadPdf,
+  getDemoPdfPath,
   getPreviewImage,
   hasDemo,
 }: PackageExperienceProps) => {
@@ -617,25 +621,77 @@ const PackageExperience = ({
     toast.success(`${pkg.code_name} package added to cart!`);
   };
 
-  // Download every demo/sample PDF for this vertical at once. Browsers throttle
-  // bursts of downloads, so the files are triggered one-by-one with a small gap;
-  // a toast confirms what's happening. (iOS Safari may still limit how many
-  // simultaneous downloads it accepts.)
+  const triggerBlobDownload = (blob: Blob, filename: string) => {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  };
+
+  const safeFileName = (name: string) =>
+    name.replace(/[\\/:*?"<>|]+/g, " ").replace(/\s+/g, " ").trim();
+
+  // Bundle every demo/sample PDF for this vertical into a SINGLE .zip and
+  // download it — one file, so it works reliably everywhere (iOS Safari
+  // included). Falls back to staggered one-by-one downloads if the paths can't
+  // be resolved for any reason.
   const downloadAllDemos = async () => {
     if (downloadingDemos || demoPdfNames.length === 0) return;
     setDownloadingDemos(true);
-    toast.success(
-      demoPdfNames.length === 1
-        ? "Downloading the demo PDF…"
-        : `Downloading all ${demoPdfNames.length} demo PDFs…`
-    );
     try {
-      for (let i = 0; i < demoPdfNames.length; i++) {
-        onDownloadPdf(demoPdfNames[i], pkg.category);
-        if (i < demoPdfNames.length - 1) {
-          await new Promise((resolve) => setTimeout(resolve, 800));
+      const paths = getDemoPdfPath
+        ? demoPdfNames
+            .map((name) => ({ name, path: getDemoPdfPath(name, pkg.category) }))
+            .filter((x): x is { name: string; path: string } => !!x.path)
+        : [];
+
+      if (paths.length === 0) {
+        // Fallback: trigger each via the single-file handler, staggered.
+        toast.success(`Downloading ${demoPdfNames.length} demo PDFs…`);
+        for (let i = 0; i < demoPdfNames.length; i++) {
+          onDownloadPdf(demoPdfNames[i], pkg.category);
+          if (i < demoPdfNames.length - 1) await new Promise((r) => setTimeout(r, 800));
         }
+        return;
       }
+
+      toast.success(
+        paths.length === 1
+          ? "Downloading the demo PDF…"
+          : `Preparing a zip with all ${paths.length} demo PDFs…`
+      );
+
+      const entries: ZipEntry[] = [];
+      const usedNames = new Set<string>();
+      for (const { name, path } of paths) {
+        const res = await fetch(path);
+        if (!res.ok) continue;
+        const data = new Uint8Array(await res.arrayBuffer());
+        let fileName = `${safeFileName(name)}.pdf`;
+        let n = 2;
+        while (usedNames.has(fileName.toLowerCase())) fileName = `${safeFileName(name)} (${n++}).pdf`;
+        usedNames.add(fileName.toLowerCase());
+        entries.push({ name: fileName, data });
+      }
+
+      if (entries.length === 0) {
+        toast.error("Couldn't load the demo files. Please try again.");
+        return;
+      }
+
+      if (entries.length === 1) {
+        triggerBlobDownload(new Blob([entries[0].data], { type: "application/pdf" }), entries[0].name);
+      } else {
+        triggerBlobDownload(zipFiles(entries), `${safeFileName(pkg.code_name)} demos.zip`);
+        toast.success(`${entries.length} demo PDFs downloaded as a zip.`);
+      }
+    } catch (e) {
+      console.error("download all demos failed", e);
+      toast.error("Couldn't download the demos. Please try again.");
     } finally {
       setDownloadingDemos(false);
     }
