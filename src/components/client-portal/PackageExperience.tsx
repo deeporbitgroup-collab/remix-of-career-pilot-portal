@@ -28,6 +28,7 @@ import {
   Briefcase,
   ArrowLeftRight,
   Download,
+  Loader2,
 } from "lucide-react";
 import AssociateChoiceCarousel from "./AssociateChoiceCarousel";
 import CoveredLogos from "./CoveredLogos";
@@ -320,6 +321,8 @@ const PackageExperience = ({
   // Mobile: the Associate picker opens in a focused bottom sheet behind a real
   // pill CTA (replaces the old grey segmented tab).
   const [associateSheetOpen, setAssociateSheetOpen] = useState(false);
+  // Mobile "download all demos" button — disabled while the batch runs.
+  const [downloadingDemos, setDownloadingDemos] = useState(false);
 
   const Icon = categoryIcon[pkg.category] || Plane;
   const packageName = `${pkg.code_name} — ${pkg.subtitle}`;
@@ -614,6 +617,30 @@ const PackageExperience = ({
     toast.success(`${pkg.code_name} package added to cart!`);
   };
 
+  // Download every demo/sample PDF for this vertical at once. Browsers throttle
+  // bursts of downloads, so the files are triggered one-by-one with a small gap;
+  // a toast confirms what's happening. (iOS Safari may still limit how many
+  // simultaneous downloads it accepts.)
+  const downloadAllDemos = async () => {
+    if (downloadingDemos || demoPdfNames.length === 0) return;
+    setDownloadingDemos(true);
+    toast.success(
+      demoPdfNames.length === 1
+        ? "Downloading the demo PDF…"
+        : `Downloading all ${demoPdfNames.length} demo PDFs…`
+    );
+    try {
+      for (let i = 0; i < demoPdfNames.length; i++) {
+        onDownloadPdf(demoPdfNames[i], pkg.category);
+        if (i < demoPdfNames.length - 1) {
+          await new Promise((resolve) => setTimeout(resolve, 800));
+        }
+      }
+    } finally {
+      setDownloadingDemos(false);
+    }
+  };
+
   // Bullets: Study Plan / Entry Plan sits right under the Timeline/Roadmap row;
   // the rest trail the component list. Everything renders as one uniform,
   // separator-free list so the package reads like many products.
@@ -906,14 +933,35 @@ const PackageExperience = ({
           </>
         )}
 
-        {/* Full details */}
-        <button
-          type="button"
-          onClick={() => setPackageInfoOpen(true)}
-          className="inline-flex items-center justify-center gap-1.5 text-[12px] font-medium text-primary"
-        >
-          <Info className="h-3.5 w-3.5" /> See full details
-        </button>
+        {/* Full details + (optional) download-all-demos — a small, unobtrusive
+            secondary row at the very bottom of the card. */}
+        <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-[12px] font-medium text-primary">
+          <button
+            type="button"
+            onClick={() => setPackageInfoOpen(true)}
+            className="inline-flex items-center gap-1.5"
+          >
+            <Info className="h-3.5 w-3.5" /> See full details
+          </button>
+          {demoPdfNames.length > 0 && (
+            <>
+              <span aria-hidden="true" className="text-border">•</span>
+              <button
+                type="button"
+                onClick={downloadAllDemos}
+                disabled={downloadingDemos}
+                className="inline-flex items-center gap-1.5 disabled:opacity-60"
+              >
+                {downloadingDemos ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <Download className="h-3.5 w-3.5" />
+                )}
+                {downloadingDemos ? "Downloading…" : "Download all demos"}
+              </button>
+            </>
+          )}
+        </div>
       </div>
 
       {/* Mobile Associate picker — a focused bottom sheet behind the pill CTA.
