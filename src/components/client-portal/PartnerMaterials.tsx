@@ -1,6 +1,16 @@
 import { cn } from "@/lib/utils";
 import { partnerships } from "@/data/partnerships";
 
+// Insert an invisible break opportunity (zero-width space, U+200B) at camelCase
+// boundaries and before a dot, so long brand words wrap at a CLEAN point
+// ("Career"/"Boost", "Language"/"Boost") instead of breaking mid-word. Short
+// names stay on one line; the break only kicks in when the cell is too narrow.
+const ZWSP = String.fromCharCode(0x200b);
+const breakName = (name: string): string =>
+  name
+    .replace(/([a-z0-9])([A-Z])/g, `$1${ZWSP}$2`)
+    .replace(/\.(?=\S)/g, `${ZWSP}.`);
+
 /**
  * A small caption + one even row of partnership logos, each with its name
  * underneath (every brand shares the width equally so they all fit on a single
@@ -29,8 +39,8 @@ const PartnerMaterials = ({ className }: { className?: string }) => (
               className="max-h-full max-w-full object-contain p-[3px]"
             />
           </span>
-          <span className="w-full break-words text-center text-[9px] font-medium leading-tight text-muted-foreground line-clamp-2 md:text-[10px]">
-            {p.name}
+          <span className="w-full text-center text-[9px] font-medium leading-tight text-muted-foreground line-clamp-2 md:text-[10px]">
+            {breakName(p.name)}
           </span>
         </span>
       ))}
