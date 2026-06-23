@@ -229,6 +229,27 @@ const AssociateSignupForm = () => {
         }
       }
 
+      // Mirror the professional experiences into the dedicated column the client
+      // associate selectors read (handle_new_user only stores the full about_data
+      // blob), so the associate appears complete to clients right after signup.
+      if (authData.user && useAbout) {
+        const profExp = ((aboutData as any)?.professionalExperiences || [])
+          .filter((e: any) => e && (e.company || e.role))
+          .map((e: any) => ({
+            company: e.company || '',
+            role: e.role || '',
+            sector: e.sector || '',
+            period: e.duration || '',
+          }));
+        if (profExp.length > 0) {
+          const { error: expError } = await supabase
+            .from('profiles')
+            .update({ professional_experiences: profExp })
+            .eq('id', authData.user.id);
+          if (expError) console.error('Error saving professional experiences:', expError);
+        }
+      }
+
       // Upload CV if provided
       if (cvFile && authData.user && useCv) {
         const fileExt = cvFile.name.split('.').pop();

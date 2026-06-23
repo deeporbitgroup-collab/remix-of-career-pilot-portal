@@ -130,29 +130,42 @@ const AssociateProfile = () => {
     setIsLoading(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      // Upload photo to public bucket and store the public URL on profiles.photo_url
-      // so the public Experts carousel and the client associate selectors always
-      // see the latest photo.
-      let publicPhotoUrl: string | null = null;
-      if (photoFile) {
-        const fileExt = photoFile.name.split('.').pop();
-        const fileName = `${user.id}/profile_${Date.now()}.${fileExt}`;
-
-        const { error: uploadError } = await supabase.storage
-          .from('profile-photos')
-          .upload(fileName, photoFile, { upsert: true, contentType: photoFile.type });
-
-        if (uploadError) throw uploadError;
-
-        const { data: pub } = supabase.storage
-          .from('profile-photos')
-          .getPublicUrl(fileName);
-        publicPhotoUrl = pub.publicUrl;
+      if (!user) {
+        toast({
+          title: isEnglish ? "Session expired" : "Sessione scaduta",
+          description: isEnglish ? "Please log in again to save your profile." : "Effettua di nuovo il login per salvare il profilo.",
+          variant: "destructive"
+        });
+        return;
       }
 
-      // Update profile with professional metadata (and the new photo_url if any)
+      // Upload photo to the public bucket and store the public URL on
+      // profiles.photo_url (the Experts carousel and client selectors read it).
+      // Best-effort: a photo failure must NOT block saving experiences/fields.
+      let publicPhotoUrl: string | null = null;
+      if (photoFile) {
+        try {
+          const fileExt = photoFile.name.split('.').pop();
+          const fileName = `${user.id}/profile_${Date.now()}.${fileExt}`;
+          const { error: uploadError } = await supabase.storage
+            .from('profile-photos')
+            .upload(fileName, photoFile, { upsert: true, contentType: photoFile.type });
+          if (uploadError) throw uploadError;
+          const { data: pub } = supabase.storage
+            .from('profile-photos')
+            .getPublicUrl(fileName);
+          publicPhotoUrl = pub.publicUrl;
+        } catch (photoErr: any) {
+          toast({
+            title: isEnglish ? "Photo not uploaded" : "Foto non caricata",
+            description: photoErr?.message || (isEnglish ? "We'll still save your other changes." : "Salveremo comunque le altre modifiche."),
+            variant: "destructive"
+          });
+        }
+      }
+
+      // Update profile with professional metadata (and the new photo_url if any).
+      // These are exactly the columns the client associate selectors read.
       const profileUpdate: any = {
         phone: profile.phone,
         first_name: profile.first_name,
@@ -167,48 +180,52 @@ const AssociateProfile = () => {
         profileUpdate.photo_url = publicPhotoUrl;
       }
 
-      const { error: profileError } = await supabase
+      // .select() lets us detect a silently-blocked write (0 rows) instead of
+      // reporting a false success.
+      const { data: updatedRows, error: profileError } = await supabase
         .from('profiles')
         .update(profileUpdate)
-        .eq('id', user.id);
+        .eq('id', user.id)
+        .select('id');
 
       if (profileError) throw profileError;
+      if (!updatedRows || updatedRows.length === 0) {
+        throw new Error(isEnglish
+          ? "Your changes could not be saved. Please log out and back in, then try again."
+          : "Non è stato possibile salvare le modifiche. Esci e rientra, poi riprova.");
+      }
 
       if (publicPhotoUrl) {
         setPhotoPreview(publicPhotoUrl);
       }
 
-      // Update user metadata (email, LinkedIn, status, university, experiences)
-      const updates: any = {};
-      if (profile.email !== user.email) {
-        updates.email = profile.email;
-      }
-
-      const metadataUpdates: any = {
-        ...(user.user_metadata || {}),
-        linkedin_url: profile.linkedin_url,
-        status: profile.status,
-        university: profile.university,
-        master_program: profile.master_program,
-        sector: profile.sector,
-        experiences: profile.experiences,
-      };
-
-      if (publicPhotoUrl) {
-        metadataUpdates.photo_url = publicPhotoUrl;
-      }
-
-      updates.data = metadataUpdates;
-
-      const { error: authError } = await supabase.auth.updateUser(updates);
-      
-      if (authError) throw authError;
-      
-      if (updates.email) {
-        toast({
-          title: isEnglish ? "Email updated" : "Email aggiornata",
-          description: isEnglish ? "We've sent you a verification email to the new address" : "Ti abbiamo inviato un'email di verifica al nuovo indirizzo"
-        });
+      // Sync email + auth metadata — best-effort, must NOT mask a successful
+      // profile save (e.g. an email-change error shouldn't undo the save).
+      try {
+        const updates: any = {};
+        if (profile.email !== user.email) {
+          updates.email = profile.email;
+        }
+        updates.data = {
+          ...(user.user_metadata || {}),
+          linkedin_url: profile.linkedin_url,
+          status: profile.status,
+          university: profile.university,
+          master_program: profile.master_program,
+          sector: profile.sector,
+          experiences: profile.experiences,
+          ...(publicPhotoUrl ? { photo_url: publicPhotoUrl } : {}),
+        };
+        const { error: authError } = await supabase.auth.updateUser(updates);
+        if (authError) throw authError;
+        if (updates.email) {
+          toast({
+            title: isEnglish ? "Email updated" : "Email aggiornata",
+            description: isEnglish ? "We've sent you a verification email to the new address" : "Ti abbiamo inviato un'email di verifica al nuovo indirizzo"
+          });
+        }
+      } catch (authErr: any) {
+        console.error("Auth metadata update failed (profile already saved):", authErr);
       }
 
       setHasChanges(false);

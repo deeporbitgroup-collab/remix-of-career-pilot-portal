@@ -45,6 +45,12 @@ const TestimonialsCarousel = () => {
       flag: "🇩🇪",
       rating: 4.5,
       review: "Si sono dimostrati seri e professionali, dal meeting gratuito per capire i miei obiettivi fino alla realizzazione del progetto personalizzato per me."
+    },
+    {
+      name: "Simon",
+      flag: "🇫🇷",
+      rating: 5,
+      review: "Hanno condiviso il loro network personale e mi hanno aiutato con il CV, le domande e la preparazione al colloquio. Il team è davvero disposto ad aiutare ed è composto da una rete di oltre 100 giovani professionisti provenienti dalle migliori università e aziende nei settori della finanza e della consulenza."
     }
   ] : [
     {
@@ -76,6 +82,12 @@ const TestimonialsCarousel = () => {
       flag: "🇩🇪",
       rating: 4.5,
       review: "They proved to be serious and professional, from the free meeting to understand my goals to the realization of the personalized project for me."
+    },
+    {
+      name: "Simon",
+      flag: "🇫🇷",
+      rating: 5,
+      review: "They shared their personal network, and helped me with my CV, interview questions, and interview prep. The team is genuinely willing to help and is composed of a network of 100+ young professionals from top universities and companies in the finance and consulting industries."
     }
   ];
 

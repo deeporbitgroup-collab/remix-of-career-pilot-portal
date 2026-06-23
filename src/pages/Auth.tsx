@@ -76,7 +76,7 @@ const Auth = () => {
               {/* Earnings Badge */}
               <div className="absolute -top-2 -right-2 z-10">
                 <div className="bg-sky-500 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-md flex items-center gap-1">
-                  💰 Earn 70% per service
+                  💰 Earn 60% per service
                 </div>
               </div>
               <CardHeader className="text-center py-4">

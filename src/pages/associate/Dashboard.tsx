@@ -305,7 +305,7 @@ const AssociateDashboard = () => {
                       : "Il pagamento all'associate verrà effettuato solo dopo lo svolgimento della call con il cliente."}
                   </p>
                   <div className="ml-auto bg-sky-500 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-sm whitespace-nowrap">
-                    💰 {isEn ? 'Associates earn 70% per service completed' : 'Gli associate ricevono il 70% per ogni servizio realizzato'}
+                    💰 {isEn ? 'Associates earn 60% per service completed' : 'Gli associate ricevono il 60% per ogni servizio realizzato'}
                   </div>
                 </div>
               </CardContent>
