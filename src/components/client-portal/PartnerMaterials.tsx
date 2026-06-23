@@ -1,58 +1,35 @@
 import { cn } from "@/lib/utils";
 import { partnerships } from "@/data/partnerships";
 
-interface PartnerMaterialsProps {
-  /** Tighter logos and no label — for sitting inline next to another element. */
-  compact?: boolean;
-  className?: string;
-}
-
 /**
- * A deliberately tiny, corner-style group of partner logos for the package
- * card: all on a single line so it adds (almost) no height. Links to the
- * homepage "Our Partnerships" section. Brand names live in the tooltip/alt to
- * keep the strip minimal and unobtrusive — it sits at the very bottom of the
- * package's visual hierarchy.
+ * Partnership logos, each with its name underneath, laid out as ONE even row —
+ * every brand shares the width equally so they all sit side by side on a single
+ * line. No heading and no border, so it blends in under the bullets rather than
+ * looking like a separate section. The whole row links to the homepage
+ * "Our Partnerships" section (#partnerships).
  */
-const PartnerMaterials = ({ compact = false, className }: PartnerMaterialsProps) => {
-  const dim = compact ? "h-[18px] w-[18px]" : "h-5 w-5";
-  return (
-    <a
-      href="/#partnerships"
-      title="Premium material from our partners — see Our Partnerships"
-      className={cn(
-        "group inline-flex max-w-full items-center gap-1.5 transition-colors",
-        !compact &&
-          "rounded-full border border-border/40 bg-muted/20 px-2.5 py-1 hover:border-primary/30 hover:bg-primary/5",
-        className
-      )}
-    >
-      {!compact && (
-        <span className="shrink-0 text-[9px] font-semibold uppercase tracking-wide text-muted-foreground/80">
-          Partner material
+const PartnerMaterials = ({ className }: { className?: string }) => (
+  <a
+    href="/#partnerships"
+    title="Premium material from our partners — see Our Partnerships"
+    className={cn("group flex items-start justify-between gap-1", className)}
+  >
+    {partnerships.map((p) => (
+      <span key={p.name} className="flex min-w-0 flex-1 flex-col items-center gap-1">
+        <span className="flex h-7 w-7 items-center justify-center overflow-hidden rounded-md bg-white ring-1 ring-border/40 transition-shadow group-hover:ring-primary/30 md:h-8 md:w-8">
+          <img
+            src={p.logo}
+            alt={p.name}
+            loading="lazy"
+            className="max-h-full max-w-full object-contain p-[3px]"
+          />
         </span>
-      )}
-      <span className={cn("flex items-center", compact ? "gap-0.5" : "gap-1")}>
-        {partnerships.map((p) => (
-          <span
-            key={p.name}
-            title={p.name}
-            className={cn(
-              "flex shrink-0 items-center justify-center overflow-hidden rounded-[4px] bg-white ring-1 ring-border/40 transition-shadow group-hover:ring-primary/30",
-              dim
-            )}
-          >
-            <img
-              src={p.logo}
-              alt={p.name}
-              loading="lazy"
-              className="max-h-full max-w-full object-contain p-[2px]"
-            />
-          </span>
-        ))}
+        <span className="w-full text-center text-[9px] font-medium leading-tight text-muted-foreground line-clamp-2 md:text-[10px]">
+          {p.name}
+        </span>
       </span>
-    </a>
-  );
-};
+    ))}
+  </a>
+);
 
 export default PartnerMaterials;

@@ -812,6 +812,9 @@ const PackageExperience = ({
           ))}
         </ul>
 
+        {/* Partner materials — logos + names, right under the bullets */}
+        <PartnerMaterials />
+
         {/* Optional add-ons — now inside the package, OFF by default */}
         {addonComponents.length > 0 && (
           <div className="space-y-1.5">
@@ -903,18 +906,14 @@ const PackageExperience = ({
           </>
         )}
 
-        {/* Full details + tiny partner logos on ONE line — keeps the card's
-            original height. Logos link to the homepage "Our Partnerships". */}
-        <div className="flex items-center justify-between gap-2">
-          <button
-            type="button"
-            onClick={() => setPackageInfoOpen(true)}
-            className="inline-flex shrink-0 items-center gap-1.5 text-[12px] font-medium text-primary"
-          >
-            <Info className="h-3.5 w-3.5" /> See full details
-          </button>
-          <PartnerMaterials compact className="shrink-0" />
-        </div>
+        {/* Full details */}
+        <button
+          type="button"
+          onClick={() => setPackageInfoOpen(true)}
+          className="inline-flex items-center justify-center gap-1.5 text-[12px] font-medium text-primary"
+        >
+          <Info className="h-3.5 w-3.5" /> See full details
+        </button>
       </div>
 
       {/* Mobile Associate picker — a focused bottom sheet behind the pill CTA.
@@ -1099,6 +1098,9 @@ const PackageExperience = ({
                 {trailingBullets.map(renderBulletRow)}
               </ul>
 
+              {/* Partner materials — logos + names, right under the bullets */}
+              <PartnerMaterials className="mt-2.5" />
+
               {/* Optional add-ons — same place as the rest of the services, OFF by
                   default. Selecting one updates the price above live. */}
               {addonComponents.length > 0 && (
@@ -1169,10 +1171,6 @@ const PackageExperience = ({
             {/* Covered logos — fills the lower empty space without overpowering
                 the package name, price and bullet list above. */}
             <CoveredLogos kind={pkg.category === "Altitude" ? "companies" : "universities"} />
-
-            {/* Partner materials — tiny right-aligned logo group tucked into the
-                existing lower space (no extra height). Links to "Our Partnerships". */}
-            <PartnerMaterials className="self-end" />
 
             {/* Price block */}
             <div className="rounded-xl border border-primary/20 bg-primary/5 p-3">
