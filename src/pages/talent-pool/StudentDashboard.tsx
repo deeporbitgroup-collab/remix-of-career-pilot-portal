@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -38,6 +38,7 @@ import ActiveRecruitingSection from "@/components/talent-pool/ActiveRecruitingSe
 import StudentScheduledEventsTab from "@/components/talent-pool/StudentScheduledEventsTab";
 import TalentPoolPrepMaterial from "@/components/talent-pool/TalentPoolPrepMaterial";
 import StudentTestsTab from "@/components/talent-pool/StudentTestsTab";
+import { downloadTalentPoolDocument } from "@/lib/talentPoolDocuments";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Calendar } from "@/components/ui/calendar";
@@ -49,12 +50,9 @@ import { format } from "date-fns";
 import { it, enUS } from "date-fns/locale";
 import { useTalentPoolLanguage } from "@/contexts/TalentPoolLanguageContext";
 import { PDFDocument } from 'pdf-lib';
+import { TALENT_POOL_COMPANY_SECTORS, sectorsFromCompanies } from "@/data/talentPoolSectors";
 
 const COMPANY_TYPES = ["STARTUP", "BOUTIQUE", "MEDIUM_SIZE", "LARGE_COMPANY"];
-const SECTORS = [
-  "Technology", "Finance", "Healthcare", "Education", 
-  "Marketing", "Consulting", "Retail", "Manufacturing"
-];
 const LOCATIONS = ["London", "Milan"];
 
 const StudentDashboard = () => {
@@ -77,6 +75,9 @@ const StudentDashboard = () => {
   const [actionableMeetings, setActionableMeetings] = useState(0);
   // "+N" badge on the Tests tab: number of tests still to complete (status SENT).
   const [actionableTests, setActionableTests] = useState(0);
+
+  // Industry filter chips = distinct sector values from company profiles (company or admin).
+  const companyFilterSectors = useMemo(() => sectorsFromCompanies(companies), [companies]);
   
   // Refs for file inputs
   const cvInputRef = useRef<HTMLInputElement>(null);
@@ -211,7 +212,9 @@ const StudentDashboard = () => {
 
 
     if (selectedSectors.length > 0) {
-      filtered = filtered.filter(c => selectedSectors.includes(c.sector));
+      filtered = filtered.filter((c) =>
+        selectedSectors.includes((c.sector || "").trim())
+      );
     }
 
     if (searchQuery) {
@@ -530,25 +533,14 @@ const StudentDashboard = () => {
     }
   };
 
-  // Force download via fetch+blob to avoid popup blockers and cross-origin issues
-  const handleDownload = async (url: string, filename: string) => {
+  // Force download via Storage API / fetch+blob — never window.open (avoids the
+  // browser's broken "could not load PDF" viewer on missing or stale URLs).
+  const handleDownload = async (url: string, filename: string, bucketHint?: "talent-pool-cv" | "talent-pool-covers") => {
     try {
-      const res = await fetch(url, { mode: 'cors' });
-      if (!res.ok) throw new Error('Download failed');
-      const blob = await res.blob();
-      const objectUrl = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = objectUrl;
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(objectUrl);
+      await downloadTalentPoolDocument(url, filename, bucketHint);
       toast({ title: t('studentTalentPool.success.documentDownloaded') });
     } catch (e: any) {
       console.error('Download error:', e);
-      // Do NOT fall back to window.open: opening a missing/broken file would
-      // render the browser's "could not load PDF" viewer. Just inform the user.
       toast({
         title: t('studentTalentPool.errors.documentError'),
         description: 'This file could not be loaded. Please re-upload the document.',
@@ -633,7 +625,8 @@ const StudentDashboard = () => {
         body: { studentId: userInfo.id, contentType: file.type, fileBase64 },
       });
       if (error) throw error;
-      if (!data?.success) throw new Error(data?.error || 'Upload failed');
+      if (data?.error) throw new Error(data.error);
+      if (!data?.success) throw new Error('Upload failed');
 
       setStudentProfile((prev: any) => prev ? { ...prev, passport_url: data.path } : prev);
       toast({ title: "Passport uploaded", description: "Your passport scan has been saved securely." });
@@ -973,7 +966,7 @@ const StudentDashboard = () => {
                 <TabsTrigger value="companies" className="h-auto whitespace-normal py-2 text-xs leading-tight md:text-sm">Partner Companies</TabsTrigger>
                 <TabsTrigger value="events" className="relative h-auto whitespace-normal py-2 text-xs leading-tight md:text-sm">
                   <span className="inline-flex items-center gap-1.5">
-                    Scheduled events
+                    Interviews
                     {actionableMeetings > 0 && (
                       <span className="inline-flex h-5 min-w-[20px] items-center justify-center rounded-full bg-red-500 px-1 text-[11px] font-bold text-white">
                         +{actionableMeetings}
@@ -983,7 +976,7 @@ const StudentDashboard = () => {
                 </TabsTrigger>
                 <TabsTrigger value="tests" className="relative h-auto whitespace-normal py-2 text-xs leading-tight md:text-sm">
                   <span className="inline-flex items-center gap-1.5">
-                    Tests
+                    Assessments
                     {actionableTests > 0 && (
                       <span className="inline-flex h-5 min-w-[20px] items-center justify-center rounded-full bg-red-500 px-1 text-[11px] font-bold text-white">
                         +{actionableTests}
@@ -1091,7 +1084,7 @@ const StudentDashboard = () => {
                       {t('studentTalentPool.profile.sectors')}
                     </Label>
                     <div className="space-y-2 max-h-48 overflow-y-auto">
-                      {SECTORS.map(sector => (
+                      {TALENT_POOL_COMPANY_SECTORS.map(sector => (
                         <div key={sector} className="flex items-center gap-2">
                           <Checkbox
                             checked={studentProfile.preferred_sectors?.includes(sector)}
@@ -1232,7 +1225,7 @@ const StudentDashboard = () => {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => handleDownload(studentProfile.cv_url, 'CV.pdf')}
+                          onClick={() => handleDownload(studentProfile.cv_url, 'CV.pdf', 'talent-pool-cv')}
                         >
                           <Download className="h-4 w-4 mr-1" />
                           {t('studentTalentPool.profile.download')}
@@ -1276,7 +1269,7 @@ const StudentDashboard = () => {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => handleDownload(studentProfile.cover_letter_url, 'Cover-Letter.pdf')}
+                          onClick={() => handleDownload(studentProfile.cover_letter_url, 'Cover-Letter.pdf', 'talent-pool-covers')}
                         >
                           <Download className="h-4 w-4 mr-1" />
                           {t('studentTalentPool.profile.download')}
@@ -1604,16 +1597,20 @@ const StudentDashboard = () => {
                       {t('studentTalentPool.companies.sector')}
                     </Label>
                     <div className="flex gap-2 flex-wrap">
-                      {SECTORS.map(sector => (
-                        <Badge
-                          key={sector}
-                          variant={selectedSectors.includes(sector) ? "default" : "outline"}
-                          className="cursor-pointer"
-                          onClick={() => toggleFilterSector(sector)}
-                        >
-                          {sector}
-                        </Badge>
-                      ))}
+                      {companyFilterSectors.length === 0 ? (
+                        <p className="text-sm text-muted-foreground">No industry tags yet — companies set their sector in their profile.</p>
+                      ) : (
+                        companyFilterSectors.map((sector) => (
+                          <Badge
+                            key={sector}
+                            variant={selectedSectors.includes(sector) ? "default" : "outline"}
+                            className="cursor-pointer"
+                            onClick={() => toggleFilterSector(sector)}
+                          >
+                            {sector}
+                          </Badge>
+                        ))
+                      )}
                     </div>
                   </div>
                 </CardContent>
@@ -1646,7 +1643,7 @@ const StudentDashboard = () => {
                             <h3 className="font-semibold text-lg">{company.company_name}</h3>
                             <div className="flex gap-2 mt-2">
                               <Badge variant="secondary">{company.size}</Badge>
-                              <Badge variant="outline">{company.sector}</Badge>
+                              <Badge variant="outline">{company.sector?.trim() || "N/A"}</Badge>
                             </div>
                             {company.description && (
                               <p className="text-sm text-muted-foreground mt-2">

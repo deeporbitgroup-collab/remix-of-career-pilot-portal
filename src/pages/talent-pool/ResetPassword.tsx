@@ -49,6 +49,24 @@ const ResetPassword = () => {
       return;
     }
 
+    if (!/[A-Z]/.test(newPassword) || !/[0-9]/.test(newPassword)) {
+      toast({
+        title: "Weak Password",
+        description: "Use at least one uppercase letter and one number.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (newPassword.trim() !== newPassword || confirmPassword.trim() !== confirmPassword) {
+      toast({
+        title: "Invalid Password",
+        description: "Password cannot start or end with spaces.",
+        variant: "destructive"
+      });
+      return;
+    }
+
     if (newPassword !== confirmPassword) {
       toast({
         title: "Passwords Don't Match",
@@ -63,12 +81,12 @@ const ResetPassword = () => {
     try {
       const { data, error } = await supabase.rpc('talent_pool_reset_password', {
         _token: token,
-        _new_password: newPassword
+        _new_password: newPassword.trim()
       });
 
       if (error) throw error;
 
-      if (data) {
+      if (data === true) {
         toast({
           title: "Password Reset Successful",
           description: "Your password has been reset. You can now log in with your new password."

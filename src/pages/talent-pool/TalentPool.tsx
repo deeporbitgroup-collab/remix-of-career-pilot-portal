@@ -19,7 +19,7 @@ const TalentPoolContent = () => {
     setLanguage('en');
   }, [setLanguage]);
 
-  const handleRoleSelect = (role: 'admin' | 'student' | 'company') => {
+  const handleRoleSelect = (role: 'student' | 'company') => {
     setSelectedRole(role);
     navigate(`/talent-pool/${role}`);
   };
@@ -52,6 +52,14 @@ const TalentPoolContent = () => {
               </div>
             </div>
             <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => navigate('/talent-pool/admin')}
+                className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500/80 hover:text-sky-400 transition-colors px-2 py-1"
+                aria-label="Career Pilot Admin access"
+              >
+                CPA
+              </button>
               <Button
                 variant="ghost"
                 onClick={() => navigate('/')}
@@ -133,37 +141,12 @@ const TalentPoolContent = () => {
               {t('landing.roleSelection.title')}
             </h2>
 
-            {/* Desktop: 3-up grid. Mobile: swipe the access cards horizontally. */}
-            <div className="grid md:grid-cols-3 gap-5 max-md:-mx-4 max-md:flex max-md:snap-x max-md:snap-mandatory max-md:gap-3 max-md:overflow-x-auto max-md:px-4 max-md:pb-2">
-              {/* Admin Card */}
-              <Card 
-                {...getItemProps(7)}
-                className="group relative overflow-hidden border border-slate-700/50 hover:border-sky-500/50 transition-all duration-500 cursor-pointer bg-slate-900/70 backdrop-blur-xl hover:shadow-2xl hover:shadow-sky-500/10 hover:-translate-y-2 hover:scale-105 max-md:snap-center max-md:shrink-0 max-md:w-[80vw]"
-                onClick={() => handleRoleSelect('admin')}
-              >
-                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-sky-500/5 to-transparent rounded-full -mr-16 -mt-16 group-hover:scale-150 transition-transform duration-700" />
-                <div className="relative p-5">
-                  <div className="mb-3 flex justify-center">
-                    <div className="h-16 w-16 rounded bg-gradient-to-br from-sky-500 to-sky-600 border border-sky-400/20 flex items-center justify-center shadow-xl shadow-sky-500/20 group-hover:scale-105 transition-transform duration-500">
-                      <Shield className="h-8 w-8 text-slate-950" />
-                    </div>
-                  </div>
-                  <h3 className="text-xl font-bold text-sky-50 text-center mb-2 tracking-tight">
-                    {t('landing.roleSelection.admin.title')}
-                  </h3>
-                  <p className="text-slate-400 text-center mb-4 text-xs leading-relaxed">
-                    {t('landing.roleSelection.admin.description')}
-                  </p>
-                  <Button className="w-full bg-gradient-to-r from-sky-500 to-sky-600 hover:from-sky-600 hover:to-sky-700 text-slate-950 shadow-lg font-bold text-sm tracking-wide">
-                    {t('landing.roleSelection.admin.button')}
-                  </Button>
-                </div>
-              </Card>
-
+            {/* Desktop: 2-up grid. Mobile: two cards side by side or stacked. */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-5 max-w-3xl mx-auto">
               {/* Student Card */}
               <Card 
-                {...getItemProps(8)}
-                className="group relative overflow-hidden border border-slate-700/50 hover:border-sky-500/50 transition-all duration-500 cursor-pointer bg-slate-900/70 backdrop-blur-xl hover:shadow-2xl hover:shadow-sky-500/10 hover:-translate-y-2 hover:scale-105 max-md:snap-center max-md:shrink-0 max-md:w-[80vw]"
+                {...getItemProps(7)}
+                className="group relative overflow-hidden border border-slate-700/50 hover:border-sky-500/50 transition-all duration-500 cursor-pointer bg-slate-900/70 backdrop-blur-xl hover:shadow-2xl hover:shadow-sky-500/10 hover:-translate-y-2 hover:scale-105"
                 onClick={() => handleRoleSelect('student')}
               >
                 <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-sky-500/5 to-transparent rounded-full -mr-16 -mt-16 group-hover:scale-150 transition-transform duration-700" />
@@ -187,8 +170,8 @@ const TalentPoolContent = () => {
 
               {/* Company Card */}
               <Card 
-                {...getItemProps(9)}
-                className="group relative overflow-hidden border border-slate-700/50 hover:border-emerald-500/50 transition-all duration-500 cursor-pointer bg-slate-900/70 backdrop-blur-xl hover:shadow-2xl hover:shadow-emerald-500/10 hover:-translate-y-2 hover:scale-105 max-md:snap-center max-md:shrink-0 max-md:w-[80vw]"
+                {...getItemProps(8)}
+                className="group relative overflow-hidden border border-slate-700/50 hover:border-emerald-500/50 transition-all duration-500 cursor-pointer bg-slate-900/70 backdrop-blur-xl hover:shadow-2xl hover:shadow-emerald-500/10 hover:-translate-y-2 hover:scale-105"
                 onClick={() => handleRoleSelect('company')}
               >
                 <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-emerald-500/5 to-transparent rounded-full -mr-16 -mt-16 group-hover:scale-150 transition-transform duration-700" />

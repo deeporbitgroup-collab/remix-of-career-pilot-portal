@@ -133,12 +133,12 @@ const AboutSection = () => {
           <div
             ref={mobileScrollerRef}
             onScroll={handleMobileScroll}
-            className="flex gap-3 overflow-x-auto snap-x snap-mandatory -mx-4 px-4 pb-2"
+            className="flex gap-3 overflow-x-auto snap-x snap-mandatory -mx-4 px-4 pb-2 items-stretch"
             style={{ scrollSnapType: "x mandatory", WebkitOverflowScrolling: "touch", scrollbarWidth: "none" }}
           >
             {founders.map((member) => (
-              <Card key={member.name} className="snap-center flex-none w-[88%] bg-white shadow-sm border border-border/60 overflow-hidden rounded-2xl">
-                <div className="relative w-full aspect-[4/3] bg-muted overflow-hidden">
+              <Card key={member.name} className="snap-center flex-none w-[88%] flex flex-col bg-white shadow-sm border border-border/60 overflow-hidden rounded-2xl">
+                <div className="relative w-full aspect-[4/3] bg-muted overflow-hidden flex-shrink-0">
                   <img src={member.image} alt={member.name} className={imgClass(member)} loading="lazy" />
                   <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-black/55 to-transparent" />
                   <div className="absolute bottom-2 left-3 right-3">
@@ -146,13 +146,13 @@ const AboutSection = () => {
                     <p className="text-white/90 text-[11px] font-medium leading-tight">{member.role}</p>
                   </div>
                 </div>
-                <CardContent className="p-3">
+                <CardContent className="p-3 flex flex-col flex-1">
                   <div className="flex items-center gap-1 text-muted-foreground mb-1.5 text-[10px]">
                     <MapPin className="h-3 w-3 flex-shrink-0" />
                     <span className="truncate">{member.location}</span>
                   </div>
-                  <p className="text-steel-gray leading-snug text-[11px] line-clamp-4">{member.bio}</p>
-                  <a href={member.linkedin} target="_blank" rel="noopener noreferrer" className="mt-2 inline-flex items-center gap-1 text-primary font-semibold text-[11px]">
+                  <p className="text-steel-gray leading-snug text-[10px] flex-1">{member.bio}</p>
+                  <a href={member.linkedin} target="_blank" rel="noopener noreferrer" className="mt-2 inline-flex items-center gap-1 text-primary font-semibold text-[11px] flex-shrink-0">
                     <Linkedin className="h-3.5 w-3.5" /> LinkedIn
                   </a>
                 </CardContent>

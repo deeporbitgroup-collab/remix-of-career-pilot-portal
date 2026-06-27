@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { normalizeTalentPoolEmail } from "@/lib/talentPoolPassword";
 import { Mail, Loader2 } from "lucide-react";
 
 interface ForgotPasswordDialogProps {
@@ -33,8 +34,10 @@ export const ForgotPasswordDialog = ({ open, onOpenChange, role }: ForgotPasswor
     setLoading(true);
 
     try {
+      const normalizedEmail = normalizeTalentPoolEmail(email);
+
       const { error } = await supabase.functions.invoke('send-password-reset', {
-        body: { email, role }
+        body: { email: normalizedEmail, role }
       });
 
       if (error) throw error;

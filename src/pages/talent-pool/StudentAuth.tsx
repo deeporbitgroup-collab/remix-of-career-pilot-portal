@@ -14,6 +14,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { z } from "zod";
 import { TalentPoolLanguageProvider, useTalentPoolLanguage } from "@/contexts/TalentPoolLanguageContext";
 import { ForgotPasswordDialog } from "@/components/talent-pool/ForgotPasswordDialog";
+import { normalizeTalentPoolEmail, talentPoolPasswordHash } from "@/lib/talentPoolPassword";
 
 const studentSchema = z.object({
   firstName: z.string().trim().min(1, "Name required").max(100),
@@ -108,11 +109,13 @@ const StudentAuthContent = () => {
     setIsLoading(true);
     
     try {
+      const normalizedEmail = normalizeTalentPoolEmail(formData.email);
+
       // Check if email already exists
       const { data: existingUser } = await supabase
         .from('talent_pool_users')
         .select('id')
-        .eq('email', formData.email)
+        .ilike('email', normalizedEmail)
         .maybeSingle();
 
       if (existingUser) {
@@ -129,10 +132,10 @@ const StudentAuthContent = () => {
       const { data: newUserId, error: regError } = await supabase.rpc('talent_pool_register_student', {
         _first_name: formData.firstName,
         _last_name: formData.lastName,
-        _email: formData.email,
+        _email: normalizedEmail,
         _phone: formData.phone,
         _linkedin: formData.linkedin || '',
-        _password_hash: btoa(formData.password)
+        _password_hash: talentPoolPasswordHash(formData.password)
       });
 
       if (regError) {
@@ -219,8 +222,8 @@ const StudentAuthContent = () => {
       // Auto-login the newly registered student
       try {
         const { data: loginData } = await supabase.rpc('talent_pool_login', {
-          _email: formData.email,
-          _password: formData.password,
+          _email: normalizedEmail,
+          _password: formData.password.trim(),
           _role: 'STUDENT'
         });
         if (loginData) {
@@ -254,9 +257,11 @@ const StudentAuthContent = () => {
 
     try {
       // Call secure RPC function for login (bypasses RLS)
+      const normalizedEmail = normalizeTalentPoolEmail(loginData.email);
+
       const { data, error } = await supabase.rpc('talent_pool_login', {
-        _email: loginData.email,
-        _password: loginData.password,
+        _email: normalizedEmail,
+        _password: loginData.password.trim(),
         _role: 'STUDENT'
       });
 

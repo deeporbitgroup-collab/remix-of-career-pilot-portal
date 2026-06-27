@@ -16,6 +16,9 @@ import { z } from "zod";
 import { TalentPoolLanguageProvider, useTalentPoolLanguage } from "@/contexts/TalentPoolLanguageContext";
 import { ForgotPasswordDialog } from "@/components/talent-pool/ForgotPasswordDialog";
 
+import { ForgotPasswordDialog } from "@/components/talent-pool/ForgotPasswordDialog";
+import { TALENT_POOL_COMPANY_SECTORS } from "@/data/talentPoolSectors";
+
 const companySchema = z.object({
   companyName: z.string().trim().min(1, "Company name required").max(200),
   sector: z.string().min(1, "Sector required"),
@@ -32,26 +35,7 @@ const companySchema = z.object({
   path: ["confirmPassword"]
 });
 
-const sectors = [
-  "Consulting",
-  "Finance",
-  "Technology",
-  "Healthcare",
-  "Manufacturing",
-  "Retail",
-  "Education",
-  "Energy",
-  "Real Estate",
-  "Telecommunications",
-  "Transportation",
-  "Fashion",
-  "Media & Entertainment",
-  "Legal",
-  "Other"
-];
-
 const CompanyAuthContent = () => {
-  const navigate = useNavigate();
   const { toast } = useToast();
   const { t } = useTalentPoolLanguage();
   const [isLoading, setIsLoading] = useState(false);
@@ -403,7 +387,7 @@ const CompanyAuthContent = () => {
                         <SelectValue placeholder={t('companyAuth.register.sectorPlaceholder')} />
                       </SelectTrigger>
                       <SelectContent>
-                        {sectors.map(sector => (
+                        {TALENT_POOL_COMPANY_SECTORS.map(sector => (
                           <SelectItem key={sector} value={sector}>{sector}</SelectItem>
                         ))}
                       </SelectContent>

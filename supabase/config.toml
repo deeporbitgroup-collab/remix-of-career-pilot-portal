@@ -112,6 +112,30 @@ verify_jwt = false
 [functions.get-student-selections]
 verify_jwt = false
 
+[functions.upload-passport]
+verify_jwt = false
+
+[functions.get-passport-url]
+verify_jwt = false
+
+[functions.get-recruiting-meetings]
+verify_jwt = false
+
+[functions.get-recruiting-tests]
+verify_jwt = false
+
+[functions.recruiting-meeting-action]
+verify_jwt = false
+
+[functions.recruiting-test-action]
+verify_jwt = false
+
+[functions.recruiting-decision]
+verify_jwt = false
+
+[functions.notify-companies-new-student]
+verify_jwt = false
+
 [functions.send-password-reset]
 verify_jwt = false
 

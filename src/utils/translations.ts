@@ -287,7 +287,7 @@ export const translations = {
         title: "Layover",
         subtitle: "University transfer",
         description: "Strategic Guide for Changing University or Degree Program",
-        clearance: "Career Pilot contacts universities through direct connections with Admission Offices to verify transfer eligibility"
+        clearance: "Transfer direct Eligibility Verification"
       },
       altitude: {
         title: "Altitude",

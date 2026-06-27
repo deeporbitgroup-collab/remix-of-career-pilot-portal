@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useNavigate } from "react-router-dom";
+import { downloadTalentPoolDocument } from "@/lib/talentPoolDocuments";
 import { useToast } from "@/hooks/use-toast";
 import {
   Building2,
@@ -41,11 +41,7 @@ import { TalentPoolLanguageProvider, useTalentPoolLanguage } from "@/contexts/Ta
 import { cn } from "@/lib/utils";
 import { formatSlot } from "@/lib/meeting-format";
 
-const SECTORS = [
-  "Consulting", "Finance", "Technology", "Healthcare", "Manufacturing",
-  "Retail", "Education", "Energy", "Real Estate", "Telecommunications",
-  "Transportation", "Fashion", "Media & Entertainment", "Legal", "Altro"
-];
+import { TALENT_POOL_COMPANY_SECTORS } from "@/data/talentPoolSectors";
 
 const SIZES = [
   { value: "STARTUP", label: "Startup" },
@@ -729,25 +725,9 @@ const CompanyDashboardContent = () => {
   const ukVisaLabel = (v?: string) =>
     v === 'YES' ? 'Can work in the UK' : v === 'NO' ? 'No UK work right' : v === 'APPLYING' ? 'UK visa: applying' : null;
 
-  const downloadFile = async (url: string, filename: string) => {
+  const downloadFile = async (url: string, filename: string, bucketHint?: "talent-pool-cv" | "talent-pool-covers") => {
     try {
-      const response = await fetch(url);
-      if (!response.ok) throw new Error('Failed to fetch file');
-
-      const blob = await response.blob();
-      const blobUrl = window.URL.createObjectURL(blob);
-      
-      const a = document.createElement('a');
-      a.href = blobUrl;
-      a.download = filename;
-      a.style.display = 'none';
-      
-      document.body.appendChild(a);
-      a.click();
-      
-      document.body.removeChild(a);
-      window.URL.revokeObjectURL(blobUrl);
-      
+      await downloadTalentPoolDocument(url, filename, bucketHint);
       toast({
         title: "Success",
         description: `${filename} downloaded successfully`
@@ -971,7 +951,7 @@ const CompanyDashboardContent = () => {
                               <SelectValue placeholder="Select sector" />
                             </SelectTrigger>
                             <SelectContent>
-                              {SECTORS.map(sector => (
+                              {TALENT_POOL_COMPANY_SECTORS.map(sector => (
                                 <SelectItem key={sector} value={sector}>{sector}</SelectItem>
                               ))}
                             </SelectContent>
@@ -1264,7 +1244,8 @@ const CompanyDashboardContent = () => {
                                 variant="outline"
                                 onClick={() => downloadFile(
                                   student.cv_url,
-                                  `${student.first_name}_${student.last_name}_CV.pdf`
+                                  `${student.first_name}_${student.last_name}_CV.pdf`,
+                                  'talent-pool-cv'
                                 )}
                                 className="w-full flex items-center justify-center gap-2"
                               >
@@ -1284,7 +1265,8 @@ const CompanyDashboardContent = () => {
                                 variant="outline"
                                 onClick={() => downloadFile(
                                   student.cover_letter_url,
-                                  `${student.first_name}_${student.last_name}_CoverLetter.pdf`
+                                  `${student.first_name}_${student.last_name}_CoverLetter.pdf`,
+                                  'talent-pool-covers'
                                 )}
                                 className="w-full flex items-center justify-center gap-2"
                               >
@@ -1417,7 +1399,7 @@ const CompanyDashboardContent = () => {
                             {/* Documents */}
                             <div className="flex flex-wrap gap-2">
                               {student.cv_url ? (
-                                <Button size="sm" variant="outline" onClick={() => downloadFile(student.cv_url, `${student.first_name}_${student.last_name}_CV.pdf`)}>
+                                <Button size="sm" variant="outline" onClick={() => downloadFile(student.cv_url, `${student.first_name}_${student.last_name}_CV.pdf`, 'talent-pool-cv')}>
                                   <FileText className="h-4 w-4 mr-1" /> CV <Download className="h-3 w-3 ml-1" />
                                 </Button>
                               ) : (
@@ -1426,7 +1408,7 @@ const CompanyDashboardContent = () => {
                                 </Button>
                               )}
                               {student.cover_letter_url ? (
-                                <Button size="sm" variant="outline" onClick={() => downloadFile(student.cover_letter_url, `${student.first_name}_${student.last_name}_CoverLetter.pdf`)}>
+                                <Button size="sm" variant="outline" onClick={() => downloadFile(student.cover_letter_url, `${student.first_name}_${student.last_name}_CoverLetter.pdf`, 'talent-pool-covers')}>
                                   <FileText className="h-4 w-4 mr-1" /> Cover <Download className="h-3 w-3 ml-1" />
                                 </Button>
                               ) : (

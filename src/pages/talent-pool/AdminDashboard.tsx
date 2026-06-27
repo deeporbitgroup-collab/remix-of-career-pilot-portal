@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { TALENT_POOL_COMPANY_SECTORS } from "@/data/talentPoolSectors";
 import { 
   Users, 
   User,
@@ -1950,7 +1951,24 @@ const AdminDashboard = () => {
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-2">
                   <Label>Sector</Label>
-                  <Input value={companyEditData.sector} onChange={(e) => setCompanyEditData({ ...companyEditData, sector: e.target.value })} />
+                  <Select
+                    value={companyEditData.sector || undefined}
+                    onValueChange={(v) => setCompanyEditData({ ...companyEditData, sector: v })}
+                  >
+                    <SelectTrigger><SelectValue placeholder="Select sector" /></SelectTrigger>
+                    <SelectContent>
+                      {[
+                        ...new Set([
+                          ...TALENT_POOL_COMPANY_SECTORS,
+                          ...(companyEditData.sector?.trim() ? [companyEditData.sector.trim()] : []),
+                        ]),
+                      ]
+                        .sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" }))
+                        .map((sector) => (
+                          <SelectItem key={sector} value={sector}>{sector}</SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div className="space-y-2">
                   <Label>Size</Label>

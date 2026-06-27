@@ -77,25 +77,6 @@ const ServicesSection = () => {
           ]
         },
         {
-          title: "Pathways",
-          description: language === 'it' 
-            ? "Costruisci un CV competitivo per l'accesso universitario attraverso i 4 pilastri fondamentali"
-            : "Build a competitive CV for university admission through 4 fundamental pillars",
-          features: language === 'it' ? [
-            "Volontariato: esperienze che dimostrano impegno sociale",
-            "Lingue: certificazioni e programmi internazionali",
-            "Exchange: esperienze di studio all'estero",
-            "Public Speaking: capacità comunicative e leadership"
-          ] : [
-            "Volunteering: experiences that demonstrate social commitment",
-            "Languages: certifications and international programs",
-            "Exchange: study abroad experiences",
-            "Public Speaking: communication skills and leadership"
-          ],
-          ctaText: language === 'it' ? "Vai alla piattaforma" : "Go to platform",
-          ctaHref: "/platforms/pathways"
-        },
-        {
           title: t.services.takeoff.inDepth,
           features: language === 'it' ? [
             "Presentazione realizzata da uno studente dell'università di interesse",
@@ -202,22 +183,6 @@ const ServicesSection = () => {
             "Includes certifications to pursue, projects to build, networking opportunities and more",
             "Goal: enter the field successfully"
           ]
-        },
-        {
-          title: t.services.altitude.placement,
-          features: language === 'it' ? [
-            <span><strong>Standard Option:</strong> Accesso alla talent pool: piattaforma che mette in contatto aziende e studenti</span>,
-            "Sono le aziende a scegliere il profilo giusto, non il contrario",
-            <span><strong>{t.services.altitude.boost}:</strong> Utilizziamo il nostro network (team e aziende partner) per trovarti lo stage. Se non ci riusciamo, ti rimborsiamo</span>,
-            "Con \"trovarti lo stage\" intendiamo che l'azienda valida il tuo CV e avvia il colloquio o l'assunzione"
-          ] : [
-            <span><strong>Standard Option:</strong> Access to the talent pool: a platform that connects companies and students</span>,
-            "It's the companies that choose the right profile, not the other way around",
-            <span><strong>{t.services.altitude.boost}:</strong> We use our network (team and partner companies) to find you an internship. If we don't succeed, we refund you</span>,
-            "By \"find you an internship\" we mean that the company validates your CV and proceeds with an interview or a job offer"
-          ],
-          ctaText: language === 'it' ? "Vai Alla Talent Pool" : "Go to Talent Pool",
-          ctaHref: "/talent-pool"
         },
         {
           title: "CV, Cover & Interview by CareerBoost & Talflow",

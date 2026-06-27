@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Plane, Star, GraduationCap, Building, ArrowRight, ArrowLeftRight, ChevronLeft, ChevronRight } from "lucide-react";
+import { Plane, Star, GraduationCap, Building, UserSearch, ArrowRight, ArrowLeftRight, ChevronLeft, ChevronRight } from "lucide-react";
 import BookingPopup from "./BookingPopup";
 import EcosystemOverlay from "./EcosystemOverlay";
 import HeroTrustStrip from "./HeroTrustStrip";
@@ -300,7 +300,7 @@ const HeroSection = () => {
               >
                 <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/15 to-transparent -translate-x-full group-active:translate-x-full transition-transform duration-700" />
                 <span className="relative z-10 mb-2 flex h-10 w-10 items-center justify-center rounded-xl bg-white/20">
-                  <Building className="h-5 w-5" />
+                  <UserSearch className="h-5 w-5" />
                 </span>
                 <span className="relative z-10 text-base font-extrabold leading-tight">Talent Pool</span>
                 <span className="relative z-10 mt-0.5 text-[10px] font-medium leading-tight text-white/85">Get discovered by top companies</span>
@@ -464,14 +464,15 @@ const HeroSection = () => {
                 </button>
                 <div className="w-12 h-px bg-border/60" />
                 <button
-                  onClick={() => window.location.href = '/talent-pool'}
-                  className="group relative inline-flex items-center justify-center gap-1.5 overflow-hidden rounded-full bg-gradient-to-r from-emerald-500/90 via-teal-500/90 to-teal-600/90 px-2.5 py-1 2xl:px-3 2xl:py-1.5 text-white font-medium shadow-md transition-all duration-300 hover:scale-105 hover:-translate-y-0.5"
-                  style={{ boxShadow: '0 4px 12px hsla(173, 80%, 30%, 0.35)' }}
+                  onClick={() => { window.location.href = '/talent-pool'; }}
+                  className="group relative flex w-full flex-col items-center justify-center gap-1.5 2xl:gap-2 overflow-hidden rounded-xl bg-gradient-to-br from-emerald-500 via-teal-500 to-teal-600 px-3 py-2.5 2xl:px-5 2xl:py-3.5 text-white transition-all duration-300 hover:scale-105 hover:-translate-y-0.5"
+                  style={{ boxShadow: '0 4px 14px hsla(173, 80%, 30%, 0.35)' }}
                 >
-                  <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
-                  <Building className="h-3 w-3 2xl:h-3.5 2xl:w-3.5 relative z-10" />
-                  <span className="relative z-10 text-[11px] 2xl:text-xs leading-none">Talent Pool</span>
-                  <ArrowRight className="h-3 w-3 relative z-10 transition-transform group-hover:translate-x-0.5" />
+                  <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/15 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
+                  <UserSearch className="h-6 w-6 2xl:h-7 2xl:w-7 relative z-10" />
+                  <span className="relative z-10 text-base 2xl:text-xl font-bold text-center leading-tight">
+                    Talent Pool
+                  </span>
                 </button>
               </div>
             </div>

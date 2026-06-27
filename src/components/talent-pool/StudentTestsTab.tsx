@@ -172,7 +172,7 @@ const StudentTestsTab = ({ studentId, onTestsChange }: { studentId: string; onTe
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <ClipboardCheck className="h-5 w-5 text-primary" /> Tests
+          <ClipboardCheck className="h-5 w-5 text-primary" /> Assessments
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
