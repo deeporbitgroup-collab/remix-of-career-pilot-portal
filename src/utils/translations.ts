@@ -7,7 +7,7 @@ export const translations = {
         title: "Takeoff",
         subtitle: "Liceo → Università",
         description: "Supporto completo per l'ingresso nel mondo universitario",
-        timeline: "Timeline Personalizzata",
+        timeline: "Timeline Personalizzata e Piano di Studio",
         comparative: "Presentazioni Comparative",
         inDepth: "Presentazioni Approfondite",
         book: "Prenota il tuo volo"
@@ -30,7 +30,7 @@ export const translations = {
         subtitle: "Università → Master",
         description: "Supporto strategico per il passaggio dall'università al master",
         personalizedTimeline: {
-          title: "Timeline Personalizzata",
+          title: "Timeline Personalizzata e Piano di Studio",
           items: [
             "Timeline d'accesso con scadenze e piano studio per test d'ingresso",
             "Accesso scontato alle migliori risorse di preparazione incluse nel piano di studio",
@@ -278,7 +278,7 @@ export const translations = {
         title: "Takeoff",
         subtitle: "Highschool → University",
         description: "Full support for starting your university journey",
-        timeline: "Personalized Timeline",
+        timeline: "Personalized Timeline and Study Plan",
         comparative: "Comparative Presentations",
         inDepth: "In-Depth Presentations",
         book: "Book your Flight"
@@ -302,7 +302,7 @@ export const translations = {
         subtitle: "University → Master",
         description: "Strategic Support for the Transition from University to Master's",
         personalizedTimeline: {
-          title: "Personalized Timeline",
+          title: "Personalized Timeline and Study Plan",
           items: [
             "Access timeline with deadlines and study plan for entrance tests",
             "Discounted access to the best preparation resources included in the study plan",
