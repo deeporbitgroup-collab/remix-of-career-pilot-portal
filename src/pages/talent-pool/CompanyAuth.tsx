@@ -15,8 +15,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { z } from "zod";
 import { TalentPoolLanguageProvider, useTalentPoolLanguage } from "@/contexts/TalentPoolLanguageContext";
 import { ForgotPasswordDialog } from "@/components/talent-pool/ForgotPasswordDialog";
-
-import { ForgotPasswordDialog } from "@/components/talent-pool/ForgotPasswordDialog";
 import { TALENT_POOL_COMPANY_SECTORS } from "@/data/talentPoolSectors";
 
 const companySchema = z.object({
