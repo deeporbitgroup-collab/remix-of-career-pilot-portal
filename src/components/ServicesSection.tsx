@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { CheckCircle2, Plane, RefreshCw, TrendingUp, GraduationCap, Check, MapPin, Headphones, ChevronRight, Calendar, FileText, Users, Presentation, ArrowRight, MessageCircle, BookOpen } from "lucide-react";
+import { CheckCircle2, Plane, RefreshCw, TrendingUp, GraduationCap, Check, MapPin, Headphones, ChevronRight, Users, ArrowRight, MessageCircle, BookOpen } from "lucide-react";
 import whatsappLogo from "@/assets/whatsapp-logo.png";
 import BookingPopup from "./BookingPopup";
 import JobHubFormDialog from "./JobHubFormDialog";
@@ -40,6 +40,38 @@ const ServicesSection = () => {
   const flightPlansAnimation = useScrollAnimation({ delay: 150, animationClass: 'animate-fade-up' });
   const stepsAnimation = useStaggeredAnimation(3, { animationClass: 'animate-fade-up', staggerDelay: 150 });
   const flightPlansCardsAnimation = useStaggeredAnimation(3, { animationClass: 'animate-fade-up', staggerDelay: 120 });
+
+  const associateOfficeHoursDetail = () => ({
+    title: "Associate Office Hours",
+    features: [
+      language === 'it'
+        ? "Call online di 60 minuti con un Associate. Chiedi qualsiasi cosa su SAT, GMAT, interview prep, studio e molto altro."
+        : "60-minute online call with an Associate. Ask anything about SAT, GMAT, interview prep, study tips, and more.",
+    ],
+  });
+
+  const expertCareerSessionDetail = () => ({
+    title: "Expert Career Session",
+    features: language === 'it' ? [
+      "Sessione 1:1 di 60 minuti completamente personalizzata con un associate che lavora nel tuo settore target",
+      "Prima della sessione specifichi esattamente di cosa hai bisogno, così l'associate può prepararsi in anticipo",
+      "Preparazione colloqui (behavioral, tecnici, case)",
+      "Prep tecnica specifica (Excel, modeling, analytics, strumenti)",
+      "Analisi gap competenze",
+      "Revisione CV e profilo",
+      "Transizione verso un nuovo ruolo o settore",
+    ] : [
+      "Fully customized 1:1 career session with an associate working in your target field",
+      "Before the session, you specify exactly what you need help with, so the associate can prepare in advance and deliver maximum value",
+      "Interview preparation (behavioral, technical, case-based)",
+      "Role-specific technical prep (Excel tests, modeling, analytics, tools)",
+      "Skill gap analysis",
+      "CV and profile review",
+      "Transition into a new role or industry",
+    ],
+  });
+
+  const mentorCallDetails = () => [associateOfficeHoursDetail(), expertCareerSessionDetail()];
 
   const services = [
     {
@@ -87,7 +119,8 @@ const ServicesSection = () => {
             "Quantitative data + personal experience",
             "Conclusion with personalized career advice based on your profile"
           ]
-        }
+        },
+        ...mentorCallDetails(),
       ]
     },
     {
@@ -143,7 +176,8 @@ const ServicesSection = () => {
             "Quantitative data + personal experience",
             "Conclusion with personalized career advice based on your profile"
           ]
-        }
+        },
+        ...mentorCallDetails(),
       ]
     },
     {
@@ -227,7 +261,8 @@ const ServicesSection = () => {
             "You receive a summary of what was sent, who was contacted, and recommended follow-ups",
             <span><strong>Pricing:</strong> €250 per interview secured. No upfront fee, no per-email cost — you are billed only when a contacted lead turns into a confirmed interview</span>
           ]
-        }
+        },
+        associateOfficeHoursDetail(),
       ]
     },
     {
@@ -237,7 +272,26 @@ const ServicesSection = () => {
       icon: <GraduationCap className="h-6 w-6 text-white" />,
       description: t.services.summit.description,
       color: "bg-[#EF4444]",
-      isComingSoon: false
+      isComingSoon: false,
+      details: [
+        {
+          title: t.services.summit.personalizedTimeline.title,
+          features: t.services.summit.personalizedTimeline.items,
+        },
+        {
+          title: t.services.summit.cvRewriting.title,
+          features: t.services.summit.cvRewriting.items,
+        },
+        {
+          title: t.services.summit.comparativeAnalysis.title,
+          features: t.services.summit.comparativeAnalysis.items,
+        },
+        {
+          title: t.services.summit.detailedPresentations.title,
+          features: t.services.summit.detailedPresentations.items,
+        },
+        ...mentorCallDetails(),
+      ],
     },
     {
       id: "job-hub",
@@ -557,106 +611,6 @@ const ServicesSection = () => {
                                   </a>
                                 </Button>
                               </>
-                            ) : service.id === 'summit' ? (
-                              <>
-                                {/* Personalized Timeline */}
-                                <div className="bg-runway-gray p-4 rounded-lg">
-                                  <h4 className="text-lg font-bold text-primary mb-4 flex items-center">
-                                    <Calendar className="mr-2 h-5 w-5 text-primary" />
-                                    {language === 'it' ? 'Timeline Personalizzata' : 'Personalized Timeline'}
-                                  </h4>
-                                  <ul className="space-y-3">
-                                    {(language === 'it' ? [
-                                      "Timeline d'accesso con scadenze e piano studio per test d'ingresso",
-                                      "Accesso scontato alle migliori risorse di preparazione incluse nel piano di studio",
-                                      "Creata da uno studente dell'Università di Interesse",
-                                      "Presentata in un meeting online 1:1 dallo studente dell'Università di Interesse"
-                                    ] : [
-                                      "Access timeline with deadlines and study plan for entrance tests",
-                                      "Discounted access to the best preparation resources included in the study plan",
-                                      "Created by a student from the University of Interest",
-                                      "Presented in a 1:1 online meeting by the student from the University of Interest"
-                                    ]).map((feature, featureIdx) => (
-                                      <li key={featureIdx} className="flex items-start">
-                                        <CheckCircle2 className="h-5 w-5 text-sky mt-0.5 mr-3 flex-shrink-0" />
-                                        <span className="text-steel-gray text-sm">{feature}</span>
-                                      </li>
-                                    ))}
-                                  </ul>
-                                </div>
-
-                                {/* CV Rewriting */}
-                                <div className="bg-runway-gray p-4 rounded-lg">
-                                  <h4 className="text-lg font-bold text-primary mb-4 flex items-center">
-                                    <FileText className="mr-2 h-5 w-5 text-primary" />
-                                    {language === 'it' ? 'Riscrizione del CV' : 'CV Rewriting'}
-                                  </h4>
-                                  <ul className="space-y-3">
-                                    {(language === 'it' ? [
-                                      "CV riscritto da uno studente della tua Università di Interesse",
-                                      "Il risultato finale viene presentato in un meeting online 1:1",
-                                      "Il CV viene riscritto dopo una call con il team in cui viene analizzato in maniera dettagliata il profilo dello studente"
-                                    ] : [
-                                      "CV rewritten by a student from your University of Interest",
-                                      "The final result is presented in a 1:1 online meeting",
-                                      "The CV is rewritten after a call with the team where the student's profile is analyzed in detail"
-                                    ]).map((feature, featureIdx) => (
-                                      <li key={featureIdx} className="flex items-start">
-                                        <CheckCircle2 className="h-5 w-5 text-sky mt-0.5 mr-3 flex-shrink-0" />
-                                        <span className="text-steel-gray text-sm">{feature}</span>
-                                      </li>
-                                    ))}
-                                  </ul>
-                                </div>
-
-                                {/* Comparative Analysis */}
-                                <div className="bg-runway-gray p-4 rounded-lg">
-                                  <h4 className="text-lg font-bold text-primary mb-4 flex items-center">
-                                    <Users className="mr-2 h-5 w-5 text-primary" />
-                                    {language === 'it' ? 'Analisi Comparativa' : 'Comparative Analysis'}
-                                  </h4>
-                                  <ul className="space-y-3">
-                                    {(language === 'it' ? [
-                                      "Creata da 2+ studenti delle università di interesse",
-                                      "Dati quantitativi + insight non pubblici per facilitare la scelta",
-                                      "Conclusione con KPI di confronto e opinioni personali"
-                                    ] : [
-                                      "Created by 2+ students from universities of interest",
-                                      "Quantitative data + non-public insights to facilitate choice",
-                                      "Conclusion with comparison KPIs and personal opinions"
-                                    ]).map((feature, featureIdx) => (
-                                      <li key={featureIdx} className="flex items-start">
-                                        <CheckCircle2 className="h-5 w-5 text-sky mt-0.5 mr-3 flex-shrink-0" />
-                                        <span className="text-steel-gray text-sm">{feature}</span>
-                                      </li>
-                                    ))}
-                                  </ul>
-                                </div>
-
-                                {/* Detailed Presentations */}
-                                <div className="bg-runway-gray p-4 rounded-lg">
-                                  <h4 className="text-lg font-bold text-primary mb-4 flex items-center">
-                                    <Presentation className="mr-2 h-5 w-5 text-primary" />
-                                    {language === 'it' ? 'Presentazioni Approfondite' : 'In-Depth Presentations'}
-                                  </h4>
-                                  <ul className="space-y-3">
-                                    {(language === 'it' ? [
-                                      "Presentazione realizzata da uno studente dell'università di interesse",
-                                      "Dati quantitativi + esperienza personale",
-                                      "Conclusione con consigli di carriera personalizzati sul tuo profilo"
-                                    ] : [
-                                      "Presentation created by a student from the university of interest",
-                                      "Quantitative data + personal experience",
-                                      "Conclusion with personalized career advice based on your profile"
-                                    ]).map((feature, featureIdx) => (
-                                      <li key={featureIdx} className="flex items-start">
-                                        <CheckCircle2 className="h-5 w-5 text-sky mt-0.5 mr-3 flex-shrink-0" />
-                                        <span className="text-steel-gray text-sm">{feature}</span>
-                                      </li>
-                                    ))}
-                                  </ul>
-                                </div>
-                              </>
                             ) : (
                               service.details?.map((detail, idx) => (
                                 <div key={idx} className="bg-runway-gray p-4 rounded-lg">
@@ -842,107 +796,7 @@ const ServicesSection = () => {
                       </DialogTitle>
                     </DialogHeader>
                     <div className="grid gap-6">
-                      {service.id === 'summit' ? (
-                        <>
-                          {/* Personalized Timeline */}
-                          <div className="bg-runway-gray p-4 md:p-6 rounded-lg">
-                            <h4 className="text-lg md:text-xl font-bold text-primary mb-4 flex items-center">
-                              <Calendar className="mr-2 h-5 w-5 text-primary" />
-                              {language === 'it' ? 'Timeline Personalizzata' : 'Personalized Timeline'}
-                            </h4>
-                            <ul className="space-y-3">
-                              {(language === 'it' ? [
-                                "Timeline d'accesso con scadenze e piano studio per test d'ingresso",
-                                "Accesso scontato alle migliori risorse di preparazione incluse nel piano di studio",
-                                "Creata da uno studente dell'Università di Interesse",
-                                "Presentata in un meeting online 1:1 dallo studente dell'Università di Interesse"
-                              ] : [
-                                "Access timeline with deadlines and study plan for entrance tests",
-                                "Discounted access to the best preparation resources included in the study plan",
-                                "Created by a student from the University of Interest",
-                                "Presented in a 1:1 online meeting by the student from the University of Interest"
-                              ]).map((feature, featureIdx) => (
-                                <li key={featureIdx} className="flex items-start">
-                                  <CheckCircle2 className="h-5 w-5 text-sky mt-0.5 mr-3 flex-shrink-0" />
-                                  <span className="text-steel-gray text-sm md:text-base">{feature}</span>
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
-
-                          {/* CV Rewriting */}
-                          <div className="bg-runway-gray p-4 md:p-6 rounded-lg">
-                            <h4 className="text-lg md:text-xl font-bold text-primary mb-4 flex items-center">
-                              <FileText className="mr-2 h-5 w-5 text-primary" />
-                              {language === 'it' ? 'Riscrittura del CV' : 'CV Rewriting'}
-                            </h4>
-                            <ul className="space-y-3">
-                              {(language === 'it' ? [
-                                "CV riscritto da uno studente della tua Università di Interesse",
-                                "Il risultato finale viene presentato in un meeting online 1:1",
-                                "Il CV viene riscritto dopo una call con il team in cui viene analizzato in maniera dettagliata il profilo dello studente"
-                              ] : [
-                                "CV rewritten by a student from your University of Interest",
-                                "The final result is presented in a 1:1 online meeting",
-                                "The CV is rewritten after a call with the team where the student's profile is analyzed in detail"
-                              ]).map((feature, featureIdx) => (
-                                <li key={featureIdx} className="flex items-start">
-                                  <CheckCircle2 className="h-5 w-5 text-sky mt-0.5 mr-3 flex-shrink-0" />
-                                  <span className="text-steel-gray text-sm md:text-base">{feature}</span>
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
-
-                          {/* Comparative Analysis */}
-                          <div className="bg-runway-gray p-4 md:p-6 rounded-lg">
-                            <h4 className="text-lg md:text-xl font-bold text-primary mb-4 flex items-center">
-                              <Users className="mr-2 h-5 w-5 text-primary" />
-                              {language === 'it' ? 'Analisi Comparativa' : 'Comparative Analysis'}
-                            </h4>
-                            <ul className="space-y-3">
-                              {(language === 'it' ? [
-                                "Creata da 2+ studenti delle università di interesse",
-                                "Dati quantitativi + insight non pubblici per facilitare la scelta",
-                                "Conclusione con KPI di confronto e opinioni personali"
-                              ] : [
-                                "Created by 2+ students from universities of interest",
-                                "Quantitative data + non-public insights to facilitate choice",
-                                "Conclusion with comparison KPIs and personal opinions"
-                              ]).map((feature, featureIdx) => (
-                                <li key={featureIdx} className="flex items-start">
-                                  <CheckCircle2 className="h-5 w-5 text-sky mt-0.5 mr-3 flex-shrink-0" />
-                                  <span className="text-steel-gray text-sm md:text-base">{feature}</span>
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
-
-                          {/* Detailed Presentations */}
-                          <div className="bg-runway-gray p-4 md:p-6 rounded-lg">
-                            <h4 className="text-lg md:text-xl font-bold text-primary mb-4 flex items-center">
-                              <Presentation className="mr-2 h-5 w-5 text-primary" />
-                              {language === 'it' ? 'Presentazioni Approfondite' : 'In-Depth Presentations'}
-                            </h4>
-                            <ul className="space-y-3">
-                              {(language === 'it' ? [
-                                "Presentazione realizzata da uno studente dell'università di interesse",
-                                "Dati quantitativi + esperienza personale",
-                                "Conclusione con consigli di carriera personalizzati sul tuo profilo"
-                              ] : [
-                                "Presentation created by a student from the university of interest",
-                                "Quantitative data + personal experience",
-                                "Conclusion with personalized career advice based on your profile"
-                              ]).map((feature, featureIdx) => (
-                                <li key={featureIdx} className="flex items-start">
-                                  <CheckCircle2 className="h-5 w-5 text-sky mt-0.5 mr-3 flex-shrink-0" />
-                                  <span className="text-steel-gray text-sm md:text-base">{feature}</span>
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
-                        </>
-                       ) : service.id === 'job-hub' ? (
+                      {service.id === 'job-hub' ? (
                         <>
                           <div className="text-center mb-4">
                             <img src={whatsappLogo} alt="WhatsApp" className="w-20 h-20 mx-auto mb-4" />
