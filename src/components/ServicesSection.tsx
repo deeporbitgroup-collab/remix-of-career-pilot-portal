@@ -50,29 +50,6 @@ const ServicesSection = () => {
     ],
   });
 
-  const expertCareerSessionDetail = () => ({
-    title: "Expert Career Session",
-    features: language === 'it' ? [
-      "Sessione 1:1 di 60 minuti completamente personalizzata con un associate che lavora nel tuo settore target",
-      "Prima della sessione specifichi esattamente di cosa hai bisogno, così l'associate può prepararsi in anticipo",
-      "Preparazione colloqui (behavioral, tecnici, case)",
-      "Prep tecnica specifica (Excel, modeling, analytics, strumenti)",
-      "Analisi gap competenze",
-      "Revisione CV e profilo",
-      "Transizione verso un nuovo ruolo o settore",
-    ] : [
-      "Fully customized 1:1 career session with an associate working in your target field",
-      "Before the session, you specify exactly what you need help with, so the associate can prepare in advance and deliver maximum value",
-      "Interview preparation (behavioral, technical, case-based)",
-      "Role-specific technical prep (Excel tests, modeling, analytics, tools)",
-      "Skill gap analysis",
-      "CV and profile review",
-      "Transition into a new role or industry",
-    ],
-  });
-
-  const mentorCallDetails = () => [associateOfficeHoursDetail(), expertCareerSessionDetail()];
-
   const services = [
     {
       id: "takeoff",
@@ -120,7 +97,7 @@ const ServicesSection = () => {
             "Conclusion with personalized career advice based on your profile"
           ]
         },
-        ...mentorCallDetails(),
+        associateOfficeHoursDetail(),
       ]
     },
     {
@@ -177,7 +154,7 @@ const ServicesSection = () => {
             "Conclusion with personalized career advice based on your profile"
           ]
         },
-        ...mentorCallDetails(),
+        associateOfficeHoursDetail(),
       ]
     },
     {
@@ -262,7 +239,6 @@ const ServicesSection = () => {
             <span><strong>Pricing:</strong> €250 per interview secured. No upfront fee, no per-email cost — you are billed only when a contacted lead turns into a confirmed interview</span>
           ]
         },
-        associateOfficeHoursDetail(),
       ]
     },
     {
@@ -290,7 +266,7 @@ const ServicesSection = () => {
           title: t.services.summit.detailedPresentations.title,
           features: t.services.summit.detailedPresentations.items,
         },
-        ...mentorCallDetails(),
+        associateOfficeHoursDetail(),
       ],
     },
     {
