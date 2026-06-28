@@ -314,3 +314,14 @@ verify_jwt = false
 
 [functions.crm-ai]
 verify_jwt = true
+
+# Pay-after-confirmation flow. Called from the public client portal (custom auth,
+# no Supabase JWT) or server-to-server between edge functions, so no JWT gate.
+[functions.create-order-payment]
+verify_jwt = false
+
+[functions.send-order-email]
+verify_jwt = false
+
+[functions.admin-order-action]
+verify_jwt = false

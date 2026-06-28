@@ -42,8 +42,14 @@ const MyProjectsSection = ({ clientId, clientName }: MyProjectsSectionProps) => 
 
     const subscription = sb
       .channel('my_projects_changes')
-      .on('postgres_changes', 
+      .on('postgres_changes',
         { event: '*', schema: 'public', table: 'client_projects', filter: `client_id=eq.${clientId}` },
+        () => fetchProjects()
+      )
+      // Also refresh when an order's payment status changes, so the "Pay now"
+      // banner appears the moment the associate confirms and disappears once paid.
+      .on('postgres_changes',
+        { event: '*', schema: 'public', table: 'client_orders', filter: `client_id=eq.${clientId}` },
         () => fetchProjects()
       )
       .subscribe();
@@ -61,7 +67,7 @@ const MyProjectsSection = ({ clientId, clientName }: MyProjectsSectionProps) => 
         .select(`
           *,
           service:client_services(id, name, price, category),
-          order:client_orders(id, created_at, outreach_cv_url, outreach_cover_letter_url, outreach_custom_email)
+          order:client_orders(id, created_at, payment_status, kind, order_label, total_amount, associate_id, outreach_cv_url, outreach_cover_letter_url, outreach_custom_email)
         `)
         .eq('client_id', clientId)
         .order('created_at', { ascending: false });
@@ -284,6 +290,25 @@ const MyProjectsSection = ({ clientId, clientName }: MyProjectsSectionProps) => 
   const activeProjects = projects.filter(p => p.status !== 'completed');
   const completedProjects = projects.filter(p => p.status === 'completed');
 
+  // Orders whose associate has confirmed the time and now await payment. One big
+  // banner per order, with a "Pay now" button → secure Stripe Checkout.
+  const paymentDueOrders = Object.values(
+    projects.reduce((acc: Record<string, any>, p: any) => {
+      const o = p.order;
+      if (o && o.payment_status === 'awaiting_payment' && !acc[o.id]) {
+        acc[o.id] = {
+          orderId: o.id,
+          label: o.order_label || p.service?.name || 'your order',
+          total: Number(o.total_amount || 0),
+          associateName: p.associate
+            ? `${p.associate.first_name} ${p.associate.last_name}`
+            : 'Your associate',
+        };
+      }
+      return acc;
+    }, {})
+  ) as Array<{ orderId: string; label: string; total: number; associateName: string }>;
+
   // Group per-component projects under their package so the area stays tidy.
   const groupByPackage = (list: any[]) => {
     const groups: { key: string; packageName: string | null; projects: any[] }[] = [];
@@ -342,6 +367,44 @@ const MyProjectsSection = ({ clientId, clientName }: MyProjectsSectionProps) => 
           </div>
         </div>
       </Card>
+
+      {/* Payment required — associate has confirmed the time, payment is now due */}
+      {paymentDueOrders.map((o) => (
+        <Card
+          key={o.orderId}
+          className="border-2 border-amber-300 bg-amber-50 dark:bg-amber-950/30 shadow-lg overflow-hidden"
+        >
+          <CardContent className="p-5 sm:p-6">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-start gap-3">
+                <div className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-amber-400 text-white">
+                  <CheckCircle2 className="h-6 w-6" />
+                </div>
+                <div className="min-w-0">
+                  <h3 className="text-lg font-bold text-amber-900 dark:text-amber-200">
+                    {o.associateName} has confirmed your time — payment required
+                  </h3>
+                  <p className="mt-1 text-sm text-amber-800/90 dark:text-amber-200/80">
+                    Complete your payment for <strong>{o.label}</strong> to lock in your meeting and get started.
+                  </p>
+                </div>
+              </div>
+              <div className="flex shrink-0 flex-col items-stretch gap-1 sm:items-end">
+                <Button
+                  size="lg"
+                  className="bg-amber-500 hover:bg-amber-600 text-white shadow-md"
+                  onClick={() => navigate(`/client-portal/pay?order=${o.orderId}`)}
+                >
+                  Pay €{o.total.toFixed(2)} now
+                </Button>
+                <span className="text-center text-[11px] text-amber-700/80 dark:text-amber-300/70 sm:text-right">
+                  Secure payment by Stripe
+                </span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      ))}
 
       {/* Active Projects */}
       <Card className="backdrop-blur-sm bg-background/90 shadow-lg">
@@ -449,6 +512,9 @@ const ProjectCard = ({ project, clientId, clientName, onSelectSlot, onAcceptCoun
                     </div>
                   ) : (
                     <Badge variant={status.variant}>{status.label}</Badge>
+                  )}
+                  {project.order?.payment_status === 'awaiting_payment' && (
+                    <Badge className="bg-amber-500 hover:bg-amber-500 text-white">Payment required</Badge>
                   )}
                 </div>
                 <CardDescription className="mt-1">

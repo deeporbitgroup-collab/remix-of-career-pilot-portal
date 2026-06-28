@@ -28,8 +28,12 @@ const AdminClientProjects = () => {
     // Real-time subscription
     const subscription = sb
       .channel('admin_projects_changes')
-      .on('postgres_changes', 
+      .on('postgres_changes',
         { event: '*', schema: 'public', table: 'client_projects' },
+        () => fetchProjects()
+      )
+      .on('postgres_changes',
+        { event: '*', schema: 'public', table: 'client_orders' },
         () => fetchProjects()
       )
       .subscribe();
@@ -39,6 +43,46 @@ const AdminClientProjects = () => {
     };
   }, []);
 
+  const [orderActionId, setOrderActionId] = useState<string | null>(null);
+
+  const handleMarkOrderPaid = async (orderId: string) => {
+    if (!confirm("Mark this order as PAID? The client and associate will be notified.")) return;
+    setOrderActionId(orderId);
+    try {
+      const { error } = await sb.functions.invoke('admin-order-action', {
+        body: { orderId, action: 'mark_paid' },
+      });
+      if (error) throw error;
+      toast.success("Order marked as paid.");
+      fetchProjects();
+    } catch (e: any) {
+      toast.error(e.message || "Failed to mark as paid");
+    } finally {
+      setOrderActionId(null);
+    }
+  };
+
+  const handleCancelReservation = async (orderId: string) => {
+    const reason = window.prompt(
+      "Cancel this unpaid reservation? The client, associate and admin will be emailed.\n\nOptional note for the emails:",
+      ""
+    );
+    if (reason === null) return; // user dismissed
+    setOrderActionId(orderId);
+    try {
+      const { error } = await sb.functions.invoke('admin-order-action', {
+        body: { orderId, action: 'cancel', reason: reason || undefined },
+      });
+      if (error) throw error;
+      toast.success("Reservation cancelled and everyone notified.");
+      fetchProjects();
+    } catch (e: any) {
+      toast.error(e.message || "Failed to cancel reservation");
+    } finally {
+      setOrderActionId(null);
+    }
+  };
+
   const fetchProjects = async () => {
     try {
       const { data: projectsData, error } = await sb
@@ -46,7 +90,7 @@ const AdminClientProjects = () => {
         .select(`
           *,
           service:client_services(id, name, price, category),
-          order:client_orders(id, created_at, payment_status, total_amount, payment_receipt_url, outreach_cv_url, outreach_cover_letter_url, outreach_custom_email),
+          order:client_orders(id, created_at, payment_status, kind, order_label, total_amount, unlocked_at, payment_receipt_url, outreach_cv_url, outreach_cover_letter_url, outreach_custom_email),
           client:client_users(id, first_name, last_name, email, phone)
         `)
         .order('created_at', { ascending: false });
@@ -182,7 +226,11 @@ const AdminClientProjects = () => {
   const paymentLabels: Record<string, { label: string; variant: "default" | "secondary" | "outline" | "destructive" }> = {
     pending: { label: "Pending", variant: "outline" },
     uploaded: { label: "Receipt Uploaded", variant: "secondary" },
-    verified: { label: "Verified", variant: "default" },
+    verified: { label: "Paid", variant: "default" },
+    paid: { label: "Paid", variant: "default" },
+    awaiting_confirmation: { label: "Awaiting confirmation", variant: "outline" },
+    awaiting_payment: { label: "Awaiting payment", variant: "secondary" },
+    cancelled: { label: "Cancelled", variant: "destructive" },
     rejected: { label: "Rejected", variant: "destructive" },
   };
 
@@ -198,8 +246,90 @@ const AdminClientProjects = () => {
     );
   }
 
+  // Distinct order groups whose associate confirmed the time but the client hasn't paid yet.
+  const pendingPaymentOrders = Object.values(
+    projects.reduce((acc: Record<string, any>, p: any) => {
+      const o = p.order;
+      if (o && o.payment_status === 'awaiting_payment' && !acc[o.id]) {
+        acc[o.id] = {
+          orderId: o.id,
+          label: o.order_label || p.service?.name || 'Order',
+          total: Number(o.total_amount || 0),
+          unlockedAt: o.unlocked_at,
+          clientName: `${p.client?.first_name ?? ''} ${p.client?.last_name ?? ''}`.trim(),
+          clientEmail: p.client?.email,
+          associateName: p.associate ? `${p.associate.first_name} ${p.associate.last_name}` : '—',
+        };
+      }
+      return acc;
+    }, {})
+  ) as Array<any>;
+
   return (
     <div className="space-y-6">
+      {/* Pending payments — associate confirmed, client hasn't paid */}
+      {pendingPaymentOrders.length > 0 && (
+        <Card className="border-2 border-amber-300">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <CreditCard className="h-5 w-5 text-amber-500" />
+              Pending Payments ({pendingPaymentOrders.length})
+            </CardTitle>
+            <CardDescription>
+              The associate confirmed a time and the client has been asked to pay. Cancel to free the associate (everyone is emailed), or mark as paid manually.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Order</TableHead>
+                  <TableHead>Client</TableHead>
+                  <TableHead>Associate</TableHead>
+                  <TableHead>Amount</TableHead>
+                  <TableHead>Awaiting since</TableHead>
+                  <TableHead>Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {pendingPaymentOrders.map((o: any) => (
+                  <TableRow key={o.orderId}>
+                    <TableCell className="font-medium">{o.label}</TableCell>
+                    <TableCell>
+                      <p className="font-medium">{o.clientName}</p>
+                      <p className="text-sm text-muted-foreground">{o.clientEmail}</p>
+                    </TableCell>
+                    <TableCell>{o.associateName}</TableCell>
+                    <TableCell className="font-semibold">€{o.total.toFixed(2)}</TableCell>
+                    <TableCell>{o.unlockedAt ? format(new Date(o.unlockedAt), 'dd/MM/yyyy HH:mm') : '—'}</TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          size="sm"
+                          className="bg-green-600 hover:bg-green-700"
+                          disabled={orderActionId === o.orderId}
+                          onClick={() => handleMarkOrderPaid(o.orderId)}
+                        >
+                          {orderActionId === o.orderId ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Mark as paid'}
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          disabled={orderActionId === o.orderId}
+                          onClick={() => handleCancelReservation(o.orderId)}
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Summary Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
@@ -228,11 +358,11 @@ const AdminClientProjects = () => {
 
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Verified Payments</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">Paid Projects</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-between">
-              <span className="text-2xl font-bold">{projects.filter(p => p.order?.payment_status === 'verified').length}</span>
+              <span className="text-2xl font-bold">{projects.filter(p => p.order?.payment_status === 'paid' || p.order?.payment_status === 'verified').length}</span>
               <CreditCard className="h-5 w-5 text-green-500" />
             </div>
           </CardContent>

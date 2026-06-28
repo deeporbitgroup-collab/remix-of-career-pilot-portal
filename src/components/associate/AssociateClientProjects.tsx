@@ -22,6 +22,25 @@ interface AssociateClientProjectsProps {
   mode?: 'all' | 'active' | 'completed';
 }
 
+// Pay-after-confirmation payment badge. The associate should only deliver once the
+// client has paid; before that the badge makes the state explicit.
+const paymentBadge = (paymentStatus: string | null | undefined, language: string) => {
+  const it = language === 'it';
+  switch (paymentStatus) {
+    case 'paid':
+    case 'verified': // legacy
+      return { label: it ? 'Pagato' : 'Paid', className: 'bg-green-600 hover:bg-green-600 text-white' };
+    case 'awaiting_payment':
+      return { label: it ? 'In attesa di pagamento' : 'Awaiting client payment', className: 'bg-amber-500 hover:bg-amber-500 text-white' };
+    case 'cancelled':
+      return { label: it ? 'Annullato' : 'Cancelled', className: 'bg-destructive hover:bg-destructive text-destructive-foreground' };
+    case 'awaiting_confirmation':
+      return { label: it ? 'Conferma orario per sbloccare il pagamento' : 'Confirm a time to unlock payment', className: 'bg-slate-200 text-slate-700 hover:bg-slate-200' };
+    default:
+      return { label: it ? 'Pagamento in attesa' : 'Payment pending', className: 'bg-slate-200 text-slate-700 hover:bg-slate-200' };
+  }
+};
+
 const statusLabels: Record<string, { label: string; labelIt: string; variant: "default" | "secondary" | "outline" | "destructive" }> = {
   pending: { label: "Pending", labelIt: "In attesa", variant: "outline" },
   slots_proposed: { label: "Select Time Slot", labelIt: "Seleziona orario", variant: "default" },
@@ -800,13 +819,10 @@ const ProjectCard = ({ project, associateId, language, onSelectSlot, isExpanded,
 
           <div className="flex flex-wrap gap-1.5">
             <Badge variant={statusConfig.variant} className="text-xs">{statusLabel}</Badge>
-            {project.order?.payment_status && (
-              <Badge variant={project.order.payment_status === 'verified' ? 'default' : 'secondary'} className="text-xs">
-                {project.order.payment_status === 'verified'
-                  ? (language === 'it' ? 'Pagato' : 'Paid')
-                  : (language === 'it' ? 'Pagamento in attesa' : 'Payment pending')}
-              </Badge>
-            )}
+            {project.order?.payment_status && (() => {
+              const pb = paymentBadge(project.order.payment_status, language);
+              return <Badge className={`text-xs ${pb.className}`}>{pb.label}</Badge>;
+            })()}
           </div>
 
           {scheduledSlot && (
@@ -837,13 +853,10 @@ const ProjectCard = ({ project, associateId, language, onSelectSlot, isExpanded,
             <DialogTitle className="flex flex-wrap items-center gap-2">
               {project.service?.name}
               <Badge variant={statusConfig.variant}>{statusLabel}</Badge>
-              {project.order?.payment_status && (
-                <Badge variant={project.order.payment_status === 'verified' ? 'default' : 'secondary'}>
-                  {project.order.payment_status === 'verified'
-                    ? (language === 'it' ? 'Pagato' : 'Paid')
-                    : (language === 'it' ? 'Pagamento in attesa' : 'Payment pending')}
-                </Badge>
-              )}
+              {project.order?.payment_status && (() => {
+                const pb = paymentBadge(project.order.payment_status, language);
+                return <Badge className={pb.className}>{pb.label}</Badge>;
+              })()}
             </DialogTitle>
             <CardDescription>
               <span className="font-medium">{project.client?.first_name} {project.client?.last_name}</span>

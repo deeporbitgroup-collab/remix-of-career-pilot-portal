@@ -48,22 +48,14 @@ serve(async (req) => {
     const kind = meta.kind; // "client_order" | "kb_order" | "talent_pool_subscription"
 
     if (kind === "client_order" && meta.order_id) {
-      const { data: existingOrder } = await supabase
-        .from("client_orders")
-        .select("payment_status")
-        .eq("id", meta.order_id)
-        .maybeSingle();
-      const wasAlreadyPaid = existingOrder?.payment_status === "paid";
+      // Idempotent: returns true only on the first transition to 'paid', so the
+      // confirmation emails fire exactly once (whether triggered here or by the webhook).
+      const { data: didPay } = await supabase.rpc("mark_client_order_paid", {
+        _order_id: meta.order_id,
+        _stripe_session: session.id,
+      });
 
-      await supabase
-        .from("client_orders")
-        .update({
-          payment_status: "paid",
-          payment_receipt_url: `stripe:${session.id}`,
-        })
-        .eq("id", meta.order_id);
-
-      if (!wasAlreadyPaid) {
+      if (didPay) {
         Promise.allSettled([
           supabase.functions.invoke("send-client-order-notification", {
             body: { orderId: meta.order_id },

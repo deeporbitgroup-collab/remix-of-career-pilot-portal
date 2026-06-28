@@ -13,6 +13,26 @@ const supabase = createClient(
 );
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
+// Pay-after-confirmation: unlock the order group's payment once the meeting is
+// confirmed, then email the client a secure pay link (sent at most once).
+async function unlockOrderPaymentAndNotify(orderId: string | null | undefined) {
+  if (!orderId) return;
+  try {
+    const { data: didUnlock, error } = await supabase.rpc("unlock_order_payment", {
+      _order_id: orderId,
+    });
+    if (error) {
+      console.error("unlock_order_payment error", error);
+      return;
+    }
+    if (didUnlock) {
+      await supabase.functions.invoke("send-order-email", { body: { orderId, type: "payment_due" } });
+    }
+  } catch (e) {
+    console.error("unlockOrderPaymentAndNotify err", e);
+  }
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
@@ -63,6 +83,9 @@ serve(async (req) => {
           body: { projectId, slotId, selectedTime: slot?.proposed_time },
         });
       } catch (e) { console.error(e); }
+
+      // Pay-after-confirmation: the meeting is now confirmed → payment is due.
+      await unlockOrderPaymentAndNotify(project.order_id);
 
       return new Response(JSON.stringify({ success: true }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },

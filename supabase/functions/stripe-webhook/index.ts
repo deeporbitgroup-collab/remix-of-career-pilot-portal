@@ -200,8 +200,43 @@ Deno.serve(async (req) => {
     { auth: { persistSession: false } }
   );
 
+  // Pay-after-confirmation flow: the order already exists (created at checkout),
+  // so we just mark it paid. mark_client_order_paid is idempotent and returns true
+  // only on the first transition, so emails fire once even if verify-payment also ran.
+  if (meta.order_id) {
+    try {
+      const { data: didPay, error: payErr } = await supabase.rpc("mark_client_order_paid", {
+        _order_id: meta.order_id,
+        _stripe_session: session.id,
+      });
+      if (payErr) throw payErr;
+      if (didPay) {
+        await Promise.allSettled([
+          supabase.functions.invoke("send-client-order-notification", { body: { orderId: meta.order_id } }),
+          meta.client_id
+            ? supabase.functions.invoke("send-client-payment-confirmation", {
+                body: { orderId: meta.order_id, clientId: meta.client_id },
+              })
+            : Promise.resolve(null),
+        ]);
+      }
+      return new Response(JSON.stringify({ received: true, paid: true, orderId: meta.order_id }), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Unexpected error";
+      console.error("[stripe-webhook] order_id path", msg);
+      return new Response(JSON.stringify({ error: msg }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+  }
+
   try {
-    // Atomic claim — only the winner proceeds (the payment-success page may have
+    // Legacy fallback (no order_id): atomic claim on the staged pending_orders
+    // payload — only the winner proceeds (the payment-success page may have
     // already fulfilled it; then claim returns an empty/non-processing row).
     const { data: claim, error: claimErr } = await supabase.rpc("claim_pending_order", {
       _session_id: session.id,

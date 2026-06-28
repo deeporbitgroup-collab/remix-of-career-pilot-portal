@@ -46,6 +46,7 @@ import ClientAuth from "./pages/client-portal/ClientAuth";
 import ClientDashboard from "./pages/client-portal/ClientDashboard";
 import ClientServices from "./pages/client-portal/ClientServices";
 import ClientCheckout from "./pages/client-portal/ClientCheckout";
+import PayOrder from "./pages/client-portal/PayOrder";
 import ClientResetPassword from "./pages/client-portal/ClientResetPassword";
 import KnowledgeBase from "./pages/KnowledgeBase";
 import KnowledgeBaseCheckout from "./pages/KnowledgeBaseCheckout";
@@ -102,6 +103,7 @@ const App = () => (
               <Route path="/client-portal/checkout" element={<ClientCheckout />} />
               <Route path="/client-portal/auth" element={<ClientAuth />} />
               <Route path="/client-portal/dashboard" element={<ClientDashboard />} />
+              <Route path="/client-portal/pay" element={<PayOrder />} />
               <Route path="/client-portal/reset-password" element={<ClientResetPassword />} />
 
               {/* Knowledge Base */}

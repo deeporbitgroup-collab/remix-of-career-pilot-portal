@@ -13,6 +13,27 @@ const supabase = createClient(
 );
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
+// Pay-after-confirmation: the order group becomes due for payment when its meeting
+// is confirmed. unlock_order_payment flips 'awaiting_confirmation' → 'awaiting_payment'
+// exactly once and returns true only on that first transition, so we email once.
+async function unlockOrderPaymentAndNotify(orderId: string | null | undefined) {
+  if (!orderId) return;
+  try {
+    const { data: didUnlock, error } = await supabase.rpc("unlock_order_payment", {
+      _order_id: orderId,
+    });
+    if (error) {
+      console.error("unlock_order_payment error", error);
+      return;
+    }
+    if (didUnlock) {
+      await supabase.functions.invoke("send-order-email", { body: { orderId, type: "payment_due" } });
+    }
+  } catch (e) {
+    console.error("unlockOrderPaymentAndNotify err", e);
+  }
+}
+
 interface CounterSlot {
   date: string; // yyyy-MM-dd
   time: string; // HH:mm or range
@@ -67,6 +88,11 @@ serve(async (req) => {
       } catch (e) {
         console.error("notify err", e);
       }
+
+      // Pay-after-confirmation: confirming the meeting makes payment due for the
+      // whole order group. Unlock it exactly once, then email the client a pay link.
+      await unlockOrderPaymentAndNotify(project.order_id);
+
       return new Response(JSON.stringify({ success: true }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });

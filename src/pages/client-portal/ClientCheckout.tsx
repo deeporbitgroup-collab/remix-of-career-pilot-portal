@@ -20,7 +20,7 @@ import bgImage from "@/assets/client-portal-bg.jpeg";
 import { BriefOverviewForm, BriefOverviewData } from "@/components/client-portal/BriefOverviewForm";
 import OutreachDocumentsUpload from "@/components/client-portal/OutreachDocumentsUpload";
 import CheckoutAssociateProfiles, { CheckoutProfilesEntry } from "@/components/client-portal/CheckoutAssociateProfiles";
-import { type PendingClientOrder, type PendingOrderItem, type PendingMeetingSlot, type PendingSharedDoc } from "@/lib/fulfillClientOrder";
+import { placeClientOrder, type PlaceOrderItem, type PlaceMeetingSlot, type PlaceSharedDoc } from "@/lib/placeClientOrder";
 
 const sb = supabase as any;
 
@@ -379,7 +379,7 @@ const ClientCheckout = () => {
     setIsProcessing(true);
 
     try {
-      const { subtotal, discountPercentage, total } = calculateTotals();
+      const { discountPercentage } = calculateTotals();
 
       // ── Upload files to storage NOW (File objects can't survive the Stripe
       //    redirect), but DO NOT create any order / project / slot yet. Those are
@@ -423,21 +423,25 @@ const ClientCheckout = () => {
         outreachCoverLetterUrl = clUpload.path;
       }
 
-      // Build the per-item fulfillment payload (resolved associate, slots, backup,
-      // and any CV-rewrite documents uploaded to a pre-payment path).
-      const pendingItems: PendingOrderItem[] = [];
+      // Build the per-item order data (resolved associate, slots, CV-rewrite docs).
+      const orderItems: PlaceOrderItem[] = [];
       for (const item of cartItems) {
         const isCvRewriteNoMeeting = isCvRewriteItem(item) && !!cvRewriteSkipMeeting[item.id];
 
         // For Comparative items the deliverable is produced by the 2nd associate.
-        const resolvedAssociateId =
-          item.associates && item.associates.length === 2
-            ? item.associates[1].id
-            : (item.associate?.id || null);
+        const isComparative = !!(item.associates && item.associates.length === 2);
+        const resolvedAssociateId = isComparative
+          ? item.associates![1].id
+          : (item.associate?.id || null);
+        const associateName = isComparative
+          ? `${item.associates![1].first_name} ${item.associates![1].last_name}`
+          : item.associate
+          ? `${item.associate.first_name} ${item.associate.last_name}`
+          : null;
 
         // Upload CV-rewrite docs now (no project id yet → use a pending path; the
         // stored path is what client_shared_documents references, prefix is irrelevant).
-        const cvRewriteDocs: PendingSharedDoc[] = [];
+        const cvRewriteDocs: PlaceSharedDoc[] = [];
         if (isCvRewriteNoMeeting) {
           const uploads: Array<{ file: File; label: string }> = [];
           const cv = cvRewriteCvFile[item.id];
@@ -462,7 +466,7 @@ const ClientCheckout = () => {
 
         // Meeting slots — the single order-level availability applies to every
         // meeting in the order (same Associate, or comparative's 2nd Associate).
-        const slots: PendingMeetingSlot[] = [];
+        const slots: PlaceMeetingSlot[] = [];
         if (resolvedAssociateId && !isCvRewriteNoMeeting) {
           for (const slot of orderSlots) {
             if (slot.date && slot.timeSlot) {
@@ -472,94 +476,104 @@ const ClientCheckout = () => {
           }
         }
 
-        pendingItems.push({
+        orderItems.push({
           serviceId: item.service.id,
+          serviceName: item.service.name,
           price: Number(item.service.price),
           resolvedAssociateId,
+          associateName,
           isCvRewriteNoMeeting,
           specificRequest: item.specificRequest || null,
           additionalCallReason: (item as any).additionalCallReason || null,
           packageName: item.packageName || null,
           slots,
-          backupAssociateId: null,
-          backupSlots: [],
           cvRewriteDocs,
         });
       }
 
-      const pendingOrder: PendingClientOrder = {
+      // Create the order group(s) NOW, unpaid. Associate groups wait for the
+      // associate to confirm a meeting time before payment is due; the immediate
+      // group (no associate/meeting) is paid right away via Stripe below.
+      const placed = await placeClientOrder({
         clientId: clientUser.id,
-        totalAmount: subtotal,
         discountPercentage,
         receiptUrl,
         outreachCvUrl,
         outreachCoverLetterUrl,
         outreachCustomEmail: hasOutreachPowerPackService && useCustomEmail ? outreachCustomEmail : null,
-        items: pendingItems,
-      };
+        items: orderItems,
+      });
 
-      // Create Stripe Checkout session and redirect. No order_id is passed: the
-      // order doesn't exist yet, so verify-payment's client_order branch is a
-      // no-op and won't send premature emails.
-      const origin = window.location.origin;
-      const lineItems = cartItems.map((item) => ({
-        name: item.service.name,
-        description: item.associate
-          ? `Associate: ${item.associate.first_name} ${item.associate.last_name}`
-          : undefined,
-        amount: Number(item.service.price),
-        quantity: 1,
-      }));
-
-      if (discountPercentage > 0) {
-        const factor = 1 - discountPercentage / 100;
-        lineItems.forEach((li) => {
-          li.amount = Math.round(li.amount * factor * 100) / 100;
-        });
-      }
-
-      const { data: stripeSession, error: stripeError } = await supabase.functions.invoke(
-        'create-payment',
-        {
-          body: {
-            customer_email: clientUser.email,
-            success_url: `${origin}/payment-success?kind=client_order&session_id={CHECKOUT_SESSION_ID}`,
-            cancel_url: `${origin}/payment-canceled?kind=client_order`,
-            items: lineItems,
-            metadata: {
-              kind: 'client_order',
-              client_id: clientUser.id,
-            },
-          },
-        }
+      // Notify the associate (+ admin + client) for each unpaid associate order:
+      // "new request — please confirm a time".
+      await Promise.allSettled(
+        placed.associateOrders.map((o) =>
+          supabase.functions.invoke('send-order-email', { body: { orderId: o.orderId, type: 'order_received' } })
+        )
       );
 
-      if (stripeError) throw stripeError;
-      if (!stripeSession?.url) throw new Error('Stripe session URL missing');
+      localStorage.removeItem('guest_cart');
 
-      // Stage the fulfillment payload keyed by the Stripe session id, so the order
-      // can be created AFTER payment by either the payment-success page or the
-      // Stripe webhook (whichever runs first) — making it tab-close proof.
-      const sessionId = stripeSession.session_id || stripeSession.id;
-      if (!sessionId) throw new Error('Stripe session id missing');
-      const { error: pendingError } = await sb
-        .from('pending_orders')
-        .insert({ session_id: sessionId, client_id: clientUser.id, payload: pendingOrder });
-      if (pendingError) throw pendingError;
+      // If there's an immediate group with a real amount, pay it now. (A €0 immediate
+      // group — e.g. pay-per-result services — needs no Stripe redirect.)
+      if (placed.immediate && placed.immediate.amount > 0) {
+        const origin = window.location.origin;
+        const factor = discountPercentage > 0 ? 1 - discountPercentage / 100 : 1;
+        const immediateItems = cartItems.filter((it) => {
+          const isComp = !!(it.associates && it.associates.length === 2);
+          const rid = isComp ? it.associates![1].id : (it.associate?.id || null);
+          const noMeeting = isCvRewriteItem(it) && !!cvRewriteSkipMeeting[it.id];
+          return !(rid && !noMeeting); // immediate = anything that doesn't need an associate meeting
+        });
+        const lineItems = immediateItems.map((item) => ({
+          name: item.service.name,
+          amount: Math.round(Number(item.service.price) * factor * 100) / 100,
+          quantity: 1,
+        }));
 
-      // Redirect to Stripe Checkout — break out of any iframe (Lovable preview, etc.)
-      // Stripe Checkout sets X-Frame-Options: DENY and won't render inside iframes.
-      toast.success('Opening secure Stripe Checkout…');
-      try {
-        if (window.top && window.top !== window.self) {
-          window.top.location.href = stripeSession.url;
-        } else {
-          window.location.href = stripeSession.url;
+        const { data: stripeSession, error: stripeError } = await supabase.functions.invoke(
+          'create-payment',
+          {
+            body: {
+              customer_email: clientUser.email,
+              success_url: `${origin}/payment-success?kind=client_order&session_id={CHECKOUT_SESSION_ID}`,
+              cancel_url: `${origin}/payment-canceled?kind=client_order`,
+              items: lineItems,
+              metadata: {
+                kind: 'client_order',
+                order_id: placed.immediate.orderId,
+                client_id: clientUser.id,
+              },
+            },
+          }
+        );
+        if (stripeError) throw stripeError;
+        if (!stripeSession?.url) throw new Error('Stripe session URL missing');
+
+        const sessionId = stripeSession.session_id || stripeSession.id;
+        if (sessionId) {
+          await sb.from('client_orders')
+            .update({ stripe_session_id: sessionId })
+            .eq('id', placed.immediate.orderId);
         }
-      } catch {
-        // Cross-origin iframe — fall back to opening in a new tab
-        window.open(stripeSession.url, '_blank', 'noopener,noreferrer');
+
+        // Redirect to Stripe Checkout — break out of any iframe (Lovable preview, etc.)
+        toast.success('Opening secure Stripe Checkout…');
+        try {
+          if (window.top && window.top !== window.self) {
+            window.top.location.href = stripeSession.url;
+          } else {
+            window.location.href = stripeSession.url;
+          }
+        } catch {
+          window.open(stripeSession.url, '_blank', 'noopener,noreferrer');
+        }
+        return;
       }
+
+      // No immediate payment due: everything waits for the associate's confirmation.
+      toast.success("Request sent! Your associate will confirm a time, then you'll be able to pay.");
+      navigate('/client-portal/dashboard');
       return;
     } catch (error: any) {
       console.error('Checkout error:', error);
@@ -594,6 +608,30 @@ const ClientCheckout = () => {
   };
 
   const { subtotal, discountPercentage, discountAmount, total } = calculateTotals();
+
+  // Split the cart total into "pay now" (no associate/meeting) vs "pay after the
+  // associate confirms a time". Drives the payment copy + button label below.
+  const paymentSplit = (() => {
+    let payNow = 0;
+    let payLater = 0;
+    for (const item of cartItems) {
+      const isComp = !!(item.associates && item.associates.length === 2);
+      const rid = isComp ? item.associates![1].id : (item.associate?.id || null);
+      const noMeeting = isCvRewriteItem(item) && !!cvRewriteSkipMeeting[item.id];
+      const needsMeeting = !!rid && !noMeeting;
+      if (needsMeeting) payLater += Number(item.service.price);
+      else payNow += Number(item.service.price);
+    }
+    return { payNow, payLater };
+  })();
+
+  const payButtonLabel = isProcessing
+    ? "Processing…"
+    : paymentSplit.payNow > 0 && paymentSplit.payLater > 0
+    ? `Place order & pay €${paymentSplit.payNow.toFixed(2)} now`
+    : paymentSplit.payNow > 0
+    ? `Pay €${paymentSplit.payNow.toFixed(2)} with Stripe`
+    : "Place order — pay after confirmation";
 
   return (
     <div 
@@ -1206,9 +1244,18 @@ const ClientCheckout = () => {
                       <CreditCard className="h-4 w-4" />
                       Secure Payment by Stripe
                     </p>
-                    <p className="text-sm text-muted-foreground">
-                      You will be redirected to Stripe to complete your payment securely. Once paid, your order is automatically confirmed and your Associate is notified.
-                    </p>
+                    {paymentSplit.payLater > 0 ? (
+                      <p className="text-sm text-muted-foreground">
+                        Your request is sent to your Associate first. <strong>You pay only after the Associate confirms your meeting time</strong> — you'll get an email with a secure payment button, and a payment banner will appear in your dashboard.
+                        {paymentSplit.payNow > 0 && (
+                          <> Services that don't need an associate (€{paymentSplit.payNow.toFixed(2)}) are paid now via Stripe.</>
+                        )}
+                      </p>
+                    ) : (
+                      <p className="text-sm text-muted-foreground">
+                        You will be redirected to Stripe to complete your payment securely. Once paid, your order is automatically confirmed.
+                      </p>
+                    )}
                   </div>
 
                   {/* Downloadable associate profiles (primary + backup per service) */}
@@ -1271,7 +1318,7 @@ const ClientCheckout = () => {
                     size="lg"
                   >
                     <CreditCard className="h-5 w-5 mr-2" />
-                    {isProcessing ? "Redirecting…" : `Pay €${total.toFixed(2)} with Stripe`}
+                    {payButtonLabel}
                   </Button>
 
                   {!hasValidAvailability() && (
