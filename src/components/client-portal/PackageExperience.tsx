@@ -30,6 +30,7 @@ import {
   Download,
   Loader2,
   ChevronDown,
+  UserRound,
 } from "lucide-react";
 import AssociateChoiceCarousel from "./AssociateChoiceCarousel";
 import OutreachCheckinDialog from "./OutreachCheckinDialog";
@@ -1119,7 +1120,7 @@ const PackageExperience = ({
                   return (
                     <>
                       <Button variant="outline" size="sm" className="flex-1 border-primary/20" onClick={(e) => { e.stopPropagation(); setBioAssociate(ap); }}>
-                        <FileText className="mr-1.5 h-4 w-4" /> Overview
+                        <UserRound className="mr-1.5 h-4 w-4" /> Overview
                       </Button>
                       {ap.linkedin_url && (
                         <Button asChild variant="outline" size="sm" className="flex-1 border-primary/20">
@@ -1483,7 +1484,7 @@ const PackageExperience = ({
                           setBioAssociate(ap);
                         }}
                       >
-                        <FileText className="h-4 w-4" />
+                        <UserRound className="h-4 w-4" />
                       </Button>
                       {ap.linkedin_url && (
                         <Button
