@@ -36,6 +36,24 @@ const MyProjectsSection = ({ clientId, clientName }: MyProjectsSectionProps) => 
   const [expandedProjects, setExpandedProjects] = useState<Set<string>>(new Set());
   const [additionalCallProject, setAdditionalCallProject] = useState<any | null>(null);
   const [isProcessingCall, setIsProcessingCall] = useState(false);
+  const [outreachCheckins, setOutreachCheckins] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchOutreach = async () => {
+      const { data } = await sb
+        .from('outreach_checkins')
+        .select('*')
+        .eq('client_id', clientId)
+        .order('created_at', { ascending: false });
+      setOutreachCheckins(data || []);
+    };
+    fetchOutreach();
+    const oSub = sb
+      .channel('client_outreach_checkins')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'outreach_checkins', filter: `client_id=eq.${clientId}` }, () => fetchOutreach())
+      .subscribe();
+    return () => oSub.unsubscribe();
+  }, [clientId]);
 
   useEffect(() => {
     fetchProjects();
@@ -258,7 +276,7 @@ const MyProjectsSection = ({ clientId, clientName }: MyProjectsSectionProps) => 
     );
   }
 
-  if (projects.length === 0) {
+  if (projects.length === 0 && outreachCheckins.length === 0) {
     return (
       <Card className="backdrop-blur-sm bg-background/90 shadow-lg overflow-hidden">
         <div className="bg-gradient-to-r from-primary/10 via-primary/5 to-transparent p-6 border-b border-border">
@@ -367,6 +385,31 @@ const MyProjectsSection = ({ clientId, clientName }: MyProjectsSectionProps) => 
           </div>
         </div>
       </Card>
+
+      {/* Outreach Power Pack — free check-in status (pay-per-interview) */}
+      {outreachCheckins.map((c) => (
+        <Card
+          key={c.id}
+          className={c.status === 'confirmed'
+            ? 'border-2 border-green-300 bg-green-50 dark:bg-green-950/30'
+            : 'border-2 border-amber-300 bg-amber-50 dark:bg-amber-950/30'}
+        >
+          <CardContent className="p-5">
+            <h3 className="font-bold flex items-center gap-2">
+              <span>📣</span> Outreach Power Pack — free check-in
+            </h3>
+            {c.status === 'confirmed' ? (
+              <p className="text-sm mt-1 text-green-800 dark:text-green-300">
+                Your free check-in is confirmed for <strong>{c.confirmed_slot}</strong>. See you then!
+              </p>
+            ) : (
+              <p className="text-sm mt-1 text-amber-800 dark:text-amber-300">
+                Your check-in request was received. Our team will confirm one of your proposed times by email shortly. <span className="text-muted-foreground">No payment now — billed €250 only per secured interview.</span>
+              </p>
+            )}
+          </CardContent>
+        </Card>
+      ))}
 
       {/* Payment required — associate has confirmed the time, payment is now due */}
       {paymentDueOrders.map((o) => (

@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { Eye, FileText, Download, Users, CreditCard, Calendar, Video, Link, CheckCircle2, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import SharedDocuments from "@/components/client-portal/SharedDocuments";
+import AdminOutreachCheckins from "@/components/admin/AdminOutreachCheckins";
 
 const sb = supabase as any;
 
@@ -267,6 +268,9 @@ const AdminClientProjects = () => {
 
   return (
     <div className="space-y-6">
+      {/* Outreach Power Pack check-ins (pay-per-interview, free intro call) */}
+      <AdminOutreachCheckins />
+
       {/* Pending payments — associate confirmed, client hasn't paid */}
       {pendingPaymentOrders.length > 0 && (
         <Card className="border-2 border-amber-300">

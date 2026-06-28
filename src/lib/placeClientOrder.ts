@@ -96,9 +96,15 @@ export async function placeClientOrder(
       : `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
   const factor = input.discountPercentage > 0 ? 1 - input.discountPercentage / 100 : 1;
 
+  // Outreach Power Pack is pay-per-interview and handled via a separate free
+  // check-in (outreach_checkins) — it is NEVER part of an order or charged here.
+  const payableItems = input.items.filter(
+    (it) => !(it.serviceName || "").startsWith("Outreach Power Pack")
+  );
+
   // Partition the cart into payment groups (one immediate + one per associate).
   const groups = new Map<string, PlaceOrderItem[]>();
-  for (const item of input.items) {
+  for (const item of payableItems) {
     const key = groupKeyFor(item);
     if (!groups.has(key)) groups.set(key, []);
     groups.get(key)!.push(item);

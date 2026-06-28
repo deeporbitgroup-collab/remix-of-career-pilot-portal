@@ -19,6 +19,7 @@ import IndividualProductsSheet from "@/components/client-portal/IndividualProduc
 import JobHubFormDialog from "@/components/JobHubFormDialog";
 import PilotAdvisor from "@/components/client-portal/PilotAdvisor";
 import BookingPopup from "@/components/BookingPopup";
+import OutreachCheckinDialog from "@/components/client-portal/OutreachCheckinDialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 // Service background images
 import bgAssociateOfficeHours from "@/assets/service-bg/associate-office-hours.jpeg";
@@ -230,6 +231,9 @@ const ClientServicesPage = () => {
   const [associates, setAssociates] = useState<AssociatePreview[]>([]);
   const [advisorOpen, setAdvisorOpen] = useState(false);
   const [bookingOpen, setBookingOpen] = useState(false);
+  // Outreach Power Pack free check-in (pay-per-interview, no upfront charge).
+  const [outreachOpen, setOutreachOpen] = useState(false);
+  const [outreachSvc, setOutreachSvc] = useState<Service | null>(null);
   const checkoutAfterAdvisorAddRef = useRef(false);
 
   // Scroll to highlighted service after loading
@@ -882,11 +886,9 @@ const ClientServicesPage = () => {
                                     <MessageCircle className="h-4 w-4 mr-2" />
                                     Request a Quote on WhatsApp
                                   </a>
-                                </Button> : service.name?.startsWith('Outreach Power Pack') ? <Button asChild className="w-full bg-gradient-to-r from-[#25D366] to-[#1ea952] hover:from-[#1ea952] hover:to-[#128C47] shadow-md">
-                                  <a href="https://wa.me/447826932893" target="_blank" rel="noopener noreferrer">
-                                    <MessageCircle className="h-4 w-4 mr-2" />
-                                    Contact us
-                                  </a>
+                                </Button> : service.name?.startsWith('Outreach Power Pack') ? <Button onClick={() => { setOutreachSvc(service); setOutreachOpen(true); }} className="w-full bg-gradient-to-br from-amber-500 to-orange-600 text-white hover:opacity-90 shadow-md">
+                                  <MessageCircle className="h-4 w-4 mr-2" />
+                                  Book free check-in
                                 </Button> : service.name === 'University Eligibility Verification' ? <Button onClick={() => handleDirectAddToCart(service)} className="w-full bg-gradient-to-r from-primary to-secondary hover:opacity-90 shadow-md">
                                   <ShoppingCart className="h-4 w-4 mr-2" />
                                   Add to Cart
@@ -1179,6 +1181,21 @@ const ClientServicesPage = () => {
 
       {/* Free Booking Call */}
       <BookingPopup isOpen={bookingOpen} onClose={() => setBookingOpen(false)} />
+
+      {(() => {
+        let cu: any = null;
+        try { cu = JSON.parse(localStorage.getItem('client_user') || 'null'); } catch { cu = null; }
+        return (
+          <OutreachCheckinDialog
+            open={outreachOpen}
+            onClose={() => setOutreachOpen(false)}
+            clientId={cu?.id || null}
+            defaultName={cu ? `${cu.first_name} ${cu.last_name}` : ''}
+            defaultEmail={cu?.email || ''}
+            onConfirmed={() => { if (outreachSvc) handleDirectAddToCart(outreachSvc); }}
+          />
+        );
+      })()}
     </div>;
 };
 export default ClientServicesPage;

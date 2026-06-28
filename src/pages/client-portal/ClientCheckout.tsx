@@ -18,7 +18,7 @@ import { cn } from "@/lib/utils";
 import bcrypt from "bcryptjs";
 import bgImage from "@/assets/client-portal-bg.jpeg";
 import { BriefOverviewForm, BriefOverviewData } from "@/components/client-portal/BriefOverviewForm";
-import OutreachDocumentsUpload from "@/components/client-portal/OutreachDocumentsUpload";
+import OutreachCheckinDialog from "@/components/client-portal/OutreachCheckinDialog";
 import CheckoutAssociateProfiles, { CheckoutProfilesEntry } from "@/components/client-portal/CheckoutAssociateProfiles";
 import { placeClientOrder, type PlaceOrderItem, type PlaceMeetingSlot, type PlaceSharedDoc } from "@/lib/placeClientOrder";
 
@@ -117,10 +117,9 @@ const ClientCheckout = () => {
   const [showValidation, setShowValidation] = useState(false);
 
   // Outreach Power Pack specific state
-  const [outreachCvFile, setOutreachCvFile] = useState<File | null>(null);
-  const [outreachCoverLetterFile, setOutreachCoverLetterFile] = useState<File | null>(null);
-  const [outreachCustomEmail, setOutreachCustomEmail] = useState("");
-  const [useCustomEmail, setUseCustomEmail] = useState(false);
+  // Outreach Power Pack — free check-in (no upfront charge, billed per interview).
+  const [outreachDialogOpen, setOutreachDialogOpen] = useState(false);
+  const [outreachCheckinBooked, setOutreachCheckinBooked] = useState(false);
 
   // CV / Cover Letter Rewrite (Altitude): skip-meeting toggle + uploaded docs per cart item
   const [cvRewriteSkipMeeting, setCvRewriteSkipMeeting] = useState<Record<string, boolean>>({});
@@ -186,8 +185,14 @@ const ClientCheckout = () => {
     }
   }, [navigate]);
 
+  const isOutreachItem = (item: GuestCartItem) => !!item.service.name?.startsWith('Outreach Power Pack');
+
   const calculateTotals = () => {
-    const subtotal = cartItems.reduce((sum, item) => sum + Number(item.service.price), 0);
+    // Outreach Power Pack is pay-per-interview (free check-in) → excluded from the total.
+    const subtotal = cartItems.reduce(
+      (sum, item) => (isOutreachItem(item) ? sum : sum + Number(item.service.price)),
+      0
+    );
     return { subtotal, discountPercentage: 0, discountAmount: 0, total: subtotal };
   };
 
@@ -340,18 +345,8 @@ const ClientCheckout = () => {
       }
     }
 
-    // Validate Outreach Power Pack documents
-    const hasOutreachPowerPack = cartItems.some(item => item.service.name?.startsWith('Outreach Power Pack'));
-    if (hasOutreachPowerPack) {
-      if (!outreachCvFile) {
-        toast.error("Please upload your CV for the Outreach Power Pack");
-        return;
-      }
-      if (!outreachCoverLetterFile) {
-        toast.error("Please upload your Cover Letter for the Outreach Power Pack");
-        return;
-      }
-    }
+    // Outreach Power Pack: no documents at checkout — it's handled via a free
+    // check-in (booked from its own popup) and billed per interview, not here.
 
     // Validate CV / Cover Letter Rewrite items with skip-meeting option: require at least one document
     for (const item of cartItems) {
@@ -398,30 +393,10 @@ const ClientCheckout = () => {
         receiptUrl = uploadData.path;
       }
 
-      // Outreach Power Pack documents
-      let outreachCvUrl: string | null = null;
-      let outreachCoverLetterUrl: string | null = null;
-      const hasOutreachPowerPackService = cartItems.some(item => item.service.name?.startsWith('Outreach Power Pack'));
-
-      if (hasOutreachPowerPackService && outreachCvFile) {
-        const cvExt = outreachCvFile.name.split('.').pop();
-        const cvFileName = `${clientUser.id}-outreach-cv-${Date.now()}.${cvExt}`;
-        const { data: cvUpload, error: cvUploadError } = await sb.storage
-          .from('documents')
-          .upload(`outreach-documents/${cvFileName}`, outreachCvFile);
-        if (cvUploadError) throw cvUploadError;
-        outreachCvUrl = cvUpload.path;
-      }
-
-      if (hasOutreachPowerPackService && outreachCoverLetterFile) {
-        const clExt = outreachCoverLetterFile.name.split('.').pop();
-        const clFileName = `${clientUser.id}-outreach-cover-${Date.now()}.${clExt}`;
-        const { data: clUpload, error: clUploadError } = await sb.storage
-          .from('documents')
-          .upload(`outreach-documents/${clFileName}`, outreachCoverLetterFile);
-        if (clUploadError) throw clUploadError;
-        outreachCoverLetterUrl = clUpload.path;
-      }
+      // Outreach Power Pack is never charged at checkout (pay-per-interview, handled
+      // via its free check-in popup), so no documents/fields are collected here.
+      const outreachCvUrl: string | null = null;
+      const outreachCoverLetterUrl: string | null = null;
 
       // Build the per-item order data (resolved associate, slots, CV-rewrite docs).
       const orderItems: PlaceOrderItem[] = [];
@@ -500,7 +475,7 @@ const ClientCheckout = () => {
         receiptUrl,
         outreachCvUrl,
         outreachCoverLetterUrl,
-        outreachCustomEmail: hasOutreachPowerPackService && useCustomEmail ? outreachCustomEmail : null,
+        outreachCustomEmail: null,
         items: orderItems,
       });
 
@@ -523,6 +498,7 @@ const ClientCheckout = () => {
           const isComp = !!(it.associates && it.associates.length === 2);
           const rid = isComp ? it.associates![1].id : (it.associate?.id || null);
           const noMeeting = isCvRewriteItem(it) && !!cvRewriteSkipMeeting[it.id];
+          if (it.service.name?.startsWith('Outreach Power Pack')) return false; // never charged
           return !(rid && !noMeeting); // immediate = anything that doesn't need an associate meeting
         });
         const lineItems = immediateItems.map((item) => ({
@@ -615,6 +591,8 @@ const ClientCheckout = () => {
     let payNow = 0;
     let payLater = 0;
     for (const item of cartItems) {
+      // Outreach Power Pack is never charged here (free check-in, pay per interview).
+      if (item.service.name?.startsWith('Outreach Power Pack')) continue;
       const isComp = !!(item.associates && item.associates.length === 2);
       const rid = isComp ? item.associates![1].id : (item.associate?.id || null);
       const noMeeting = isCvRewriteItem(item) && !!cvRewriteSkipMeeting[item.id];
@@ -887,7 +865,11 @@ const ClientCheckout = () => {
 
                       {!inPackage && (
                         <div className="flex items-center gap-2">
-                          <span className="font-bold text-lg">€{item.service.price.toFixed(2)}</span>
+                          {isOutreachItem(item) ? (
+                            <span className="text-sm font-semibold text-amber-600 whitespace-nowrap">Free check-in</span>
+                          ) : (
+                            <span className="font-bold text-lg">€{item.service.price.toFixed(2)}</span>
+                          )}
                           <Button variant="ghost" size="icon" onClick={() => handleRemoveItem(item.id)}>
                             <Trash2 className="h-4 w-4 text-destructive" />
                           </Button>
@@ -937,19 +919,43 @@ const ClientCheckout = () => {
               </CardContent>
             </Card>
 
-            {/* Outreach Power Pack Documents Upload */}
-            {cartItems.some(item => item.service.name?.startsWith('Outreach Power Pack')) && (
-              <OutreachDocumentsUpload
-                cvFile={outreachCvFile}
-                coverLetterFile={outreachCoverLetterFile}
-                customEmail={outreachCustomEmail}
-                useCustomEmail={useCustomEmail}
-                onCvChange={setOutreachCvFile}
-                onCoverLetterChange={setOutreachCoverLetterFile}
-                onCustomEmailChange={setOutreachCustomEmail}
-                onUseCustomEmailChange={setUseCustomEmail}
-              />
+            {/* Outreach Power Pack — free check-in required (pay per interview, €0 now) */}
+            {cartItems.some(isOutreachItem) && (
+              <Card className="backdrop-blur-sm bg-amber-50/95 dark:bg-amber-950/30 border-amber-200 shadow-lg">
+                <CardContent className="p-5 space-y-3">
+                  <div className="flex items-start gap-3">
+                    <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-amber-400 text-white text-lg">📣</div>
+                    <div>
+                      <h3 className="font-bold text-amber-900 dark:text-amber-200">Outreach Power Pack — free check-in required</h3>
+                      <p className="text-sm text-amber-800/90 dark:text-amber-200/80 mt-1">
+                        This is <strong>pay-per-interview</strong>: €250 only when we secure an interview in your target sectors &amp; cities — <strong>nothing is charged now</strong>. First, book a quick free check-in so we can explain how it works.
+                      </p>
+                    </div>
+                  </div>
+                  {outreachCheckinBooked ? (
+                    <div className="flex items-center gap-2 text-sm font-medium text-green-700 dark:text-green-400">
+                      ✅ Check-in requested — we'll confirm a time by email.
+                    </div>
+                  ) : (
+                    <Button
+                      className="w-full bg-gradient-to-br from-amber-500 to-orange-600 text-white hover:opacity-90"
+                      onClick={() => setOutreachDialogOpen(true)}
+                    >
+                      Book your free check-in
+                    </Button>
+                  )}
+                </CardContent>
+              </Card>
             )}
+
+            <OutreachCheckinDialog
+              open={outreachDialogOpen}
+              onClose={() => setOutreachDialogOpen(false)}
+              clientId={clientUser?.id || null}
+              defaultName={clientUser ? `${clientUser.first_name} ${clientUser.last_name}` : ''}
+              defaultEmail={clientUser?.email || ''}
+              onConfirmed={() => setOutreachCheckinBooked(true)}
+            />
             
             {/* Meeting Availability Selection - Per Service */}
             {itemsNeedingMeeting(cartItems).length > 0 && (
