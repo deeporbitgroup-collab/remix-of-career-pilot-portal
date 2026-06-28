@@ -1197,7 +1197,7 @@ const PackageExperience = ({
             {/* Scrollable details (only scrolls internally if the content is taller
                 than the screen) — price + button stay pinned below. */}
             <div className="relative md:flex-1 md:min-h-0">
-            <div ref={detailsRef} className="pkg-scroll flex flex-col gap-2.5 md:h-full md:overflow-y-auto md:pr-2">
+            <div ref={detailsRef} className="pkg-scroll flex flex-col gap-2.5 md:h-full md:overflow-y-scroll md:pr-3">
             <div className="rounded-xl border border-border/50 bg-muted/20 p-2.5">
               <p className="mb-2 flex items-center justify-between text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
                 <span>What's included</span>
@@ -1330,15 +1330,13 @@ const PackageExperience = ({
             <CoveredLogos kind={pkg.category === "Altitude" ? "companies" : "universities"} />
             </div>{/* end scrollable details */}
 
-            {/* Scroll nudge — soft fade + bouncing chevron, shown only while there's
-                more of the package to see below; fades out at the bottom. */}
+            {/* Little animated down-arrows next to the scrollbar, nudging the user to
+                scroll the package content. Shown while there's more below; gone at the bottom. */}
             {showScrollHint && (
-              <div className="pointer-events-none absolute inset-x-0 bottom-0 hidden flex-col items-center justify-end md:flex">
-                <div className="h-12 w-full rounded-b-xl bg-gradient-to-t from-card via-card/85 to-transparent" />
-                <div className="-mt-7 flex items-center gap-1.5 rounded-full bg-primary/90 px-3 py-1 text-[11px] font-semibold text-primary-foreground shadow-lg animate-scroll-hint">
-                  <ChevronDown className="h-3.5 w-3.5" />
-                  Scroll for the full package
-                </div>
+              <div className="pointer-events-none absolute bottom-2 right-1 hidden flex-col items-center text-primary md:flex">
+                <ChevronDown className="h-4 w-4 -mb-2.5 animate-scroll-hint opacity-60" style={{ animationDelay: "0ms" }} />
+                <ChevronDown className="h-4 w-4 -mb-2.5 animate-scroll-hint opacity-80" style={{ animationDelay: "150ms" }} />
+                <ChevronDown className="h-4 w-4 animate-scroll-hint" style={{ animationDelay: "300ms" }} />
               </div>
             )}
             </div>{/* end relative details wrapper */}
