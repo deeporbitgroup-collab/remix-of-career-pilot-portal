@@ -1367,6 +1367,10 @@ const PackageExperience = ({
               </div>
             )}
 
+            {/* Scrollable so the associate cards are NEVER cut: on tall screens
+                everything shows without scrolling; on short screens this area
+                scrolls internally while the footer below stays pinned. */}
+            <div className="md:flex-1 md:min-h-0 md:overflow-y-auto md:-mr-1 md:pr-1">
             {filteredAssociates.length === 0 ? (
               <div className="py-8 text-center text-sm text-muted-foreground">
                 No associates match yet. Try another search, or clear the filter.
@@ -1423,6 +1427,7 @@ const PackageExperience = ({
                 }}
               />
             )}
+            </div>{/* end scrollable associate area */}
 
             <div className="mt-auto">
               {selectedAssociate ? (
