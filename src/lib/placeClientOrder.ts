@@ -104,11 +104,43 @@ export async function placeClientOrder(
     groups.get(key)!.push(item);
   }
 
+  // Phase 2: which services are stand-alone "calls" (each its own meeting, scheduled
+  // after Meeting 1). Everything else delivered by an associate is presented in Meeting 1.
+  const serviceIds = Array.from(new Set(input.items.map((i) => i.serviceId)));
+  const { data: svcRows } = await sb
+    .from("client_services")
+    .select("id, is_call_service")
+    .in("id", serviceIds);
+  const callServiceIds = new Set(
+    (svcRows || []).filter((s: any) => s.is_call_service).map((s: any) => s.id)
+  );
+  const isCall = (it: PlaceOrderItem) => callServiceIds.has(it.serviceId);
+
   const placed: PlacedOrder[] = [];
 
   for (const [key, items] of groups) {
     const kind: "immediate" | "associate" = key === IMMEDIATE_KEY ? "immediate" : "associate";
     const associateId = kind === "associate" ? items[0].resolvedAssociateId : null;
+
+    // Phase 2 — meeting plan for an associate group: ONE kickoff (Meeting 1) covering
+    // the deliverables, then one sequenced call per Associate Office Hours / Expert
+    // Session, scheduled later by the associate. Kickoff = first deliverable, or the
+    // first call if the group is all calls.
+    let kickoffItem: PlaceOrderItem | null = null;
+    const callSeq = new Map<PlaceOrderItem, number>();
+    if (kind === "associate") {
+      const deliverables = items.filter((it) => !isCall(it));
+      const calls = items.filter((it) => isCall(it));
+      if (deliverables.length > 0) {
+        kickoffItem = deliverables[0];
+        calls.forEach((c, idx) => callSeq.set(c, idx + 1));
+      } else if (calls.length > 0) {
+        kickoffItem = calls[0];
+        calls.slice(1).forEach((c, idx) => callSeq.set(c, idx + 1));
+      } else {
+        kickoffItem = items[0];
+      }
+    }
     const rawAmount = items.reduce((sum, i) => sum + Number(i.price), 0);
     const amount = Math.round(rawAmount * factor * 100) / 100;
     const label = buildLabel(kind, items);
@@ -148,6 +180,28 @@ export async function placeClientOrder(
       const resolvedAssociateId = item.resolvedAssociateId;
       const isCvRewriteNoMeeting = item.isCvRewriteNoMeeting;
 
+      // Phase 2 role within an associate group.
+      const isKickoff = kind === "associate" && item === kickoffItem;
+      const callSequence = callSeq.get(item) ?? null;
+      const isSequencedCall = kind === "associate" && callSequence !== null;
+
+      // scheduling_status:
+      //  immediate CV-rewrite  → no_meeting_requested
+      //  immediate no associate→ null
+      //  kickoff               → awaiting_primary (client proposed 3 slots)
+      //  deliverable in kickoff→ covered_by_kickoff (no own meeting)
+      //  sequenced call        → locked_until_previous (associate proposes later)
+      let schedulingStatus: string | null;
+      if (kind === "immediate") {
+        schedulingStatus = isCvRewriteNoMeeting ? "no_meeting_requested" : resolvedAssociateId ? "awaiting_primary" : null;
+      } else if (isKickoff) {
+        schedulingStatus = "awaiting_primary";
+      } else if (isSequencedCall) {
+        schedulingStatus = "locked_until_previous";
+      } else {
+        schedulingStatus = "covered_by_kickoff";
+      }
+
       const { data: project, error: projectError } = await sb
         .from("client_projects")
         .insert({
@@ -157,12 +211,10 @@ export async function placeClientOrder(
           associate_id: resolvedAssociateId,
           active_associate_id: resolvedAssociateId,
           backup_associate_id: null,
-          scheduling_status: isCvRewriteNoMeeting
-            ? "no_meeting_requested"
-            : resolvedAssociateId
-            ? "awaiting_primary"
-            : null,
+          scheduling_status: schedulingStatus,
           status: isCvRewriteNoMeeting ? "documents_uploaded" : "pending",
+          is_kickoff: isKickoff,
+          call_sequence: callSequence,
           additional_call_reason: item.additionalCallReason,
           specific_request: item.specificRequest,
           package_name: item.packageName,
@@ -186,7 +238,9 @@ export async function placeClientOrder(
         }
       }
 
-      if (resolvedAssociateId && project && !isCvRewriteNoMeeting) {
+      // Only the kickoff (Meeting 1) carries the client's 3 proposed slots. Deliverables
+      // are covered by Meeting 1; sequenced calls are scheduled later by the associate.
+      if (isKickoff && resolvedAssociateId && project) {
         for (const slot of item.slots) {
           await sb.from("client_meeting_slots").insert({
             project_id: project.id,

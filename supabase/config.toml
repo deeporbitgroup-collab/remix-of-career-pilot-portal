@@ -325,3 +325,7 @@ verify_jwt = false
 
 [functions.admin-order-action]
 verify_jwt = false
+
+# Phase 2 — sequential package calls (mark a meeting completed → propose the next call).
+[functions.manage-call-sequence]
+verify_jwt = false
