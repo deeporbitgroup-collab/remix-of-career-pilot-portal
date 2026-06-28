@@ -134,7 +134,7 @@ const AssociateChoiceCarousel = ({
                       compact
                         ? "h-20"
                         : fillHeight
-                        ? "h-[13vh] min-h-[84px] max-h-[140px]"
+                        ? "h-[17vh] min-h-[110px] max-h-[188px]"
                         : // Default (dialog) variant: stay small on phones so the whole
                           // card fits the viewport, then grow on larger screens.
                           "h-40 sm:h-60 md:h-72"

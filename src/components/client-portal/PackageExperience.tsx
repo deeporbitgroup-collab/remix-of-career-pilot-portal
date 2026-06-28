@@ -1453,25 +1453,30 @@ const PackageExperience = ({
                 }}
                 renderActions={(a) => {
                   const ap = a as AssociatePreview;
+                  // Icon-only, side by side — frees vertical room so the photo (and the
+                  // associate's face) gets more space without breaking the card balance.
                   return (
                     <>
                       <Button
                         variant="outline"
                         size="sm"
+                        title="Overview"
+                        aria-label="Overview"
                         className="flex-1 border-primary/20 hover:bg-primary/5 hover:text-primary"
                         onClick={(e) => {
                           e.stopPropagation();
                           setBioAssociate(ap);
                         }}
                       >
-                        <FileText className="mr-1.5 h-4 w-4" />
-                        Overview
+                        <FileText className="h-4 w-4" />
                       </Button>
                       {ap.linkedin_url && (
                         <Button
                           asChild
                           variant="outline"
                           size="sm"
+                          title="LinkedIn"
+                          aria-label="LinkedIn"
                           className="flex-1 border-primary/20 hover:bg-primary/5 hover:text-primary"
                         >
                           <a
@@ -1479,8 +1484,7 @@ const PackageExperience = ({
                             target="_blank"
                             rel="noopener noreferrer"
                           >
-                            <Linkedin className="mr-1.5 h-4 w-4" />
-                            LinkedIn
+                            <Linkedin className="h-4 w-4" />
                           </a>
                         </Button>
                       )}
