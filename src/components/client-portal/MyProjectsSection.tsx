@@ -603,6 +603,52 @@ const ProjectCard = ({ project, clientId, clientName, onSelectSlot, onAcceptCoun
               );
             })()}
 
+            {/* Phase 2 — associate proposed times for the next package call: client picks one */}
+            {project.scheduling_status === 'associate_proposed' && (() => {
+              const callSlots = (project.meetingSlots || []).filter(
+                (s: any) => s.slot_role === 'associate_for_client' && s.status === 'proposed'
+              );
+              return (
+                <div className="space-y-3">
+                  <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 p-4 rounded-lg">
+                    <h4 className="text-sm font-semibold mb-1">Pick a time for your next call</h4>
+                    <p className="text-sm text-muted-foreground">
+                      Your associate proposed these times. Choose the one that suits you — each call lasts up to 1 hour.
+                    </p>
+                  </div>
+                  <div className="grid gap-2">
+                    {callSlots.map((slot: any) => (
+                      <Button
+                        key={slot.id}
+                        variant="outline"
+                        className="flex h-auto items-center justify-between gap-2 whitespace-normal py-3 text-left"
+                        onClick={() => onAcceptCounter?.(project.id, slot.id)}
+                      >
+                        <span className="min-w-0 break-words">{slot.proposed_time}</span>
+                        <CheckCircle2 className="h-4 w-4 shrink-0 text-green-600" />
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* Phase 2 — next call not schedulable yet / awaiting the associate's proposal */}
+            {(project.scheduling_status === 'locked_until_previous' || project.scheduling_status === 'awaiting_associate_proposal') && (
+              <div className="bg-muted p-3 rounded-lg text-sm text-muted-foreground">
+                {project.scheduling_status === 'awaiting_associate_proposal'
+                  ? 'Your associate will propose times for your next call shortly.'
+                  : 'This call will be scheduled after your previous meeting is completed.'}
+              </div>
+            )}
+
+            {/* Phase 2 — a deliverable presented during Meeting 1 (no separate meeting) */}
+            {project.scheduling_status === 'covered_by_kickoff' && (
+              <div className="bg-muted p-3 rounded-lg text-sm text-muted-foreground">
+                This is delivered during your first meeting (Meeting 1).
+              </div>
+            )}
+
             {/* Show waiting message when client proposed slots but associate hasn't selected yet */}
             {project.status === 'slots_proposed' &&
               project.scheduling_status !== 'primary_proposed_new' &&

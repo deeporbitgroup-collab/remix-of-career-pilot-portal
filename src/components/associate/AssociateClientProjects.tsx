@@ -41,6 +41,12 @@ const paymentBadge = (paymentStatus: string | null | undefined, language: string
   }
 };
 
+// Hourly ranges the associate can offer when proposing a follow-up call (Phase 2).
+const TIME_RANGES = [
+  "09:00-10:00", "10:00-11:00", "11:00-12:00", "12:00-13:00", "13:00-14:00", "14:00-15:00",
+  "15:00-16:00", "16:00-17:00", "17:00-18:00", "18:00-19:00", "19:00-20:00", "20:00-21:00",
+];
+
 const statusLabels: Record<string, { label: string; labelIt: string; variant: "default" | "secondary" | "outline" | "destructive" }> = {
   pending: { label: "Pending", labelIt: "In attesa", variant: "outline" },
   slots_proposed: { label: "Select Time Slot", labelIt: "Seleziona orario", variant: "default" },
@@ -359,6 +365,46 @@ const ProjectCard = ({ project, associateId, language, onSelectSlot, isExpanded,
   const [associateProfile, setAssociateProfile] = useState<any>(null);
   const [briefOverviewOpen, setBriefOverviewOpen] = useState(false);
   const [unavailableOpen, setUnavailableOpen] = useState(false);
+  // Phase 2 — sequential calls: mark a meeting done, and propose the next call's times.
+  const [seqProcessing, setSeqProcessing] = useState(false);
+  const [proposeSlots, setProposeSlots] = useState([
+    { date: "", time: "" }, { date: "", time: "" }, { date: "", time: "" },
+  ]);
+
+  const markMeetingCompleted = async () => {
+    setSeqProcessing(true);
+    try {
+      const { error } = await sb.functions.invoke("manage-call-sequence", {
+        body: { projectId: project.id, action: "mark_completed" },
+      });
+      if (error) throw error;
+      toast.success(language === "it" ? "Meeting segnato come completato" : "Meeting marked as completed");
+    } catch (e: any) {
+      toast.error(e?.message || "Error");
+    } finally {
+      setSeqProcessing(false);
+    }
+  };
+
+  const proposeNextCall = async () => {
+    const filled = proposeSlots.filter((s) => s.date && s.time);
+    if (filled.length < 1) {
+      toast.error(language === "it" ? "Inserisci almeno un orario" : "Add at least one time");
+      return;
+    }
+    setSeqProcessing(true);
+    try {
+      const { error } = await sb.functions.invoke("manage-call-sequence", {
+        body: { projectId: project.id, action: "propose_next", slots: filled },
+      });
+      if (error) throw error;
+      toast.success(language === "it" ? "Orari inviati al cliente" : "Times sent to the client");
+    } catch (e: any) {
+      toast.error(e?.message || "Error");
+    } finally {
+      setSeqProcessing(false);
+    }
+  };
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -1055,6 +1101,79 @@ const ProjectCard = ({ project, associateId, language, onSelectSlot, isExpanded,
                 </h4>
                 <p className="text-sm">
                   {project.meetingSlots.find((s: any) => s.status === 'selected')?.proposed_time}
+                </p>
+                {/* Phase 2: once the meeting happened, completing it unlocks the next call. */}
+                {project.scheduling_status === 'confirmed' && !project.meeting_completed_at && (
+                  <div className="mt-3">
+                    <Button size="sm" onClick={markMeetingCompleted} disabled={seqProcessing}>
+                      {language === 'it' ? 'Segna meeting come completato' : 'Mark meeting as completed'}
+                    </Button>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      {language === 'it'
+                        ? 'Da fare dopo la call: sblocca la proposta della call successiva del pacchetto.'
+                        : 'Do this after the call: it unlocks proposing the next call in the package.'}
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Phase 2 — locked follow-up call (waiting for the previous meeting) */}
+            {project.scheduling_status === 'locked_until_previous' && (
+              <div className="bg-muted p-4 rounded-lg text-sm text-muted-foreground">
+                {language === 'it'
+                  ? 'Questa call si potrà programmare dopo che il meeting precedente del pacchetto sarà completato.'
+                  : 'This call can be scheduled once the previous meeting in the package is completed.'}
+              </div>
+            )}
+
+            {/* Phase 2 — associate proposes 3 times for the next call */}
+            {project.scheduling_status === 'awaiting_associate_proposal' && project.active_associate_id === associateId && (
+              <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 p-4 rounded-lg">
+                <h4 className="text-sm font-semibold mb-1 flex items-center gap-2">
+                  <Clock className="h-4 w-4" />
+                  {language === 'it' ? 'Proponi gli orari della prossima call' : 'Propose times for the next call'}
+                </h4>
+                <p className="text-sm text-muted-foreground mb-3">
+                  {language === 'it'
+                    ? 'Il cliente ha già pagato. Proponi fino a 3 fasce orarie (durata max 1h); il cliente ne sceglierà una.'
+                    : 'The client has already paid. Offer up to 3 time slots (max 1h each); the client will pick one.'}
+                </p>
+                <div className="space-y-2">
+                  {proposeSlots.map((s, idx) => (
+                    <div key={idx} className="grid grid-cols-2 gap-2">
+                      <input
+                        type="date"
+                        value={s.date}
+                        onChange={(e) => setProposeSlots((prev) => prev.map((p, i) => i === idx ? { ...p, date: e.target.value } : p))}
+                        className="h-9 rounded-md border border-input bg-background px-2 text-sm"
+                      />
+                      <Select
+                        value={s.time}
+                        onValueChange={(v) => setProposeSlots((prev) => prev.map((p, i) => i === idx ? { ...p, time: v } : p))}
+                      >
+                        <SelectTrigger className="h-9 text-sm"><SelectValue placeholder={language === 'it' ? 'Orario' : 'Time'} /></SelectTrigger>
+                        <SelectContent>
+                          {TIME_RANGES.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  ))}
+                </div>
+                <Button className="mt-3 w-full" onClick={proposeNextCall} disabled={seqProcessing}>
+                  {language === 'it' ? 'Invia gli orari al cliente' : 'Send times to the client'}
+                </Button>
+              </div>
+            )}
+
+            {/* Phase 2 — waiting for the client to pick one of the proposed call times */}
+            {project.scheduling_status === 'associate_proposed' && (
+              <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 p-4 rounded-lg text-sm">
+                <span className="font-semibold">{language === 'it' ? 'In attesa del cliente' : 'Waiting for the client'}</span>
+                <p className="text-muted-foreground mt-1">
+                  {language === 'it'
+                    ? 'Hai proposto gli orari della prossima call. Il cliente deve sceglierne uno.'
+                    : 'You proposed the next call times. The client needs to pick one.'}
                 </p>
               </div>
             )}
