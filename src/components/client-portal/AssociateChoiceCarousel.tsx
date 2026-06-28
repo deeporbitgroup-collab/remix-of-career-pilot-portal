@@ -145,7 +145,12 @@ const AssociateChoiceCarousel = ({
                         src={associate.photo_url}
                         alt={`${associate.first_name} ${associate.last_name}`}
                         loading="lazy"
-                        className="h-full w-full object-cover object-top transition-transform duration-500 group-hover:scale-105"
+                        className={cn(
+                          "h-full w-full object-cover transition-transform duration-500 group-hover:scale-105",
+                          // Shorter package cards crop too high with object-top (hair/wall),
+                          // so anchor the crop on the face; the taller dialog keeps object-top.
+                          fillHeight ? "object-[center_22%]" : "object-top"
+                        )}
                       />
                     ) : (
                       <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-primary/20 via-primary/10 to-muted">

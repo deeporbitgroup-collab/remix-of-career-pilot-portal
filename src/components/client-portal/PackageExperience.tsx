@@ -1161,13 +1161,20 @@ const PackageExperience = ({
         <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/15 text-primary shrink-0">
           <Icon className="h-5 w-5" />
         </div>
-        <div className="min-w-0">
+        <div className="min-w-0 shrink-0">
           <h2 className="text-2xl font-extrabold uppercase leading-tight tracking-wide text-primary">
             <span className="inline-block border-b-[3px] border-secondary pb-0.5">{pkg.code_name}</span>
           </h2>
           <p className="truncate text-xs text-foreground/70">{pkg.subtitle}</p>
         </div>
-        <p className="ml-auto hidden items-center gap-1.5 text-xs text-muted-foreground lg:flex">
+        {/* Covered universities / companies — relocated here as one compact row, in
+            the empty middle of the header. */}
+        <CoveredLogos
+          kind={pkg.category === "Altitude" ? "companies" : "universities"}
+          variant="header"
+          className="mx-2 min-w-0 flex-1"
+        />
+        <p className="hidden shrink-0 items-center gap-1.5 text-xs text-muted-foreground xl:flex">
           <Info className="h-3.5 w-3.5 text-primary" />
           One fixed price · one Associate · live 1:1 · dedicated WhatsApp support
         </p>
@@ -1325,9 +1332,6 @@ const PackageExperience = ({
               </div>
             )}
 
-            {/* Covered logos — fills the lower empty space without overpowering
-                the package name, price and bullet list above. */}
-            <CoveredLogos kind={pkg.category === "Altitude" ? "companies" : "universities"} />
             </div>{/* end scrollable details */}
 
             {/* Little animated down-arrows next to the scrollbar, nudging the user to
