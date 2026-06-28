@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useRef, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -29,6 +29,7 @@ import {
   ArrowLeftRight,
   Download,
   Loader2,
+  ChevronDown,
 } from "lucide-react";
 import AssociateChoiceCarousel from "./AssociateChoiceCarousel";
 import CoveredLogos from "./CoveredLogos";
@@ -327,6 +328,26 @@ const PackageExperience = ({
   const [associateSheetOpen, setAssociateSheetOpen] = useState(false);
   // Mobile "download all demos" button — disabled while the batch runs.
   const [downloadingDemos, setDownloadingDemos] = useState(false);
+
+  // Desktop: nudge the user to scroll the package details when there's more below.
+  const detailsRef = useRef<HTMLDivElement | null>(null);
+  const [showScrollHint, setShowScrollHint] = useState(false);
+  useEffect(() => {
+    const el = detailsRef.current;
+    if (!el) return;
+    const update = () => {
+      const moreBelow = el.scrollHeight - el.scrollTop - el.clientHeight > 12;
+      setShowScrollHint(el.scrollHeight > el.clientHeight + 12 && moreBelow);
+    };
+    update();
+    el.addEventListener("scroll", update, { passive: true });
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => {
+      el.removeEventListener("scroll", update);
+      ro.disconnect();
+    };
+  }, []);
 
   const Icon = categoryIcon[pkg.category] || Plane;
   const packageName = `${pkg.code_name} — ${pkg.subtitle}`;
@@ -1150,7 +1171,8 @@ const PackageExperience = ({
           <CardContent className="flex flex-1 flex-col gap-2.5 pb-3 md:min-h-0">
             {/* Scrollable details (only scrolls internally if the content is taller
                 than the screen) — price + button stay pinned below. */}
-            <div className="flex flex-col gap-2.5 md:flex-1 md:min-h-0 md:overflow-y-auto md:pr-1">
+            <div className="relative md:flex-1 md:min-h-0">
+            <div ref={detailsRef} className="pkg-scroll flex flex-col gap-2.5 md:h-full md:overflow-y-auto md:pr-2">
             <div className="rounded-xl border border-border/50 bg-muted/20 p-2.5">
               <p className="mb-2 flex items-center justify-between text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
                 <span>What's included</span>
@@ -1282,6 +1304,19 @@ const PackageExperience = ({
                 the package name, price and bullet list above. */}
             <CoveredLogos kind={pkg.category === "Altitude" ? "companies" : "universities"} />
             </div>{/* end scrollable details */}
+
+            {/* Scroll nudge — soft fade + bouncing chevron, shown only while there's
+                more of the package to see below; fades out at the bottom. */}
+            {showScrollHint && (
+              <div className="pointer-events-none absolute inset-x-0 bottom-0 hidden flex-col items-center justify-end md:flex">
+                <div className="h-12 w-full rounded-b-xl bg-gradient-to-t from-card via-card/85 to-transparent" />
+                <div className="-mt-7 flex items-center gap-1.5 rounded-full bg-primary/90 px-3 py-1 text-[11px] font-semibold text-primary-foreground shadow-lg animate-scroll-hint">
+                  <ChevronDown className="h-3.5 w-3.5" />
+                  Scroll for the full package
+                </div>
+              </div>
+            )}
+            </div>{/* end relative details wrapper */}
 
             {/* Price block — pinned at the bottom of the card, always visible */}
             <div className="rounded-xl border border-primary/20 bg-primary/5 p-3">
