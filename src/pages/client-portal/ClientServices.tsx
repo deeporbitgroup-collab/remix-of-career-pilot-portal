@@ -410,6 +410,7 @@ const ClientServicesPage = () => {
         error
       } = await sb.from('client_services').select('*')
         .neq('name', 'Additional Call with Associate')
+        .neq('name', 'Masterclass Managed by CareerBoost')
         .order('category', {
         ascending: true
       }).order('price', {

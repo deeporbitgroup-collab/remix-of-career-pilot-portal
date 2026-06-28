@@ -32,6 +32,9 @@ import {
   ChevronDown,
 } from "lucide-react";
 import AssociateChoiceCarousel from "./AssociateChoiceCarousel";
+import OutreachCheckinDialog from "./OutreachCheckinDialog";
+
+const isOutreachName = (n?: string) => !!n?.startsWith("Outreach Power Pack");
 import CoveredLogos from "./CoveredLogos";
 import PartnerMaterials from "./PartnerMaterials";
 import { zipFiles, type ZipEntry } from "@/lib/zipFiles";
@@ -43,7 +46,7 @@ import whatsappLogo from "@/assets/whatsapp-logo.png";
 // without breaking the layout.
 const displayBulletLabel = (label: string): string =>
   /study plan/i.test(label)
-    ? "Study plan month by month, with access to our best discounted resources"
+    ? "Study plan month by month, with access to our best discounted resources plus deadlines"
     : label;
 
 // The "Dedicated WhatsApp group with your Associate" bullet gets a small
@@ -329,6 +332,13 @@ const PackageExperience = ({
   // Mobile "download all demos" button — disabled while the batch runs.
   const [downloadingDemos, setDownloadingDemos] = useState(false);
 
+  // Outreach Power Pack (single) — free check-in instead of an upfront charge.
+  const [outreachOpen, setOutreachOpen] = useState(false);
+  const [outreachSvc, setOutreachSvc] = useState<Service | null>(null);
+  const clientUser = useMemo(() => {
+    try { return JSON.parse(localStorage.getItem("client_user") || "null"); } catch { return null; }
+  }, []);
+
   // Desktop: nudge the user to scroll the package details when there's more below.
   const detailsRef = useRef<HTMLDivElement | null>(null);
   const [showScrollHint, setShowScrollHint] = useState(false);
@@ -383,8 +393,10 @@ const PackageExperience = ({
     () => new Set(addonComponents.map((c) => c.service_id).filter(Boolean) as string[]),
     [addonComponents]
   );
+  // Outreach Power Pack is an add-on, but it should still appear under "Buy single
+  // products" (Altitude) with its free check-in flow — so keep it in the singles.
   const singles = useMemo(
-    () => services.filter((s) => !addonServiceIds.has(s.id)),
+    () => services.filter((s) => !addonServiceIds.has(s.id) || isOutreachName(s.name)),
     [services, addonServiceIds]
   );
 
@@ -1517,7 +1529,9 @@ const PackageExperience = ({
                         </div>
                       )}
                       <div className="absolute bottom-2 right-2">
-                        <Badge className="bg-primary text-primary-foreground font-bold shadow">€{Number(service.price).toFixed(2)}</Badge>
+                        <Badge className="bg-primary text-primary-foreground font-bold shadow">
+                          {isOutreachName(service.name) ? "Pay per interview" : `€${Number(service.price).toFixed(2)}`}
+                        </Badge>
                       </div>
                     </div>
                     <CardHeader className="pb-2">
@@ -1536,10 +1550,19 @@ const PackageExperience = ({
                           </Button>
                         )}
                       </div>
-                      <Button className="w-full bg-gradient-to-r from-primary to-secondary font-semibold shadow-md hover:opacity-90" onClick={() => onSelectService(service)}>
-                        <ShoppingCart className="mr-2 h-4 w-4" />
-                        Add
-                      </Button>
+                      {isOutreachName(service.name) ? (
+                        <Button
+                          className="w-full bg-gradient-to-br from-amber-500 to-orange-600 font-semibold text-white shadow-md hover:opacity-90"
+                          onClick={() => { setOutreachSvc(service); setOutreachOpen(true); }}
+                        >
+                          Book free check-in
+                        </Button>
+                      ) : (
+                        <Button className="w-full bg-gradient-to-r from-primary to-secondary font-semibold shadow-md hover:opacity-90" onClick={() => onSelectService(service)}>
+                          <ShoppingCart className="mr-2 h-4 w-4" />
+                          Add
+                        </Button>
+                      )}
                     </CardContent>
                   </Card>
                 );
@@ -1548,6 +1571,18 @@ const PackageExperience = ({
           </AccordionContent>
         </AccordionItem>
       </Accordion>
+
+      {/* Outreach Power Pack — free check-in (pay per interview, no upfront charge) */}
+      <OutreachCheckinDialog
+        open={outreachOpen}
+        onClose={() => setOutreachOpen(false)}
+        clientId={clientUser?.id || null}
+        defaultName={clientUser ? `${clientUser.first_name} ${clientUser.last_name}` : ""}
+        defaultEmail={clientUser?.email || ""}
+        onConfirmed={() => {
+          if (outreachSvc) onAddToCart({ id: `outreach-${Date.now()}`, service: outreachSvc } as GuestCartItem);
+        }}
+      />
       </div>
       {/* ===================== END DESKTOP layout ===================== */}
 

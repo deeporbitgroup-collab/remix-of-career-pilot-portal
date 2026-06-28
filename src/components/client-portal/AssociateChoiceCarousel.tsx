@@ -134,7 +134,7 @@ const AssociateChoiceCarousel = ({
                       compact
                         ? "h-20"
                         : fillHeight
-                        ? "h-[20vh] min-h-[128px] max-h-[240px]"
+                        ? "h-[13vh] min-h-[84px] max-h-[140px]"
                         : // Default (dialog) variant: stay small on phones so the whole
                           // card fits the viewport, then grow on larger screens.
                           "h-40 sm:h-60 md:h-72"
@@ -177,8 +177,8 @@ const AssociateChoiceCarousel = ({
                   </div>
 
                   {/* ---- Key info (ALWAYS visible) ---- */}
-                  <div className={cn("flex flex-1 flex-col", compact ? "gap-1 p-1.5" : fillHeight ? "gap-2 p-3" : "gap-2 p-3 sm:gap-3 sm:p-4")}>
-                    <div className={cn("flex flex-col", compact ? "gap-1" : fillHeight ? "gap-1.5" : "gap-1.5 sm:gap-2.5")}>
+                  <div className={cn("flex flex-1 flex-col", compact ? "gap-1 p-1.5" : fillHeight ? "gap-1.5 p-2.5" : "gap-2 p-3 sm:gap-3 sm:p-4")}>
+                    <div className={cn("flex flex-col", compact ? "gap-1" : fillHeight ? "gap-1" : "gap-1.5 sm:gap-2.5")}>
                       {(associate.university || associate.university_2) && (
                         <div className="flex items-start gap-1.5">
                           <GraduationCap className={cn("mt-0.5 shrink-0 text-primary", compact ? "h-3.5 w-3.5" : "h-4 w-4")} aria-label="University" />
