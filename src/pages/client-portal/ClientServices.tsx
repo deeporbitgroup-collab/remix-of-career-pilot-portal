@@ -691,7 +691,7 @@ const ClientServicesPage = () => {
                   onShowInfo={(svc) => setInfoService(svc)}
                   onDownloadPdf={handleDownloadPdf}
                   getDemoPdfPath={getDemoPdfPath}
-                  getPreviewImage={(name) => getServicePreview(category, name)}
+                  getPreviewImage={(name) => getServicePreview(category, name) ?? serviceBgImages[name]}
                   hasDemo={(name) => hasDemoPdf(name, category)}
                 />
               </div>
