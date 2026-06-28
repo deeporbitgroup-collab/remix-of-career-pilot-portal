@@ -1107,6 +1107,9 @@ const PackageExperience = ({
 
       {/* ===================== DESKTOP layout (unchanged) ===================== */}
       <div className="hidden md:block space-y-3">
+      {/* One-screen block: the whole package + associate fit the viewport without
+          scrolling; "Buy single products" sits below (revealed on scroll). */}
+      <div className="md:flex md:flex-col md:h-[calc(100vh-6rem)] md:gap-3">
       {/* Slim category header (keeps the whole experience in one screen) */}
       <div className="flex items-center gap-3 rounded-xl border border-primary/20 bg-background/90 px-4 py-2.5 shadow-lg backdrop-blur-sm">
         <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/15 text-primary shrink-0">
@@ -1125,9 +1128,9 @@ const PackageExperience = ({
       </div>
 
       {/* TOP: Package (left) + Choose your Associate (right) — fits one screen */}
-      <div className="grid grid-cols-1 items-stretch gap-4 md:grid-cols-2">
+      <div className="grid grid-cols-1 items-stretch gap-4 md:grid-cols-2 md:flex-1 md:min-h-0">
         {/* LEFT — Package */}
-        <Card className="relative flex flex-col overflow-hidden border-primary/30 bg-card shadow-xl">
+        <Card className="relative flex flex-col overflow-hidden border-primary/30 bg-card shadow-xl md:min-h-0">
           <CardHeader className="space-y-0.5 pb-2 pt-3">
             <div className="flex items-center justify-between gap-2">
               <CardTitle className="text-xl">
@@ -1144,7 +1147,10 @@ const PackageExperience = ({
             <CardDescription className="line-clamp-1 text-xs">{pkg.description}</CardDescription>
           </CardHeader>
 
-          <CardContent className="flex flex-1 flex-col gap-2.5 pb-3">
+          <CardContent className="flex flex-1 flex-col gap-2.5 pb-3 md:min-h-0">
+            {/* Scrollable details (only scrolls internally if the content is taller
+                than the screen) — price + button stay pinned below. */}
+            <div className="flex flex-col gap-2.5 md:flex-1 md:min-h-0 md:overflow-y-auto md:pr-1">
             <div className="rounded-xl border border-border/50 bg-muted/20 p-2.5">
               <p className="mb-2 flex items-center justify-between text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
                 <span>What's included</span>
@@ -1275,8 +1281,9 @@ const PackageExperience = ({
             {/* Covered logos — fills the lower empty space without overpowering
                 the package name, price and bullet list above. */}
             <CoveredLogos kind={pkg.category === "Altitude" ? "companies" : "universities"} />
+            </div>{/* end scrollable details */}
 
-            {/* Price block */}
+            {/* Price block — pinned at the bottom of the card, always visible */}
             <div className="rounded-xl border border-primary/20 bg-primary/5 p-3">
               <div className="flex items-end justify-between">
                 <div>
@@ -1311,7 +1318,7 @@ const PackageExperience = ({
         </Card>
 
         {/* RIGHT — Choose your Associate (the WOW panel) */}
-        <Card className="relative flex flex-col overflow-hidden border-secondary/30 bg-card shadow-xl">
+        <Card className="relative flex flex-col overflow-hidden border-secondary/30 bg-card shadow-xl md:min-h-0">
           <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-primary via-secondary to-primary" />
           <CardHeader className="space-y-0.5 bg-gradient-to-br from-secondary/10 via-primary/5 to-transparent pb-2 pt-3">
             <CardTitle className="flex items-center gap-2 text-lg">
@@ -1325,7 +1332,7 @@ const PackageExperience = ({
             </CardDescription>
           </CardHeader>
 
-          <CardContent className="flex flex-1 flex-col gap-2 pb-3">
+          <CardContent className="flex flex-1 flex-col gap-2 pb-3 md:min-h-0">
             <div className="space-y-1.5">
               <label className="flex items-center gap-1.5 text-sm font-medium">
                 {filterMode === "sector" ? <Briefcase className="h-4 w-4 text-primary" /> : <GraduationCap className="h-4 w-4 text-primary" />}
@@ -1437,6 +1444,7 @@ const PackageExperience = ({
           </CardContent>
         </Card>
       </div>
+      </div>{/* end one-screen block */}
 
       {/* Collapsible: Buy single products (scorporo) + Extensions (add-ons) */}
       <Accordion type="multiple" className="space-y-3">
