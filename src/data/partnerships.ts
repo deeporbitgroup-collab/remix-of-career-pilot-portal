@@ -15,6 +15,8 @@ export interface Partnership {
   logo: string;
   translationKey: PartnershipKey;
   color: string;
+  /** Short label shown under the name in the mobile partner grid. */
+  subtitle?: string;
 }
 
 export const partnerships: Partnership[] = [
@@ -23,6 +25,7 @@ export const partnerships: Partnership[] = [
     logo: "/lovable-uploads/21bfcf0d-9e21-47fa-8c78-4f617ce0f8f9.png",
     translationKey: "careerBoost",
     color: "from-primary to-primary-light",
+    subtitle: "Interview Preparation",
   },
   {
     name: "Alpha Test",
@@ -41,6 +44,7 @@ export const partnerships: Partnership[] = [
     logo: "/lovable-uploads/93f6b7f1-52a9-4366-8ca1-0704791a269e.png",
     translationKey: "languageBoost",
     color: "from-accent to-primary",
+    subtitle: "Languages & Certificates",
   },
   {
     name: "PrepScholar",

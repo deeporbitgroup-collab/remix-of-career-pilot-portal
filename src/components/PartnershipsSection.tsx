@@ -76,7 +76,7 @@ const PartnershipsSection = () => {
                       {partner.name}
                     </span>
                     <span className="text-[10px] text-muted-foreground text-center leading-tight mt-0.5 line-clamp-2">
-                      {partnerData.services?.[0]}
+                      {partner.subtitle ?? partnerData.services?.[0]}
                     </span>
                   </div>
                 );
