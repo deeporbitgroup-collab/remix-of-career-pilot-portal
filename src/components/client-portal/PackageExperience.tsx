@@ -35,6 +35,7 @@ import AssociateChoiceCarousel from "./AssociateChoiceCarousel";
 import OutreachCheckinDialog from "./OutreachCheckinDialog";
 
 const isOutreachName = (n?: string) => !!n?.startsWith("Outreach Power Pack");
+const isComparativeName = (n?: string) => /comparative\s+(presentation|analysis)/i.test(n || "");
 import CoveredLogos from "./CoveredLogos";
 import PartnerMaterials from "./PartnerMaterials";
 import { zipFiles, type ZipEntry } from "@/lib/zipFiles";
@@ -351,11 +352,22 @@ const PackageExperience = ({
     };
     update();
     el.addEventListener("scroll", update, { passive: true });
+    // Observe BOTH the scroll box and its content: when the package images (logos,
+    // previews) finish loading the content grows, so the hint shows from the start
+    // — not only after the user already scrolled.
     const ro = new ResizeObserver(update);
     ro.observe(el);
+    if (el.firstElementChild) ro.observe(el.firstElementChild);
+    // Belt-and-braces re-checks while images/layout settle.
+    const timers = [setTimeout(update, 200), setTimeout(update, 700), setTimeout(update, 1500)];
+    window.addEventListener("load", update);
+    window.addEventListener("resize", update);
     return () => {
       el.removeEventListener("scroll", update);
       ro.disconnect();
+      timers.forEach(clearTimeout);
+      window.removeEventListener("load", update);
+      window.removeEventListener("resize", update);
     };
   }, []);
 
@@ -393,10 +405,11 @@ const PackageExperience = ({
     () => new Set(addonComponents.map((c) => c.service_id).filter(Boolean) as string[]),
     [addonComponents]
   );
-  // Outreach Power Pack is an add-on, but it should still appear under "Buy single
-  // products" (Altitude) with its free check-in flow — so keep it in the singles.
+  // Outreach Power Pack and Comparative Presentation/Analysis are add-ons, but they
+  // should still appear under "Buy single products" too (Outreach keeps its free
+  // check-in flow; comparative uses the normal associate selection).
   const singles = useMemo(
-    () => services.filter((s) => !addonServiceIds.has(s.id) || isOutreachName(s.name)),
+    () => services.filter((s) => !addonServiceIds.has(s.id) || isOutreachName(s.name) || isComparativeName(s.name)),
     [services, addonServiceIds]
   );
 
