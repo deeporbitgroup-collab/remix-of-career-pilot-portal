@@ -107,7 +107,12 @@ const AssociateChoiceCarousel = ({
                     // One big card + a peek of the next on every breakpoint, so it is
                     // always obvious that more associates exist to the right.
                     isSingle
-                      ? "basis-full sm:basis-4/5 mx-auto"
+                      ? // In the package (fillHeight) a single associate should look just
+                        // like one of the multi cards (not a wide full-width card that
+                        // squashes the photo); elsewhere keep the roomy single layout.
+                        fillHeight
+                        ? "basis-[82%] sm:basis-[58%] lg:basis-[44%] mx-auto"
+                        : "basis-full sm:basis-4/5 mx-auto"
                       : compact
                       ? "basis-[76%] sm:basis-[58%] lg:basis-[44%]"
                       : "basis-[82%] sm:basis-[58%] lg:basis-[44%]"

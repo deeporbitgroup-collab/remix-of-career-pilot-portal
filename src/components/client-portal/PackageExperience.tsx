@@ -342,13 +342,15 @@ const PackageExperience = ({
 
   // Desktop: nudge the user to scroll the package details when there's more below.
   const detailsRef = useRef<HTMLDivElement | null>(null);
-  const [showScrollHint, setShowScrollHint] = useState(false);
+  const [scrollable, setScrollable] = useState(false);
+  const [scrollFrac, setScrollFrac] = useState(0);
   useEffect(() => {
     const el = detailsRef.current;
     if (!el) return;
     const update = () => {
-      const moreBelow = el.scrollHeight - el.scrollTop - el.clientHeight > 12;
-      setShowScrollHint(el.scrollHeight > el.clientHeight + 12 && moreBelow);
+      const max = el.scrollHeight - el.clientHeight;
+      setScrollable(max > 12);
+      setScrollFrac(max > 0 ? Math.min(1, el.scrollTop / max) : 0);
     };
     update();
     el.addEventListener("scroll", update, { passive: true });
@@ -1334,13 +1336,26 @@ const PackageExperience = ({
 
             </div>{/* end scrollable details */}
 
-            {/* Little animated down-arrows next to the scrollbar, nudging the user to
-                scroll the package content. Shown while there's more below; gone at the bottom. */}
-            {showScrollHint && (
-              <div className="pointer-events-none absolute bottom-2 right-1 hidden flex-col items-center text-primary md:flex">
-                <ChevronDown className="h-4 w-4 -mb-2.5 animate-scroll-hint opacity-60" style={{ animationDelay: "0ms" }} />
-                <ChevronDown className="h-4 w-4 -mb-2.5 animate-scroll-hint opacity-80" style={{ animationDelay: "150ms" }} />
-                <ChevronDown className="h-4 w-4 animate-scroll-hint" style={{ animationDelay: "300ms" }} />
+            {/* Scroll progress indicator next to the scrollbar (a little above the
+                middle): 3 chevrons that fill downward as you scroll — 1st at the top,
+                2nd past a third, 3rd near the bottom. A gentle bounce (until the
+                bottom) makes it obvious you should scroll to see everything. */}
+            {scrollable && (
+              <div className="pointer-events-none absolute right-3 top-[42%] hidden -translate-y-1/2 flex-col items-center gap-0.5 rounded-full bg-card/85 px-1 py-1.5 shadow-md ring-1 ring-primary/15 backdrop-blur-sm md:flex">
+                {[0, 1, 2].map((i) => {
+                  const filled = i === 0 || (i === 1 && scrollFrac > 0.34) || (i === 2 && scrollFrac > 0.7);
+                  return (
+                    <ChevronDown
+                      key={i}
+                      className={cn(
+                        "h-[18px] w-[18px] -my-0.5 transition-colors",
+                        filled ? "text-primary" : "text-primary/25",
+                        scrollFrac < 0.95 && "animate-scroll-hint"
+                      )}
+                      style={{ animationDelay: `${i * 130}ms` }}
+                    />
+                  );
+                })}
               </div>
             )}
             </div>{/* end relative details wrapper */}
