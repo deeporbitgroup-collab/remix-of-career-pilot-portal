@@ -37,6 +37,7 @@ const companySchema = z.object({
 const CompanyAuthContent = () => {
   const { toast } = useToast();
   const { t } = useTalentPoolLanguage();
+  const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const [legalDialog, setLegalDialog] = useState<'terms' | 'privacy' | null>(null);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
