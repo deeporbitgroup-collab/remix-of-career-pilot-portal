@@ -17,7 +17,8 @@ interface StatusChangeRequest {
   email: string;
   name: string;
   role: 'STUDENT' | 'COMPANY';
-  action: 'LOGIN_ACCESS' | 'TALENT_POOL_ACCESS' | 'PAYMENT_REQUIRED' | 'PAYMENT_VERIFIED' | 'REJECTED';
+  action: 'LOGIN_ACCESS' | 'TALENT_POOL_ACCESS' | 'PAYMENT_REQUIRED' | 'PAYMENT_VERIFIED' | 'REJECTED' | 'EXPELLED';
+  reason?: string;
 }
 
 const getEmailTemplate = (content: string, gradient: string = "linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%)") => `
@@ -73,7 +74,7 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    const { email, name, role, action }: StatusChangeRequest = await req.json();
+    const { email, name, role, action, reason }: StatusChangeRequest = await req.json();
 
     let subject = "";
     let content = "";
@@ -284,6 +285,44 @@ const handler = async (req: Request): Promise<Response> => {
             For further information or if you have any questions, please don't hesitate to contact us at <a href="mailto:careerpilot2025@gmail.com" style="color: #1e3a8a; font-weight: 600;">careerpilot2025@gmail.com</a>
           </p>
           
+          <p style="margin: 30px 0 0 0; color: #334155; font-size: 16px; line-height: 1.6;">
+            Best regards,<br>
+            <strong style="color: #dc2626;">The Career Pilot Team</strong>
+          </p>
+        `;
+        break;
+
+      case 'EXPELLED':
+        subject = "Important update about your Career Pilot Talent Pool membership";
+        gradient = "linear-gradient(135deg, #dc2626 0%, #991b1b 100%)";
+        content = `
+          <div style="text-align: center; margin-bottom: 30px;">
+            <div style="display: inline-block; background-color: #fef2f2; border-radius: 50%; padding: 20px;">
+              <span style="font-size: 48px;">📋</span>
+            </div>
+          </div>
+
+          <h2 style="margin: 0 0 20px 0; color: #dc2626; font-size: 24px; font-weight: 600; text-align: center;">Talent Pool Membership Ended</h2>
+
+          <p style="margin: 0 0 20px 0; color: #334155; font-size: 16px; line-height: 1.6;">
+            Dear <strong>${name}</strong>,
+          </p>
+
+          <p style="margin: 0 0 20px 0; color: #334155; font-size: 16px; line-height: 1.6;">
+            We are writing to inform you that your profile has been removed from the Career Pilot Talent Pool. Your profile is no longer visible to partner companies.
+          </p>
+
+          ${reason ? `
+          <div style="background-color: #fef2f2; border-left: 4px solid #dc2626; padding: 20px; margin: 25px 0; border-radius: 0 12px 12px 0;">
+            <p style="margin: 0 0 8px 0; color: #991b1b; font-size: 15px; font-weight: 600;">Reason</p>
+            <p style="margin: 0; color: #334155; font-size: 15px; line-height: 1.6; white-space: pre-wrap;">${reason}</p>
+          </div>
+          ` : ''}
+
+          <p style="margin: 0 0 20px 0; color: #334155; font-size: 16px; line-height: 1.6;">
+            If you believe this decision was made in error or have any questions, please don't hesitate to contact us at <a href="mailto:careerpilot2025@gmail.com" style="color: #1e3a8a; font-weight: 600;">careerpilot2025@gmail.com</a>.
+          </p>
+
           <p style="margin: 30px 0 0 0; color: #334155; font-size: 16px; line-height: 1.6;">
             Best regards,<br>
             <strong style="color: #dc2626;">The Career Pilot Team</strong>

@@ -75,6 +75,10 @@ const AdminDashboard = () => {
   const [companyLogoFile, setCompanyLogoFile] = useState<File | null>(null);
   const [companyCoverFile, setCompanyCoverFile] = useState<File | null>(null);
   const [savingCompany, setSavingCompany] = useState(false);
+  // Expel student flow (admin removes an active student from the Talent Pool with a reason)
+  const [expelDialogFor, setExpelDialogFor] = useState<any>(null);
+  const [expelReason, setExpelReason] = useState('');
+  const [expelling, setExpelling] = useState(false);
 
   useEffect(() => {
     loadDashboardData();
@@ -679,6 +683,69 @@ const AdminDashboard = () => {
       });
     } finally {
       setActionLoading(prev => ({ ...prev, [loadingKey]: false }));
+    }
+  };
+
+  const handleExpelStudent = async () => {
+    const student = expelDialogFor;
+    if (!student) return;
+    const studentProfile = student.student_profiles?.[0];
+    const name = `${studentProfile?.first_name ?? ''} ${studentProfile?.last_name ?? ''}`.trim();
+    const reason = expelReason.trim();
+
+    if (!reason) {
+      toast({
+        title: "Reason required",
+        description: "Please write an explanation. It will be included in the email to the student.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setExpelling(true);
+    try {
+      // Hide from companies + remove from selections + mark rejected + log (SECURITY DEFINER RPC)
+      const { error } = await supabase.rpc('tp_expel_student', {
+        _student_id: student.id,
+        _reason: reason,
+      });
+
+      if (error) throw error;
+
+      // Send the explanation email to the student (non-fatal)
+      if (student.email) {
+        try {
+          await supabase.functions.invoke('send-status-change-email', {
+            body: {
+              email: student.email,
+              name,
+              role: 'STUDENT',
+              action: 'EXPELLED',
+              reason,
+            }
+          });
+        } catch (emailError) {
+          console.error('Error sending expulsion email:', emailError);
+        }
+      }
+
+      toast({
+        title: "Student removed",
+        description: `${name} has been removed from the Talent Pool and is no longer visible to companies. Email sent.`,
+      });
+
+      setExpelDialogFor(null);
+      setExpelReason('');
+      loadDashboardData();
+    } catch (error) {
+      console.error('Error expelling student:', error);
+      toast({
+        title: "Error",
+        description: "Could not remove the student from the Talent Pool",
+        variant: "destructive"
+      });
+    } finally {
+      setExpelling(false);
     }
   };
 
@@ -1470,6 +1537,15 @@ const AdminDashboard = () => {
                               )}
                             </Button>
 
+                            {/* Expel from Talent Pool (with reason email) */}
+                            <Button
+                              onClick={() => { setExpelDialogFor(student); setExpelReason(''); }}
+                              className="w-full bg-red-700 hover:bg-red-800 text-white"
+                            >
+                              <DoorOpen className="h-4 w-4 mr-2" />
+                              Expel from Talent Pool
+                            </Button>
+
                             {/* Other Actions */}
                             <div className="flex gap-2">
                               <Button
@@ -2006,6 +2082,47 @@ const AdminDashboard = () => {
             <DialogFooter>
               <Button variant="outline" onClick={() => setEditingCompany(null)} disabled={savingCompany}>Cancel</Button>
               <Button onClick={handleSaveCompanyProfile} disabled={savingCompany}>{savingCompany ? "Saving..." : "Save"}</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Expel student dialog */}
+        <Dialog open={!!expelDialogFor} onOpenChange={(o) => { if (!o && !expelling) { setExpelDialogFor(null); setExpelReason(''); } }}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle className="text-red-700">Expel from Talent Pool</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-3">
+              <p className="text-sm text-steel-gray">
+                {expelDialogFor && (
+                  <>
+                    You are about to remove{' '}
+                    <strong>
+                      {expelDialogFor.student_profiles?.[0]?.first_name} {expelDialogFor.student_profiles?.[0]?.last_name}
+                    </strong>{' '}
+                    from the Talent Pool. Their profile will be hidden from all companies and removed from every company's
+                    selected list. They will receive an email with the explanation you write below.
+                  </>
+                )}
+              </p>
+              <div className="space-y-1">
+                <Label htmlFor="expel-reason">Reason (sent to the student)</Label>
+                <Textarea
+                  id="expel-reason"
+                  value={expelReason}
+                  onChange={(e) => setExpelReason(e.target.value)}
+                  placeholder="Explain why this student is being removed from the Talent Pool..."
+                  rows={5}
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => { setExpelDialogFor(null); setExpelReason(''); }} disabled={expelling}>
+                Cancel
+              </Button>
+              <Button className="bg-red-700 hover:bg-red-800 text-white" onClick={handleExpelStudent} disabled={expelling || !expelReason.trim()}>
+                {expelling ? "Removing..." : "Expel & send email"}
+              </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
