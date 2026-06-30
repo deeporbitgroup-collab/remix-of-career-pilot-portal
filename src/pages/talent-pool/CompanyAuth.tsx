@@ -16,6 +16,7 @@ import { z } from "zod";
 import { TalentPoolLanguageProvider, useTalentPoolLanguage } from "@/contexts/TalentPoolLanguageContext";
 import { ForgotPasswordDialog } from "@/components/talent-pool/ForgotPasswordDialog";
 import { TALENT_POOL_COMPANY_SECTORS } from "@/data/talentPoolSectors";
+import { normalizeTalentPoolEmail, talentPoolPasswordHash } from "@/lib/talentPoolPassword";
 
 const companySchema = z.object({
   companyName: z.string().trim().min(1, "Company name required").max(200),
@@ -58,15 +59,6 @@ const CompanyAuthContent = () => {
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  // Robust UTF-8 safe base64 encoding for passwords
-  const toBase64 = (s: string) => {
-    try {
-      return btoa(unescape(encodeURIComponent(s)));
-    } catch {
-      return btoa(s);
-    }
-  };
-
   const validateForm = () => {
     try {
       companySchema.parse(formData);
@@ -101,11 +93,13 @@ const CompanyAuthContent = () => {
     setIsLoading(true);
     
     try {
+      const normalizedEmail = normalizeTalentPoolEmail(formData.referenceEmail);
+
       // Check if email already exists
       const { data: existingUser } = await supabase
         .from('talent_pool_users')
         .select('id')
-        .eq('email', formData.referenceEmail)
+        .ilike('email', normalizedEmail)
         .maybeSingle();
 
       if (existingUser) {
@@ -120,8 +114,8 @@ const CompanyAuthContent = () => {
 
       // Register user via secure RPC (bypasses RLS)
       const { data: newUserId, error: regError } = await supabase.rpc('talent_pool_register_user', {
-        _email: formData.referenceEmail,
-        _password_base64: toBase64(formData.password),
+        _email: normalizedEmail,
+        _password_base64: talentPoolPasswordHash(formData.password),
         _role: 'COMPANY'
       });
 
@@ -145,7 +139,7 @@ const CompanyAuthContent = () => {
         _company_name: formData.companyName,
         _sector: formData.sector,
         _size: formData.size as any,
-        _reference_email: formData.referenceEmail,
+        _reference_email: normalizedEmail,
         _linkedin_url: formData.linkedin || ''
       });
 
@@ -171,7 +165,7 @@ const CompanyAuthContent = () => {
         await supabase.functions.invoke('send-company-registration', {
           body: {
             companyName: formData.companyName,
-            email: formData.referenceEmail,
+            email: normalizedEmail,
             sector: formData.sector,
             size: formData.size,
             referenceEmail: formData.referenceEmail,
@@ -218,10 +212,12 @@ const CompanyAuthContent = () => {
     setIsLoading(true);
 
     try {
+      const normalizedEmail = normalizeTalentPoolEmail(loginData.email);
+
       // Call secure RPC function for login (bypasses RLS)
       const { data, error } = await supabase.rpc('talent_pool_login', {
-        _email: loginData.email,
-        _password: loginData.password,
+        _email: normalizedEmail,
+        _password: loginData.password.trim(),
         _role: 'COMPANY'
       });
 

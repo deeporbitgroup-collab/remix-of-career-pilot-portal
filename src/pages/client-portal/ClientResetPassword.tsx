@@ -49,7 +49,7 @@ const ClientResetPassword = () => {
 
     try {
       const { data, error } = await supabase.functions.invoke('complete-client-password-reset', {
-        body: { token, newPassword }
+        body: { token, newPassword: newPassword.trim() }
       });
 
       if (error) throw error;

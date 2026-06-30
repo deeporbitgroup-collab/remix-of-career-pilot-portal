@@ -69,7 +69,8 @@ const handler = async (req: Request): Promise<Response> => {
 
       // Only send email if token was actually generated
       if (token && token !== 'REQUEST_SENT') {
-        const resetUrl = `https://careerpilot.it/reset-password?token=${token}`;
+        const origin = req.headers.get('origin') || 'https://careerpilot.it';
+        const resetUrl = `${origin}/reset-password?token=${token}`;
 
         const emailResponse = await resend.emails.send({
           from: "Career Pilot <noreply@careerpilot.it>",
@@ -137,7 +138,7 @@ const handler = async (req: Request): Promise<Response> => {
       // Update password in auth.users using admin client
       const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(
         resetData.user_id,
-        { password: newPassword }
+        { password: newPassword.trim() }
       );
 
       if (updateError) throw updateError;

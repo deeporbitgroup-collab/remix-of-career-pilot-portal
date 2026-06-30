@@ -58,6 +58,8 @@ const ClientAuth = () => {
     }
     setIsLoading(true);
     try {
+      const normalizedEmail = signupData.email.trim().toLowerCase();
+
       // Upload CV if provided
       let cvUrl = null;
       if (cvFile) {
@@ -78,7 +80,7 @@ const ClientAuth = () => {
       const {
         error: insertError
       } = await sb.from('client_users').insert({
-        email: signupData.email,
+        email: normalizedEmail,
         password_hash: passwordHash,
         first_name: signupData.firstName,
         last_name: signupData.lastName,
@@ -95,7 +97,7 @@ const ClientAuth = () => {
         body: {
           firstName: signupData.firstName,
           lastName: signupData.lastName,
-          email: signupData.email,
+          email: normalizedEmail,
           phone: signupData.phone,
           status: signupData.status,
           linkedinUrl: signupData.linkedinUrl
@@ -127,11 +129,14 @@ const ClientAuth = () => {
     e.preventDefault();
     setIsLoading(true);
     try {
+      const normalizedEmail = loginData.email.trim().toLowerCase();
+      const trimmedPassword = loginData.password.trim();
+
       // Get user from database
       const {
         data: user,
         error: userError
-      } = await sb.from('client_users').select('*').eq('email', loginData.email).single();
+      } = await sb.from('client_users').select('*').eq('email', normalizedEmail).single();
       if (userError || !user) {
         throw new Error("Invalid email or password");
       }
@@ -142,7 +147,7 @@ const ClientAuth = () => {
       }
 
       // Verify password
-      const passwordMatch = await bcrypt.compare(loginData.password, user.password_hash);
+      const passwordMatch = await bcrypt.compare(trimmedPassword, user.password_hash);
       if (!passwordMatch) {
         throw new Error("Invalid email or password");
       }

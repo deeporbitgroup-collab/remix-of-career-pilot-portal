@@ -30,33 +30,19 @@ serve(async (req: Request) => {
     // Request password reset token. If the email exists under the other
     // Talent Pool role, still send a reset link to the email owner.
     const requestedRole = role;
-    const fallbackRole: PasswordResetRequest['role'] = requestedRole === 'STUDENT' ? 'COMPANY' : 'STUDENT';
 
-    let resolvedRole = requestedRole;
-    let { data: token, error: tokenError } = await supabase
+    const { data: token, error: tokenError } = await supabase
       .rpc('talent_pool_request_password_reset', {
         _email: email,
         _role: requestedRole
       });
 
-    if (!tokenError && (!token || token === 'REQUEST_SENT')) {
-      const fallbackResult = await supabase.rpc('talent_pool_request_password_reset', {
-        _email: email,
-        _role: fallbackRole
-      });
-
-      if (!fallbackResult.error && fallbackResult.data && fallbackResult.data !== 'REQUEST_SENT') {
-        token = fallbackResult.data;
-        resolvedRole = fallbackRole;
-      } else if (fallbackResult.error) {
-        console.error("Fallback token generation error:", fallbackResult.error);
-      }
-    }
-
     if (tokenError) {
       console.error("Token generation error:", tokenError);
       throw tokenError;
     }
+
+    const resolvedRole = requestedRole;
 
     // If token is 'REQUEST_SENT', user doesn't exist but we don't reveal this
     if (!token || token === 'REQUEST_SENT') {

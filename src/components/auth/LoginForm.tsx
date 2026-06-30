@@ -44,8 +44,8 @@ const LoginForm = ({ role }: LoginFormProps) => {
     try {
       // Sign in with Supabase
       const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-        email: data.email,
-        password: data.password,
+        email: data.email.trim().toLowerCase(),
+        password: data.password.trim(),
       });
 
       if (authError) throw authError;

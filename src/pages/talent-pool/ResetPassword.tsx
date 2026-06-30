@@ -16,17 +16,50 @@ const ResetPassword = () => {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [tokenValid, setTokenValid] = useState<boolean | null>(null);
+  const [resetRole, setResetRole] = useState<"company" | "student">("student");
   const token = searchParams.get("token");
-  const resetRole = searchParams.get("role") === "company" ? "company" : "student";
   const loginPath = `/talent-pool/${resetRole}/auth`;
 
   useEffect(() => {
     if (!token) {
       setTokenValid(false);
-    } else {
-      setTokenValid(true);
+      return;
     }
-  }, [token]);
+
+    const validateToken = async () => {
+      const roleFromUrl = searchParams.get("role");
+      if (roleFromUrl === "company" || roleFromUrl === "student") {
+        setResetRole(roleFromUrl);
+      }
+
+      try {
+        const { data, error } = await supabase.rpc('talent_pool_get_reset_token_info', {
+          _token: token
+        });
+
+        if (error || !data?.valid) {
+          setTokenValid(false);
+          return;
+        }
+
+        if (data.role === "company" || data.role === "student") {
+          setResetRole(data.role);
+        }
+
+        setTokenValid(true);
+      } catch {
+        const roleFromUrl = searchParams.get("role");
+        if (roleFromUrl === "company" || roleFromUrl === "student") {
+          setResetRole(roleFromUrl);
+          setTokenValid(true);
+        } else {
+          setTokenValid(false);
+        }
+      }
+    };
+
+    validateToken();
+  }, [token, searchParams]);
 
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -110,6 +143,18 @@ const ResetPassword = () => {
       setLoading(false);
     }
   };
+
+  if (tokenValid === null) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/5 via-background to-secondary/5 p-4">
+        <Card className="w-full max-w-md">
+          <CardHeader className="text-center">
+            <CardTitle>Validating reset link...</CardTitle>
+          </CardHeader>
+        </Card>
+      </div>
+    );
+  }
 
   if (tokenValid === false) {
     return (

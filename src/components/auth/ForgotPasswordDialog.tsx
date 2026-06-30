@@ -40,7 +40,7 @@ export const ForgotPasswordDialog = () => {
       await supabase.functions.invoke('auth-reset-password', {
         body: { 
           action: 'request',
-          email, 
+          email: email.trim().toLowerCase(), 
           role: 'ASSOCIATE' // Backend will try all roles (ASSOCIATE, PARTNER, ADMIN)
         }
       });

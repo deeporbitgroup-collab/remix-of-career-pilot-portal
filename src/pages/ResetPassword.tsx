@@ -93,7 +93,7 @@ const ResetPassword = () => {
         body: { 
           action: 'complete',
           token, 
-          newPassword 
+          newPassword: newPassword.trim()
         }
       });
 
