@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Plane, GraduationCap, Briefcase, ArrowLeftRight, ChevronLeft, Info, Download, ArrowRight, Sparkles } from "lucide-react";
@@ -64,6 +64,10 @@ const SITUATIONS: Record<string, Situation[]> = {
 interface IndividualProductsSheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  /** Deep link: when the sheet opens with these set, jump straight to the
+   *  matched product (skips the phase/situation picker). */
+  initialCategory?: string;
+  initialServiceName?: string;
   servicesByCategory: Record<string, Svc[]>;
   onInfo: (svc: Svc) => void;
   onChoose: (svc: Svc) => void;
@@ -75,6 +79,8 @@ interface IndividualProductsSheetProps {
 const IndividualProductsSheet = ({
   open,
   onOpenChange,
+  initialCategory,
+  initialServiceName,
   servicesByCategory,
   onInfo,
   onChoose,
@@ -89,6 +95,19 @@ const IndividualProductsSheet = ({
     setPhase(null);
     setMatched(null);
   };
+
+  // Deep link: on open with an initial product, jump straight to step 3 (the
+  // big recommended-product card) for that service.
+  useEffect(() => {
+    if (!open || !initialServiceName) return;
+    const ph = PHASES.find((p) => p.category === initialCategory) ?? null;
+    if (!ph) return;
+    const list = servicesByCategory[ph.category] || [];
+    const svc = list.find((s) => s.name === initialServiceName) ?? null;
+    if (!svc) return;
+    setPhase(ph);
+    setMatched(svc);
+  }, [open, initialServiceName, initialCategory, servicesByCategory]);
 
   const pickSituation = (sit: Situation) => {
     const list = servicesByCategory[phase!.category] || [];

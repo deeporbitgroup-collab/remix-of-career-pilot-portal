@@ -143,6 +143,9 @@ interface PackageExperienceProps {
   getDemoPdfPath?: (name: string, category: string) => string | null;
   getPreviewImage?: (name: string) => string | undefined;
   hasDemo?: (name: string) => boolean;
+  /** Name of a single product to spotlight (opens "Buy single products",
+   *  badges + rings the card and scrolls to it). Used by ?service= deep links. */
+  highlightService?: string;
 }
 
 const categoryIcon: Record<string, typeof Plane> = {
@@ -313,7 +316,12 @@ const PackageExperience = ({
   getDemoPdfPath,
   getPreviewImage,
   hasDemo,
+  highlightService,
 }: PackageExperienceProps) => {
+  const singleHighlightRef = useRef<HTMLDivElement>(null);
+  // "Buy single products" accordion is closed by default; a deep-link spotlight
+  // forces it open so the highlighted card is visible before we scroll to it.
+  const [openSingles, setOpenSingles] = useState<string[]>([]);
   const [associateFilter, setAssociateFilter] = useState("");
   const [selectedAssociateId, setSelectedAssociateId] = useState<string | null>(null);
   const [removed, setRemoved] = useState<Set<string>>(new Set());
@@ -415,6 +423,18 @@ const PackageExperience = ({
     () => services.filter((s) => !addonServiceIds.has(s.id) || isOutreachName(s.name) || isComparativeName(s.name)),
     [services, addonServiceIds]
   );
+
+  // When a ?service= deep link matches one of this package's singles, open the
+  // "Buy single products" section and scroll the spotlighted card into view.
+  const hasHighlightedSingle = !!highlightService && singles.some((s) => s.name === highlightService);
+  useEffect(() => {
+    if (!hasHighlightedSingle) return;
+    setOpenSingles((prev) => (prev.includes("create") ? prev : [...prev, "create"]));
+    const t = setTimeout(() => {
+      singleHighlightRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 450);
+    return () => clearTimeout(t);
+  }, [hasHighlightedSingle]);
 
   const includedCore = useMemo(
     () => coreComponents.filter((c) => !removed.has(c.id)),
@@ -1534,7 +1554,7 @@ const PackageExperience = ({
       </div>{/* end one-screen block */}
 
       {/* Collapsible: Buy single products (scorporo) + Extensions (add-ons) */}
-      <Accordion type="multiple" className="space-y-3">
+      <Accordion type="multiple" value={openSingles} onValueChange={setOpenSingles} className="space-y-3">
         <AccordionItem value="create" className="rounded-lg border-none backdrop-blur-sm bg-background/90 shadow-lg overflow-hidden">
           <AccordionTrigger className="px-6 py-3 hover:no-underline bg-gradient-to-r from-primary/10 to-transparent hover:from-primary/20">
             <div className="flex items-center gap-3 text-left">
@@ -1550,9 +1570,24 @@ const PackageExperience = ({
               {singles.map((service) => {
                 const previewImg = getPreviewImage?.(service.name);
                 const showDemo = hasDemo?.(service.name);
+                const isHighlighted = highlightService === service.name;
                 return (
-                  <Card key={service.id} className="group flex flex-col overflow-hidden border-primary/10 transition-all hover:-translate-y-1 hover:border-primary/40 hover:shadow-xl">
+                  <Card
+                    key={service.id}
+                    ref={isHighlighted ? singleHighlightRef : undefined}
+                    className={cn(
+                      "group flex flex-col overflow-hidden border-primary/10 transition-all hover:-translate-y-1 hover:border-primary/40 hover:shadow-xl",
+                      isHighlighted && "ring-2 ring-primary shadow-xl scale-[1.02]"
+                    )}
+                  >
                     <div className="relative h-32 w-full overflow-hidden bg-gradient-to-br from-primary/15 to-secondary/15">
+                      {isHighlighted && (
+                        <div className="absolute left-2 top-2 z-10">
+                          <Badge className="bg-primary text-primary-foreground font-semibold shadow">
+                            <Sparkles className="mr-1 h-3 w-3" /> Recommended for you
+                          </Badge>
+                        </div>
+                      )}
                       {previewImg ? (
                         <>
                           <img src={previewImg} alt={service.name} loading="lazy" className="absolute inset-0 h-full w-full object-cover object-top transition-transform duration-500 group-hover:scale-105" />

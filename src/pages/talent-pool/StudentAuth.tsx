@@ -455,8 +455,27 @@ const StudentAuthContent = () => {
                       {coverLetterFile ? coverLetterFile.name : t('studentAuth.register.noFile')}
                     </p>
                   </div>
+
+                  {/* No CV / cover letter yet? Offer the professional rewriting
+                      service (Altitude single products). Direct redirect — the
+                      target product is highlighted on arrival. */}
+                  <div className="rounded-lg border border-sky-blue/30 bg-sky-blue/5 p-4 space-y-2">
+                    <p className="text-sm font-semibold text-sky">Don't have a CV or cover letter yet?</p>
+                    <p className="text-xs text-steel-gray">
+                      Have it written from scratch by a professional who works in your target sector.
+                    </p>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="w-full border-sky-blue/40 text-sky hover:bg-sky-blue/10"
+                      onClick={() => navigate(`/client-portal/services?category=Altitude&service=${encodeURIComponent('CV / Cover Letter Rewrite')}`)}
+                    >
+                      <FileText className="mr-2 h-4 w-4" />
+                      Get my CV / cover letter written by a pro →
+                    </Button>
+                  </div>
                 </div>
-                
+
                 <div className="space-y-2">
                   <Label htmlFor="email">{t('studentAuth.register.email')} {t('studentAuth.register.required')}</Label>
                   <Input

@@ -18,6 +18,7 @@ import CoveredLogos from "@/components/client-portal/CoveredLogos";
 import IndividualProductsSheet from "@/components/client-portal/IndividualProductsSheet";
 import JobHubFormDialog from "@/components/JobHubFormDialog";
 import PilotAdvisor from "@/components/client-portal/PilotAdvisor";
+import { useIsMobile } from "@/hooks/use-mobile";
 import BookingPopup from "@/components/BookingPopup";
 import OutreachCheckinDialog from "@/components/client-portal/OutreachCheckinDialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -217,6 +218,7 @@ const ClientServicesPage = () => {
   const highlightService = searchParams.get("service");
   const openAdvisorParam = searchParams.get("advisor") === "1";
   const highlightRef = useRef<HTMLDivElement>(null);
+  const isMobile = useIsMobile();
   const [services, setServices] = useState<Service[]>([]);
   const [packages, setPackages] = useState<ClientPackage[]>([]);
   const [packageComponents, setPackageComponents] = useState<PackageComponent[]>([]);
@@ -251,6 +253,15 @@ const ClientServicesPage = () => {
       setAdvisorOpen(true);
     }
   }, [loading, openAdvisorParam]);
+
+  // On mobile the "Buy single products" grid is hidden, so a ?service= deep
+  // link (e.g. from Talent Pool registration → CV rewrite) is surfaced through
+  // the Individual Products sheet, jumped straight to the matched product.
+  useEffect(() => {
+    if (!loading && highlightService && isMobile) {
+      setIpOpen(true);
+    }
+  }, [loading, highlightService, isMobile]);
 
   // Helper to check if service is a monthly subscription
   const isMonthlyService = (serviceName: string) => ['Pathways', 'Talent Pool', 'Job Updates Hub'].includes(serviceName);
@@ -693,6 +704,7 @@ const ClientServicesPage = () => {
                   getDemoPdfPath={getDemoPdfPath}
                   getPreviewImage={(name) => getServicePreview(category, name) ?? serviceBgImages[name]}
                   hasDemo={(name) => hasDemoPdf(name, category)}
+                  highlightService={highlightService ?? undefined}
                 />
               </div>
             );
@@ -1009,6 +1021,8 @@ const ClientServicesPage = () => {
         <IndividualProductsSheet
           open={ipOpen}
           onOpenChange={setIpOpen}
+          initialCategory={highlightCategory ?? undefined}
+          initialServiceName={highlightService ?? undefined}
           servicesByCategory={orderedGroupedServices as any}
           onInfo={(s) => setInfoService(s as any)}
           onChoose={(s) => setSelectedService(s as any)}
