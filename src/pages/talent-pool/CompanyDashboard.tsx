@@ -1236,9 +1236,19 @@ const CompanyDashboardContent = () => {
                             <h3 className="text-lg font-semibold">
                               {student.first_name} {student.last_name}
                             </h3>
+                            {/* Showcase profiles (seeded, no documents yet) carry a
+                                small "coming soon" badge so companies understand the
+                                CV / cover letter are on the way. */}
+                            {!student.cv_url && !student.cover_letter_url && (
+                              <Badge variant="secondary" className="mt-2 gap-1 border-amber-200 bg-amber-50 text-amber-700">
+                                <CalendarClock className="h-3 w-3" />
+                                CV & cover letter coming soon
+                              </Badge>
+                            )}
                           </div>
 
                           <div className="flex flex-col gap-2 pt-2">
+                            {(student.cv_url || student.cover_letter_url) && (<>
                             {student.cv_url ? (
                               <Button
                                 size="sm"
@@ -1281,6 +1291,7 @@ const CompanyDashboardContent = () => {
                                 Cover letter not available
                               </Button>
                             )}
+                            </>)}
                             {student.presentation_video_url && (
                               <Button
                                 size="sm"
