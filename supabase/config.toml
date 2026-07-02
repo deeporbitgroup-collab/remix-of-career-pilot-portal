@@ -253,12 +253,6 @@ verify_jwt = false
 [functions.send-project-completion]
 verify_jwt = false
 
-[functions.send-recruiting-chat-notification]
-verify_jwt = false
-
-[functions.send-recruiting-next-step]
-verify_jwt = false
-
 [functions.send-talent-pool-receipt-upload]
 verify_jwt = false
 

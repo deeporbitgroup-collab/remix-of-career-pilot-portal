@@ -34,7 +34,6 @@ import {
   LayoutDashboard
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import ActiveRecruitingSection from "@/components/talent-pool/ActiveRecruitingSection";
 import StudentScheduledEventsTab from "@/components/talent-pool/StudentScheduledEventsTab";
 import TalentPoolPrepMaterial from "@/components/talent-pool/TalentPoolPrepMaterial";
 import StudentTestsTab from "@/components/talent-pool/StudentTestsTab";
@@ -897,15 +896,6 @@ const StudentDashboard = () => {
         {(
 
           <>
-            {/* Active Recruiting Section */}
-            <div className="mb-6">
-              <ActiveRecruitingSection
-                userId={userInfo.id}
-                userType="STUDENT"
-                userName={`${studentProfile?.first_name || ''} ${studentProfile?.last_name || ''}`}
-                userEmail={userInfo.email || ''}
-              />
-            </div>
             {/* How it works — young, punchy: companies come to YOU, track it all here */}
             <div className="mb-6 overflow-hidden rounded-2xl border border-sky-200 bg-gradient-to-br from-sky-50 via-white to-emerald-50 shadow-sm">
               <div className="flex flex-wrap items-center gap-x-2 gap-y-1 px-4 pt-4">

@@ -30,12 +30,10 @@ import {
   Lock,
   Trash2,
   Bell,
-  Briefcase,
   BookOpen
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { PDFDocument } from 'pdf-lib';
-import AdminActiveRecruiting from "@/components/talent-pool/AdminActiveRecruiting";
 import KnowledgeBaseAdmin from "@/pages/admin/KnowledgeBaseAdmin";
 
 const COMPANY_SIZES = [
@@ -63,7 +61,7 @@ const AdminDashboard = () => {
   const [students, setStudents] = useState<any[]>([]);
   const [companies, setCompanies] = useState<any[]>([]);
   const [paymentReceipts, setPaymentReceipts] = useState<any[]>([]);
-  const [activeTab, setActiveTab] = useState<'students' | 'companies' | 'payments' | 'notifications' | 'recruiting' | 'knowledge-base'>('students');
+  const [activeTab, setActiveTab] = useState<'students' | 'companies' | 'payments' | 'notifications' | 'knowledge-base'>('students');
   const [actionLoading, setActionLoading] = useState<{ [key: string]: boolean }>({});
   const [notifications, setNotifications] = useState<any[]>([]);
   const [selections, setSelections] = useState<any[]>([]);
@@ -1199,8 +1197,8 @@ const AdminDashboard = () => {
         </div>
 
         {/* Main Content */}
-        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'students' | 'companies' | 'payments' | 'notifications' | 'recruiting' | 'knowledge-base')} className="space-y-4">
-          <TabsList className="grid w-full grid-cols-6">
+        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'students' | 'companies' | 'payments' | 'notifications' | 'knowledge-base')} className="space-y-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="students" className="flex items-center gap-2">
               <Users className="h-4 w-4" />
               Students
@@ -1219,10 +1217,6 @@ const AdminDashboard = () => {
               {selections.length > 0 && (
                 <Badge className="ml-1 bg-primary">{selections.length}</Badge>
               )}
-            </TabsTrigger>
-            <TabsTrigger value="recruiting" className="flex items-center gap-2">
-              <Briefcase className="h-4 w-4" />
-              Active Recruiting
             </TabsTrigger>
             <TabsTrigger value="knowledge-base" className="flex items-center gap-2">
               <BookOpen className="h-4 w-4" />
@@ -1920,11 +1914,6 @@ const AdminDashboard = () => {
                 </div>
               </CardContent>
             </Card>
-          </TabsContent>
-
-          {/* Active Recruiting Tab */}
-          <TabsContent value="recruiting">
-            <AdminActiveRecruiting />
           </TabsContent>
 
           {/* Knowledge Base Tab — reuses the full KB admin management (products,

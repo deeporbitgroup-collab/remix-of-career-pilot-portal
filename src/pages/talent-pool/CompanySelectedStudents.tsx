@@ -15,7 +15,6 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { TalentPoolLanguageProvider } from "@/contexts/TalentPoolLanguageContext";
-import NextStepSelector from "@/components/talent-pool/NextStepSelector";
 
 const CompanySelectedStudentsContent = () => {
   const navigate = useNavigate();
@@ -271,19 +270,6 @@ const CompanySelectedStudentsContent = () => {
                               <Download className="h-3 w-3" />
                             </Button>
                           )}
-                          
-                          {/* Next Step Selector */}
-                          <div className="pt-2 border-t">
-                            <NextStepSelector
-                              studentId={selection.student_id}
-                              studentName={`${student.first_name} ${student.last_name}`}
-                              studentEmail={student.email || ''}
-                              companyId={companyId || ''}
-                              companyName={companyData?.company_profiles?.[0]?.company_name || 'Company'}
-                              companyEmail={companyData?.email || ''}
-                              onComplete={() => loadSelectedStudents(companyId || '')}
-                            />
-                          </div>
                           
                           {/* Deselect Button */}
                           <AlertDialog>
