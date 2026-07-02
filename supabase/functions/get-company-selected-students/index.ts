@@ -48,6 +48,9 @@ serve(async (req: Request) => {
         .eq('user_id', s.student_id)
         .single();
 
+      // The student's phone number must NOT be exposed to companies.
+      if (profile) delete (profile as Record<string, unknown>).phone;
+
       return { ...s, profile };
     }));
 
