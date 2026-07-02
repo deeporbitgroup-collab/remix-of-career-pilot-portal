@@ -799,22 +799,6 @@ const AdminDashboard = () => {
         title: "Access revoked",
         description: "Talent Pool access has been successfully revoked",
       });
-
-      // Log the action
-      await supabase
-        .from('talent_pool_logs')
-        .insert({
-          actor_id: adminId,
-          action: 'ACCESS_REVOKED',
-          target_type: 'USER',
-          target_id: userId,
-          payload: { reason: 'Admin action' }
-        });
-
-      toast({
-        title: "Access revoked",
-        description: "Talent Pool access has been successfully revoked",
-      });
     } catch (error) {
       console.error('Error revoking access:', error);
       // Reload to restore correct state on error

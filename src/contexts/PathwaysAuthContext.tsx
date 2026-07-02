@@ -51,13 +51,8 @@ export const PathwaysAuthProvider = ({ children }: { children: ReactNode }) => {
 
   const login = async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
     try {
-      console.log('=== PATHWAYS LOGIN DEBUG ===');
-      console.log('Email:', email);
-      console.log('Password:', password);
-      
       const passwordHash = await hashPassword(password);
-      console.log('Generated hash:', passwordHash);
-      
+
       const { data, error } = await supabase
         .from('pathways_users')
         .select('*')
@@ -65,10 +60,7 @@ export const PathwaysAuthProvider = ({ children }: { children: ReactNode }) => {
         .eq('password_hash', passwordHash)
         .maybeSingle();
 
-      console.log('Supabase query result:', { data, error });
-
       if (error || !data) {
-        console.log('Login failed - no data or error:', error);
         return { success: false, error: 'Invalid credentials' };
       }
 
@@ -83,7 +75,6 @@ export const PathwaysAuthProvider = ({ children }: { children: ReactNode }) => {
         status: data.status,
       };
 
-      console.log('User data created:', userData);
       setUser(userData);
       // Session only - don't persist to localStorage
 

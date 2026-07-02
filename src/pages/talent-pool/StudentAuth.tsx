@@ -128,6 +128,32 @@ const StudentAuthContent = () => {
         return;
       }
 
+      // Upload documents FIRST, before creating the account. If an upload
+      // fails we must NOT have created a user row yet — otherwise the account
+      // is orphaned (no documents) and the email-exists pre-check above blocks
+      // every retry, leaving the student permanently stuck.
+      const uploadKey = crypto.randomUUID();
+
+      // Upload CV
+      const cvPath = `${uploadKey}/cv-${Date.now()}.pdf`;
+      const { error: cvError } = await supabase.storage
+        .from('talent-pool-cv')
+        .upload(cvPath, cvFile);
+
+      if (cvError) throw cvError;
+
+      // Upload Cover Letter
+      const coverPath = `${uploadKey}/cover-${Date.now()}.pdf`;
+      const { error: coverError } = await supabase.storage
+        .from('talent-pool-covers')
+        .upload(coverPath, coverLetterFile);
+
+      if (coverError) throw coverError;
+
+      // Build public URLs
+      const cvPublicUrl = supabase.storage.from('talent-pool-cv').getPublicUrl(cvPath).data.publicUrl;
+      const coverPublicUrl = supabase.storage.from('talent-pool-covers').getPublicUrl(coverPath).data.publicUrl;
+
       // Create user and profile via secure RPC (avoids RLS issues)
       const { data: newUserId, error: regError } = await supabase.rpc('talent_pool_register_student', {
         _first_name: formData.firstName,
@@ -167,27 +193,7 @@ const StudentAuthContent = () => {
         return;
       }
 
-      // Upload CV
-      const cvPath = `${newUserId}/cv-${Date.now()}.pdf`;
-      const { error: cvError } = await supabase.storage
-        .from('talent-pool-cv')
-        .upload(cvPath, cvFile);
-
-      if (cvError) throw cvError;
-
-      // Upload Cover Letter
-      const coverPath = `${newUserId}/cover-${Date.now()}.pdf`;
-      const { error: coverError } = await supabase.storage
-        .from('talent-pool-covers')
-        .upload(coverPath, coverLetterFile);
-
-      if (coverError) throw coverError;
-
-      // Build public URLs
-      const cvPublicUrl = supabase.storage.from('talent-pool-cv').getPublicUrl(cvPath).data.publicUrl;
-      const coverPublicUrl = supabase.storage.from('talent-pool-covers').getPublicUrl(coverPath).data.publicUrl;
-
-      // Update profile via secure RPC (avoids RLS)
+      // Update profile with the already-uploaded document URLs (avoids RLS)
       const { error: updateError } = await supabase.rpc('talent_pool_update_student_documents', {
         _user_id: newUserId,
         _cv_url: cvPublicUrl,
