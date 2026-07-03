@@ -73,6 +73,14 @@ const AdminDashboard = () => {
   const [companyLogoFile, setCompanyLogoFile] = useState<File | null>(null);
   const [companyCoverFile, setCompanyCoverFile] = useState<File | null>(null);
   const [savingCompany, setSavingCompany] = useState(false);
+  // Admin student-profile editing (writes the SAME student_profiles row / RPCs the
+  // student uses: photo, CV, cover letter, LinkedIn). Reuses already-deployed RPCs.
+  const [editingStudent, setEditingStudent] = useState<any>(null);
+  const [studentEditData, setStudentEditData] = useState({ linkedin_url: '' });
+  const [studentPhotoFile, setStudentPhotoFile] = useState<File | null>(null);
+  const [studentCvFile, setStudentCvFile] = useState<File | null>(null);
+  const [studentCoverFile, setStudentCoverFile] = useState<File | null>(null);
+  const [savingStudent, setSavingStudent] = useState(false);
   // Expel student flow (admin removes an active student from the Talent Pool with a reason)
   const [expelDialogFor, setExpelDialogFor] = useState<any>(null);
   const [expelReason, setExpelReason] = useState('');
@@ -523,6 +531,86 @@ const AdminDashboard = () => {
       toast({ title: "Error", description: e.message || "Unable to save company profile", variant: "destructive" });
     } finally {
       setSavingCompany(false);
+    }
+  };
+
+  const openStudentEdit = (student: any) => {
+    const p = student.student_profiles?.[0] || {};
+    setStudentEditData({ linkedin_url: p.linkedin_url || '' });
+    setStudentPhotoFile(null);
+    setStudentCvFile(null);
+    setStudentCoverFile(null);
+    setEditingStudent(student);
+  };
+
+  const handleSaveStudentProfile = async () => {
+    if (!editingStudent) return;
+    const userId = editingStudent.id;
+    setSavingStudent(true);
+    try {
+      // 1) Profile photo (optional) — same bucket/RPC the student uses.
+      if (studentPhotoFile) {
+        const ext = (studentPhotoFile.name.split('.').pop() || 'jpg').toLowerCase();
+        const photoPath = `${userId}/photo-${Date.now()}.${ext}`;
+        const { error: upErr } = await supabase.storage
+          .from('talent-pool-photos')
+          .upload(photoPath, studentPhotoFile, { contentType: studentPhotoFile.type, upsert: true });
+        if (upErr) throw upErr;
+        const photoUrl = supabase.storage.from('talent-pool-photos').getPublicUrl(photoPath).data.publicUrl;
+        const { error: photoRpcErr } = await supabase.rpc('talent_pool_update_student_photo', {
+          _user_id: userId,
+          _photo_url: photoUrl,
+        });
+        if (photoRpcErr) throw photoRpcErr;
+      }
+
+      // 2) CV / Cover letter (optional). talent_pool_update_student_documents keeps
+      //    existing values when a param is NULL, so we only send what changed.
+      let cvUrl: string | null = null;
+      let coverUrl: string | null = null;
+      if (studentCvFile) {
+        const cvPath = `${userId}/cv-${Date.now()}.pdf`;
+        const { error: cvErr } = await supabase.storage
+          .from('talent-pool-cv')
+          .upload(cvPath, studentCvFile, { contentType: 'application/pdf', upsert: true });
+        if (cvErr) throw cvErr;
+        cvUrl = supabase.storage.from('talent-pool-cv').getPublicUrl(cvPath).data.publicUrl;
+      }
+      if (studentCoverFile) {
+        const coverPath = `${userId}/cover-${Date.now()}.pdf`;
+        const { error: coverErr } = await supabase.storage
+          .from('talent-pool-covers')
+          .upload(coverPath, studentCoverFile, { contentType: 'application/pdf', upsert: true });
+        if (coverErr) throw coverErr;
+        coverUrl = supabase.storage.from('talent-pool-covers').getPublicUrl(coverPath).data.publicUrl;
+      }
+      if (cvUrl || coverUrl) {
+        const { error: docErr } = await supabase.rpc('talent_pool_update_student_documents', {
+          _user_id: userId,
+          _cv_url: cvUrl,
+          _cover_url: coverUrl,
+        });
+        if (docErr) throw docErr;
+      }
+
+      // 3) LinkedIn (empty clears it).
+      const { error: liErr } = await supabase.rpc('talent_pool_update_student_linkedin', {
+        _user_id: userId,
+        _linkedin_url: studentEditData.linkedin_url || '',
+      });
+      if (liErr) throw liErr;
+
+      toast({ title: "Saved", description: "Student profile updated." });
+      setEditingStudent(null);
+      setStudentPhotoFile(null);
+      setStudentCvFile(null);
+      setStudentCoverFile(null);
+      await loadDashboardData();
+    } catch (e: any) {
+      console.error('Error saving student profile:', e);
+      toast({ title: "Error", description: e.message || "Unable to save student profile", variant: "destructive" });
+    } finally {
+      setSavingStudent(false);
     }
   };
 
@@ -1236,16 +1324,34 @@ const AdminDashboard = () => {
                     <Card key={student.id} className="p-4">
                       <div className="space-y-3">
                         {/* Header con stato */}
-                        <div className="flex items-start justify-between">
+                        <div className="flex items-start gap-3">
+                          {student.student_profiles?.[0]?.photo_url ? (
+                            <img
+                              src={student.student_profiles[0].photo_url}
+                              alt={`${student.student_profiles?.[0]?.first_name || 'Student'} photo`}
+                              className="h-14 w-14 shrink-0 rounded-full border object-cover"
+                            />
+                          ) : (
+                            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full border bg-runway-gray">
+                              <User className="h-7 w-7 text-steel-gray" />
+                            </div>
+                          )}
                           <div className="flex-1">
                             <h3 className="text-lg font-semibold flex items-center gap-2">
-                              <User className="h-5 w-5 text-primary" />
                               {student.student_profiles?.[0]?.first_name} {student.student_profiles?.[0]?.last_name}
                             </h3>
                             <div className="mt-1">
                               {getStatusBadge(student.status)}
                             </div>
                           </div>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => openStudentEdit(student)}
+                          >
+                            <FileText className="h-4 w-4 mr-1" />
+                            Edit profile
+                          </Button>
                         </div>
 
                         {/* Dati dello studente */}
@@ -2055,6 +2161,110 @@ const AdminDashboard = () => {
             <DialogFooter>
               <Button variant="outline" onClick={() => setEditingCompany(null)} disabled={savingCompany}>Cancel</Button>
               <Button onClick={handleSaveCompanyProfile} disabled={savingCompany}>{savingCompany ? "Saving..." : "Save"}</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Admin: edit a student's profile — photo, CV, cover letter, LinkedIn.
+            Writes the SAME student_profiles row / RPCs the student uses. Files are
+            optional: leaving one empty keeps the current value. */}
+        <Dialog open={!!editingStudent} onOpenChange={(o) => { if (!o && !savingStudent) setEditingStudent(null); }}>
+          <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>
+                Edit student profile
+                {editingStudent?.student_profiles?.[0] && (
+                  <span className="block text-sm font-normal text-muted-foreground mt-1">
+                    {editingStudent.student_profiles[0].first_name} {editingStudent.student_profiles[0].last_name}
+                  </span>
+                )}
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              {/* Profile photo */}
+              <div className="space-y-2">
+                <Label>Profile photo</Label>
+                <div className="flex items-center gap-3">
+                  {(studentPhotoFile || editingStudent?.student_profiles?.[0]?.photo_url) ? (
+                    <img
+                      src={studentPhotoFile ? URL.createObjectURL(studentPhotoFile) : editingStudent?.student_profiles?.[0]?.photo_url}
+                      alt="photo"
+                      className="h-16 w-16 rounded-full object-cover border"
+                    />
+                  ) : (
+                    <div className="flex h-16 w-16 items-center justify-center rounded-full border bg-runway-gray">
+                      <User className="h-8 w-8 text-steel-gray" />
+                    </div>
+                  )}
+                  <div className="flex-1">
+                    <Input
+                      type="file"
+                      accept="image/png,image/jpeg,image/webp"
+                      onChange={(e) => {
+                        const f = e.target.files?.[0] || null;
+                        if (f && !f.type.startsWith('image/')) {
+                          toast({ title: "Invalid file", description: "Please select an image (JPG, PNG).", variant: "destructive" });
+                          return;
+                        }
+                        if (f && f.size > 5 * 1024 * 1024) {
+                          toast({ title: "Photo too large", description: "Please select an image under 5MB.", variant: "destructive" });
+                          return;
+                        }
+                        setStudentPhotoFile(f);
+                      }}
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">Shown to companies — PNG/JPG, max 5MB.</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* CV */}
+              <div className="space-y-2">
+                <Label>CV (PDF)</Label>
+                <Input
+                  type="file"
+                  accept="application/pdf,.pdf"
+                  onChange={(e) => setStudentCvFile(e.target.files?.[0] || null)}
+                />
+                <p className="text-xs text-muted-foreground">
+                  {studentCvFile
+                    ? studentCvFile.name
+                    : editingStudent?.student_profiles?.[0]?.cv_url
+                      ? "A CV is already on file — upload a new one to replace it."
+                      : "No CV on file."}
+                </p>
+              </div>
+
+              {/* Cover letter */}
+              <div className="space-y-2">
+                <Label>Cover letter (PDF)</Label>
+                <Input
+                  type="file"
+                  accept="application/pdf,.pdf"
+                  onChange={(e) => setStudentCoverFile(e.target.files?.[0] || null)}
+                />
+                <p className="text-xs text-muted-foreground">
+                  {studentCoverFile
+                    ? studentCoverFile.name
+                    : editingStudent?.student_profiles?.[0]?.cover_letter_url
+                      ? "A cover letter is already on file — upload a new one to replace it."
+                      : "No cover letter on file."}
+                </p>
+              </div>
+
+              {/* LinkedIn */}
+              <div className="space-y-2">
+                <Label>LinkedIn (optional)</Label>
+                <Input
+                  value={studentEditData.linkedin_url}
+                  placeholder="https://www.linkedin.com/in/..."
+                  onChange={(e) => setStudentEditData({ ...studentEditData, linkedin_url: e.target.value })}
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setEditingStudent(null)} disabled={savingStudent}>Cancel</Button>
+              <Button onClick={handleSaveStudentProfile} disabled={savingStudent}>{savingStudent ? "Saving..." : "Save"}</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>

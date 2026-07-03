@@ -9,7 +9,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
-import { Users, Lock, Mail, Phone, User, ArrowLeft, Upload, Linkedin, FileText, X } from "lucide-react";
+import { Users, Lock, Mail, Phone, User, ArrowLeft, Upload, Linkedin, FileText, X, Camera } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { supabase } from "@/integrations/supabase/client";
 import { z } from "zod";
 import { TalentPoolLanguageProvider, useTalentPoolLanguage } from "@/contexts/TalentPoolLanguageContext";
@@ -45,6 +46,8 @@ const StudentAuthContent = () => {
   const [step, setStep] = useState(1);
   const [cvFile, setCvFile] = useState<File | null>(null);
   const [coverLetterFile, setCoverLetterFile] = useState<File | null>(null);
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [legalDialog, setLegalDialog] = useState<'terms' | 'privacy' | null>(null);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   
@@ -83,6 +86,37 @@ const StudentAuthContent = () => {
       }
       return false;
     }
+  };
+
+  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      toast({
+        title: t('studentAuth.errors.validation'),
+        description: t('studentAuth.register.photoTypeError'),
+        variant: "destructive"
+      });
+      e.target.value = '';
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        title: t('studentAuth.errors.validation'),
+        description: t('studentAuth.register.photoSizeError'),
+        variant: "destructive"
+      });
+      e.target.value = '';
+      return;
+    }
+
+    setPhotoFile(file);
+    setPhotoPreview((prev) => {
+      if (prev) URL.revokeObjectURL(prev);
+      return URL.createObjectURL(file);
+    });
   };
 
   const handleRegister = async (e: React.FormEvent) => {
@@ -150,6 +184,23 @@ const StudentAuthContent = () => {
 
       if (coverError) throw coverError;
 
+      // Upload profile photo (optional). A failure here must NOT block registration:
+      // the student can always add/replace it later from their dashboard.
+      let photoPublicUrl: string | null = null;
+      if (photoFile) {
+        try {
+          const photoExt = (photoFile.name.split('.').pop() || 'jpg').toLowerCase();
+          const photoPath = `${uploadKey}/photo-${Date.now()}.${photoExt}`;
+          const { error: photoError } = await supabase.storage
+            .from('talent-pool-photos')
+            .upload(photoPath, photoFile, { contentType: photoFile.type, upsert: true });
+          if (photoError) throw photoError;
+          photoPublicUrl = supabase.storage.from('talent-pool-photos').getPublicUrl(photoPath).data.publicUrl;
+        } catch (photoErr) {
+          console.error('Profile photo upload failed (non-fatal):', photoErr);
+        }
+      }
+
       // Build public URLs
       const cvPublicUrl = supabase.storage.from('talent-pool-cv').getPublicUrl(cvPath).data.publicUrl;
       const coverPublicUrl = supabase.storage.from('talent-pool-covers').getPublicUrl(coverPath).data.publicUrl;
@@ -201,6 +252,18 @@ const StudentAuthContent = () => {
       });
 
       if (updateError) throw updateError;
+
+      // Save the profile photo URL (best-effort; never blocks registration).
+      if (photoPublicUrl) {
+        try {
+          await supabase.rpc('talent_pool_update_student_photo', {
+            _user_id: newUserId,
+            _photo_url: photoPublicUrl
+          });
+        } catch (photoRpcErr) {
+          console.error('Saving profile photo URL failed (non-fatal):', photoRpcErr);
+        }
+      }
 
       // Send email notification to Career Pilot admin
       try {
@@ -400,6 +463,40 @@ const StudentAuthContent = () => {
             
             <TabsContent value="register">
               <form onSubmit={handleRegister} className="space-y-4">
+                <div className="flex flex-col items-center gap-3 rounded-lg border border-sky-blue/30 bg-sky-blue/5 p-4">
+                  <Label className="self-start flex items-center gap-2 text-sm">
+                    <Camera className="h-4 w-4" />
+                    {t('studentAuth.register.photo')}
+                  </Label>
+                  <div className="flex flex-col sm:flex-row items-center gap-4 w-full">
+                    <Avatar className="h-24 w-24 border-2 border-sky-blue/40">
+                      <AvatarImage src={photoPreview || undefined} alt="Profile preview" className="object-cover" />
+                      <AvatarFallback className="bg-sky-blue/10">
+                        <User className="h-10 w-10 text-sky" />
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1 w-full space-y-2 text-center sm:text-left">
+                      <Label
+                        htmlFor="register-photo"
+                        className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-md border border-sky-blue/40 bg-white px-4 py-2 text-sm font-medium text-sky hover:bg-sky-blue/10 transition-colors"
+                      >
+                        <Upload className="h-4 w-4" />
+                        {photoFile ? t('studentAuth.register.photoChange') : t('studentAuth.register.photoAdd')}
+                      </Label>
+                      <input
+                        id="register-photo"
+                        type="file"
+                        accept="image/*"
+                        className="sr-only"
+                        onChange={handlePhotoChange}
+                      />
+                      <p className="text-xs text-steel-gray">
+                        {photoFile ? photoFile.name : t('studentAuth.register.photoHint')}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="firstName">{t('studentAuth.register.firstName')} {t('studentAuth.register.required')}</Label>
