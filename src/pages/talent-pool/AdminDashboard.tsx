@@ -43,7 +43,7 @@ const COMPANY_SIZES = [
   { value: "LARGE_COMPANY", label: "Large (200+)" },
 ];
 
-const AdminDashboard = () => {
+const AdminDashboard = ({ embedded = false }: { embedded?: boolean }) => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
@@ -1195,9 +1195,10 @@ const AdminDashboard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-cloud-white to-runway-gray p-4 md:p-8">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
+    <div className={embedded ? "" : "min-h-screen bg-gradient-to-br from-background via-cloud-white to-runway-gray p-4 md:p-8"}>
+      <div className={embedded ? "" : "max-w-7xl mx-auto"}>
+        {/* Header — standalone page only; hidden when embedded in the Crew Portal CPA */}
+        {!embedded && (
         <div className="flex justify-between items-center mb-8">
           <div className="flex items-center gap-3">
             <Shield className="h-8 w-8 text-primary" />
@@ -1220,6 +1221,7 @@ const AdminDashboard = () => {
             </Button>
           </div>
         </div>
+        )}
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">

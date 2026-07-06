@@ -72,6 +72,7 @@
       "passwordHint": "Min 8 characters, 1 uppercase letter, 1 number",
       "cv": "Curriculum Vitae (PDF, max 10MB)",
       "coverLetter": "Cover Letter (PDF, max 10MB)",
+      "coverLetterOptional": "(optional — highly recommended)",
       "photo": "Profile Photo",
       "photoHint": "Recommended - shown to companies and admins. JPG or PNG, max 5MB.",
       "photoChange": "Change photo",

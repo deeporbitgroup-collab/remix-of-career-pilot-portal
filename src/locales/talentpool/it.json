@@ -72,6 +72,7 @@
       "passwordHint": "Min 8 caratteri, 1 maiuscola, 1 numero",
       "cv": "Curriculum Vitae (PDF, max 10MB)",
       "coverLetter": "Lettera di Presentazione (PDF, max 10MB)",
+      "coverLetterOptional": "(opzionale — altamente consigliata)",
       "photo": "Foto Profilo",
       "photoHint": "Consigliata - verrà mostrata ad aziende e admin. JPG o PNG, max 5MB.",
       "photoChange": "Cambia foto",

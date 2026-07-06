@@ -131,7 +131,10 @@ const StudentAuthContent = () => {
       return;
     }
 
-    if (!cvFile || !coverLetterFile) {
+    // Only the CV is mandatory. The cover letter is optional (but highly
+    // recommended) — students without one can register and use the Altitude
+    // CV / cover-letter service afterwards.
+    if (!cvFile) {
       toast({
         title: t('studentAuth.errors.documentsRequired'),
         description: t('studentAuth.errors.documentsRequiredDesc'),
@@ -176,13 +179,17 @@ const StudentAuthContent = () => {
 
       if (cvError) throw cvError;
 
-      // Upload Cover Letter
-      const coverPath = `${uploadKey}/cover-${Date.now()}.pdf`;
-      const { error: coverError } = await supabase.storage
-        .from('talent-pool-covers')
-        .upload(coverPath, coverLetterFile);
+      // Upload Cover Letter (optional). When the student doesn't attach one we
+      // skip the upload entirely and leave the cover-letter URL empty.
+      let coverPath: string | null = null;
+      if (coverLetterFile) {
+        coverPath = `${uploadKey}/cover-${Date.now()}.pdf`;
+        const { error: coverError } = await supabase.storage
+          .from('talent-pool-covers')
+          .upload(coverPath, coverLetterFile);
 
-      if (coverError) throw coverError;
+        if (coverError) throw coverError;
+      }
 
       // Upload profile photo (optional). A failure here must NOT block registration:
       // the student can always add/replace it later from their dashboard.
@@ -203,7 +210,9 @@ const StudentAuthContent = () => {
 
       // Build public URLs
       const cvPublicUrl = supabase.storage.from('talent-pool-cv').getPublicUrl(cvPath).data.publicUrl;
-      const coverPublicUrl = supabase.storage.from('talent-pool-covers').getPublicUrl(coverPath).data.publicUrl;
+      const coverPublicUrl = coverPath
+        ? supabase.storage.from('talent-pool-covers').getPublicUrl(coverPath).data.publicUrl
+        : null;
 
       // Create user and profile via secure RPC (avoids RLS issues)
       const { data: newUserId, error: regError } = await supabase.rpc('talent_pool_register_student', {
@@ -540,13 +549,13 @@ const StudentAuthContent = () => {
                   <div className="space-y-2">
                     <Label className="flex items-center gap-2">
                       <FileText className="h-4 w-4" />
-                      {t('studentAuth.register.coverLetter')} {t('studentAuth.register.required')}
+                      {t('studentAuth.register.coverLetter')}{' '}
+                      <span className="text-xs font-normal text-sky">{t('studentAuth.register.coverLetterOptional')}</span>
                     </Label>
                     <Input
                       type="file"
                       accept=".pdf"
                       onChange={(e) => setCoverLetterFile(e.target.files?.[0] || null)}
-                      required
                     />
                     <p className="text-xs text-steel-gray">
                       {coverLetterFile ? coverLetterFile.name : t('studentAuth.register.noFile')}

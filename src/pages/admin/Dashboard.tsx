@@ -9,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   LogOut, Users, Shield, Activity, FileText,
   Search, Filter, CheckCircle, XCircle, Clock,
-  UserCheck, UserX, ChevronRight, Building, Send, ShoppingCart, Briefcase, BookOpen, ExternalLink, FileCode, ListTodo, Mail, ArrowLeft
+  UserCheck, UserX, ChevronRight, Building, Send, ShoppingCart, Briefcase, BookOpen, ExternalLink, FileCode, ListTodo, Mail, ArrowLeft, GraduationCap
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import PendingApprovals from "@/components/admin/PendingApprovals";
@@ -24,13 +24,14 @@ import PrepMaterialsManagement from "@/components/admin/PrepMaterialsManagement"
 import AdminCRM from "@/components/admin/AdminCRM";
 import AdminTasks from "@/components/admin/AdminTasks";
 import NewsletterManagement from "@/components/admin/NewsletterManagement";
+import TalentPoolAdmin from "@/pages/talent-pool/AdminDashboard";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 // Top-level "hub" blocks the admin lands on. Each one is just a container that
 // groups already-existing sections together — nothing is created or removed,
 // only regrouped to keep the dashboard tidy.
-type BlockId = "ap" | "team" | "clients" | "newsletter";
+type BlockId = "ap" | "team" | "clients" | "newsletter" | "talent_pool";
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -157,6 +158,15 @@ const AdminDashboard = () => {
       title: "Newsletter",
       desc: isIt ? "Componi e invia alle tue audience." : "Compose and send to your audiences.",
       icon: Mail,
+      pending: 0,
+    },
+    {
+      id: "talent_pool",
+      title: "Talent Pool",
+      desc: isIt
+        ? "Studenti, aziende, pagamenti e knowledge base della Talent Pool."
+        : "Talent Pool students, companies, payments and knowledge base.",
+      icon: GraduationCap,
       pending: 0,
     },
   ];
@@ -465,6 +475,9 @@ const AdminDashboard = () => {
 
             {/* BLOCK 4 — Newsletter */}
             {activeBlock === "newsletter" && <NewsletterManagement />}
+
+            {/* BLOCK 5 — Talent Pool (full Talent Pool admin, embedded) */}
+            {activeBlock === "talent_pool" && <TalentPoolAdmin embedded />}
           </div>
         )}
       </div>

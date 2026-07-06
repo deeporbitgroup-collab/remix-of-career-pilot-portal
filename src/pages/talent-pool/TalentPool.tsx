@@ -52,14 +52,6 @@ const TalentPoolContent = () => {
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <button
-                type="button"
-                onClick={() => navigate('/talent-pool/admin')}
-                className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500/80 hover:text-sky-400 transition-colors px-2 py-1"
-                aria-label="Career Pilot Admin access"
-              >
-                CPA
-              </button>
               <Button
                 variant="ghost"
                 onClick={() => navigate('/')}
