@@ -294,7 +294,7 @@ const StudentAuthContent = () => {
 
       toast({
         title: t('studentAuth.success.registrationComplete'),
-        description: "Registration complete! Welcome to the Talent Pool.",
+        description: "Registration received! Your profile is now under review — we'll email you as soon as an admin approves it.",
       });
 
       // Auto-login the newly registered student

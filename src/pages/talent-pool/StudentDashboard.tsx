@@ -60,6 +60,9 @@ const StudentDashboard = () => {
   const { t, language } = useTalentPoolLanguage();
   const [loading, setLoading] = useState(true);
   const [userInfo, setUserInfo] = useState<any>(null);
+  // Fresh, admin-controlled account status (re-fetched on every load, unlike the
+  // stale value in localStorage). The approval gate below reads this.
+  const [accountStatus, setAccountStatus] = useState<string | null>(null);
   const [studentProfile, setStudentProfile] = useState<any>(null);
   const [paymentInfo, setPaymentInfo] = useState<any>(null);
   const [companies, setCompanies] = useState<any[]>([]);
@@ -229,6 +232,25 @@ const StudentDashboard = () => {
   const loadDashboardData = async (userId: string) => {
     setLoading(true);
     try {
+      // Re-fetch the fresh, admin-controlled account status (approval gate).
+      // localStorage only holds the status captured at login, so a student
+      // approved after they logged in would otherwise stay stuck on the review
+      // screen. This RPC is granted to anon and returns the current status.
+      try {
+        const { data: freshUser } = await supabase
+          .rpc('talent_pool_get_user_with_profile', { _user_id: userId });
+        const parsedUser = typeof freshUser === 'string' ? JSON.parse(freshUser) : freshUser;
+        if (parsedUser?.status) {
+          setAccountStatus(parsedUser.status);
+          // Keep userInfo (and the Profile Status badge) in sync with the truth.
+          setUserInfo((prev: any) => prev
+            ? { ...prev, status: parsedUser.status, registration_status: parsedUser.registration_status }
+            : prev);
+        }
+      } catch (statusErr) {
+        console.error('Could not refresh account status:', statusErr);
+      }
+
       // Load student profile
       const { data: profileData } = await supabase
         .rpc('talent_pool_get_student_profile', { _user_id: userId });
@@ -782,6 +804,13 @@ const StudentDashboard = () => {
     );
   }
 
+  // Approval gate: only admin-approved (active_member) students get the full
+  // dashboard — partner companies, interested companies, events, tests. Pending
+  // students see a "profile under review" screen. This is the ONLY thing that
+  // decides access; it never keys off profile_visible_to_companies (which an
+  // approved student can toggle off themselves, and which would trap them here).
+  const isApproved = (accountStatus ?? userInfo?.status) === 'active_member';
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-cloud-white to-runway-gray p-4 md:p-8">
       <div className="max-w-6xl mx-auto">
@@ -844,7 +873,9 @@ const StudentDashboard = () => {
             </CardContent>
           </Card>
 
-          {/* Companies that selected this student */}
+          {/* Companies that selected this student — only meaningful once approved
+              (a pending student is hidden from companies, so it's always empty). */}
+          {isApproved && (
           <Card className="border-2 border-success">
             <CardHeader>
               <CardTitle className="text-lg font-bold flex items-center gap-2">
@@ -890,10 +921,12 @@ const StudentDashboard = () => {
               )}
             </CardContent>
           </Card>
+          )}
         </div>
 
-        {/* All registered students have full access immediately */}
-        {(
+        {/* Approved students get the full dashboard; pending students wait for
+            an admin to approve them before they can see the partner companies. */}
+        {isApproved ? (
 
           <>
             {/* How it works — young, punchy: companies come to YOU, track it all here */}
@@ -1685,6 +1718,44 @@ const StudentDashboard = () => {
               </TabsContent>
             </Tabs>
           </>
+        ) : (
+          /* --- Profile under review: waiting for admin approval --- */
+          <Card className="border-2 border-warning">
+            <CardContent className="flex flex-col items-center gap-4 py-12 text-center">
+              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-warning/15">
+                <Clock className="h-8 w-8 text-warning" />
+              </div>
+              <h2 className="text-2xl font-bold text-primary">
+                {language === 'it' ? 'Profilo in fase di revisione' : 'Your profile is under review'}
+              </h2>
+              <p className="max-w-xl text-steel-gray">
+                {language === 'it'
+                  ? 'Grazie per esserti registrato! Il team Career Pilot sta esaminando il tuo profilo. Appena sarai approvato potrai vedere le aziende partner, e le aziende potranno vedere il tuo profilo e selezionarti. Ti avviseremo via email.'
+                  : "Thanks for registering! The Career Pilot team is reviewing your profile. As soon as you're approved you'll be able to see the partner companies, and companies will be able to view your profile and select you. We'll notify you by email."}
+              </p>
+              <div className="flex flex-wrap items-center justify-center gap-2 text-sm text-steel-gray">
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-success/10 px-3 py-1 font-medium text-success">
+                  <CheckCircle className="h-3.5 w-3.5" />
+                  {language === 'it' ? 'Registrazione ricevuta' : 'Registration received'}
+                </span>
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-warning/15 px-3 py-1 font-medium text-warning">
+                  <Clock className="h-3.5 w-3.5" />
+                  {language === 'it' ? 'In attesa di approvazione' : 'Awaiting approval'}
+                </span>
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-muted px-3 py-1 font-medium text-muted-foreground">
+                  <Building2 className="h-3.5 w-3.5" />
+                  {language === 'it' ? 'Accesso alle aziende partner' : 'Access to partner companies'}
+                </span>
+              </div>
+              <Button
+                variant="outline"
+                onClick={() => userInfo?.id && loadDashboardData(userInfo.id)}
+                className="mt-2"
+              >
+                {language === 'it' ? 'Aggiorna stato' : 'Refresh status'}
+              </Button>
+            </CardContent>
+          </Card>
         )}
       </div>
     </div>
