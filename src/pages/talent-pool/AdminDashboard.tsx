@@ -30,11 +30,13 @@ import {
   Lock,
   Trash2,
   Bell,
-  BookOpen
+  BookOpen,
+  Handshake
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { PDFDocument } from 'pdf-lib';
 import KnowledgeBaseAdmin from "@/pages/admin/KnowledgeBaseAdmin";
+import PartnerPrepServicesManagement from "@/components/admin/PartnerPrepServicesManagement";
 
 const COMPANY_SIZES = [
   { value: "STARTUP", label: "Startup (1-10)" },
@@ -61,7 +63,7 @@ const AdminDashboard = ({ embedded = false }: { embedded?: boolean }) => {
   const [students, setStudents] = useState<any[]>([]);
   const [companies, setCompanies] = useState<any[]>([]);
   const [paymentReceipts, setPaymentReceipts] = useState<any[]>([]);
-  const [activeTab, setActiveTab] = useState<'students' | 'companies' | 'payments' | 'notifications' | 'knowledge-base'>('students');
+  const [activeTab, setActiveTab] = useState<'students' | 'companies' | 'payments' | 'notifications' | 'knowledge-base' | 'partner-prep'>('students');
   const [actionLoading, setActionLoading] = useState<{ [key: string]: boolean }>({});
   const [notifications, setNotifications] = useState<any[]>([]);
   const [selections, setSelections] = useState<any[]>([]);
@@ -1287,8 +1289,8 @@ const AdminDashboard = ({ embedded = false }: { embedded?: boolean }) => {
         </div>
 
         {/* Main Content */}
-        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'students' | 'companies' | 'payments' | 'notifications' | 'knowledge-base')} className="space-y-4">
-          <TabsList className="grid w-full grid-cols-5">
+        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'students' | 'companies' | 'payments' | 'notifications' | 'knowledge-base' | 'partner-prep')} className="space-y-4">
+          <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="students" className="flex items-center gap-2">
               <Users className="h-4 w-4" />
               Students
@@ -1311,6 +1313,10 @@ const AdminDashboard = ({ embedded = false }: { embedded?: boolean }) => {
             <TabsTrigger value="knowledge-base" className="flex items-center gap-2">
               <BookOpen className="h-4 w-4" />
               Knowledge Base
+            </TabsTrigger>
+            <TabsTrigger value="partner-prep" className="flex items-center gap-2">
+              <Handshake className="h-4 w-4" />
+              Partner Prep
             </TabsTrigger>
           </TabsList>
 
@@ -2028,6 +2034,10 @@ const AdminDashboard = ({ embedded = false }: { embedded?: boolean }) => {
               bundles, orders, clients, audit) embedded, with tier selector. */}
           <TabsContent value="knowledge-base">
             <KnowledgeBaseAdmin embedded />
+          </TabsContent>
+
+          <TabsContent value="partner-prep">
+            <PartnerPrepServicesManagement />
           </TabsContent>
         </Tabs>
 
