@@ -1594,7 +1594,10 @@ const StudentDashboard = () => {
 
               {/* SECTION 2 — Prep Material (KB items shown inline) */}
               <TabsContent value="prep" className="space-y-4">
-                <TalentPoolPrepMaterial />
+                <TalentPoolPrepMaterial
+                  studentName={studentProfile ? `${studentProfile.first_name ?? ""} ${studentProfile.last_name ?? ""}`.trim() : undefined}
+                  studentEmail={userInfo?.email}
+                />
               </TabsContent>
 
               {/* SECTION 1 — Partner Companies (kept as-is, no redesign) */}
