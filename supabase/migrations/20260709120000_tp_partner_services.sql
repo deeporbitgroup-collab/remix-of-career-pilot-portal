@@ -67,7 +67,7 @@ VALUES
   ('LanguageBoost',
    'LanguageBoost Lessons — BIG3 + Reasoning (with test results)',
    'Individual LanguageBoost lessons focused on the BIG3 tests and reasoning, delivered with test results to track your progress.',
-   NULL, 'per_lesson', 50, NULL, false, 1),
+   NULL, 'per_lesson', 50, 2500, false, 1),
   ('LanguageBoost',
    'Cambridge C1 — Satisfied-or-Refunded Guarantee',
    'Individual lessons to reach Cambridge C1, backed by a satisfied-or-refunded guarantee.',
