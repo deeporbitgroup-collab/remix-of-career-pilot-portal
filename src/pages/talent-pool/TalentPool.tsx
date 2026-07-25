@@ -65,18 +65,18 @@ const TalentPoolContent = () => {
       </nav>
 
       {/* Main Content */}
-      <div ref={containerRef} className="relative z-10 flex-1 md:min-h-0 flex flex-col justify-center container mx-auto px-4 md:px-6 py-6 md:py-4">
+      <div ref={containerRef} className="relative z-10 flex-1 md:min-h-0 flex flex-col justify-center container mx-auto px-4 md:px-6 py-6 md:py-2">
         {/* Hero Section */}
-        <div className="text-center mb-5 md:mb-6">
-          <div {...getItemProps(0)} className="inline-flex items-center gap-2 bg-slate-900/70 border border-sky-500/40 text-sky-100 px-4 py-2 rounded text-xs font-bold mb-4 backdrop-blur-sm shadow-lg">
+        <div className="text-center mb-3 md:mb-4">
+          <div {...getItemProps(0)} className="inline-flex items-center gap-2 bg-slate-900/70 border border-sky-500/40 text-sky-100 px-4 py-1.5 rounded text-xs font-bold mb-2 md:mb-3 backdrop-blur-sm shadow-lg">
             <Shield className="h-3.5 w-3.5 text-sky-400" />
             {t('landing.hero.badge')}
           </div>
-          
+
           <h1 {...getItemProps(1)} className="text-2xl md:text-3xl lg:text-4xl font-bold text-sky-50 mb-2 tracking-tight drop-shadow-lg px-4">
             {t('landing.hero.title')}
           </h1>
-          <div {...getItemProps(2)} className="w-24 h-0.5 bg-gradient-to-r from-transparent via-sky-500 to-transparent mx-auto mb-3"></div>
+          <div {...getItemProps(2)} className="w-24 h-0.5 bg-gradient-to-r from-transparent via-sky-500 to-transparent mx-auto mb-2 md:mb-3"></div>
           <p {...getItemProps(3)} className="text-sm text-slate-200 max-w-2xl mx-auto font-light leading-relaxed drop-shadow-md">
             {t('landing.hero.subtitle')}
           </p>
@@ -84,19 +84,21 @@ const TalentPoolContent = () => {
             {t('landing.hero.limited')}
           </p>
         </div>
-        
-        {/* Value Proposition - Elite Style (desktop only; mobile keeps the screen to the access cards) */}
-        <div className="hidden md:grid md:grid-cols-2 gap-4 max-w-4xl mx-auto mb-6">
-          <div {...getItemProps(5)} className="bg-slate-900/50 border border-emerald-500/30 rounded-lg p-5 backdrop-blur-md hover:border-emerald-500/50 transition-all shadow-lg">
-            <div className="flex items-center gap-4">
-              <div className="h-12 w-12 rounded bg-gradient-to-br from-emerald-500/20 to-emerald-600/10 border border-emerald-500/30 flex items-center justify-center flex-shrink-0">
-                <Building className="h-6 w-6 text-emerald-400" />
+
+        {/* Value Proposition - Elite Style (desktop only, and only when there's
+            vertical room for it; mobile and short viewports keep the screen
+            to the essential access cards + CV Builder CTA). */}
+        <div className="hidden md:grid md:grid-cols-2 gap-3 max-w-4xl mx-auto mb-3 md:mb-4 [@media(max-height:700px)]:!hidden">
+          <div {...getItemProps(5)} className="bg-slate-900/50 border border-emerald-500/30 rounded-lg p-3 backdrop-blur-md hover:border-emerald-500/50 transition-all shadow-lg">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded bg-gradient-to-br from-emerald-500/20 to-emerald-600/10 border border-emerald-500/30 flex items-center justify-center flex-shrink-0">
+                <Building className="h-5 w-5 text-emerald-400" />
               </div>
               <div className="flex-1">
-                <h3 className="font-bold text-sky-50 text-base mb-1 tracking-tight">
+                <h3 className="font-bold text-sky-50 text-sm mb-0.5 tracking-tight">
                   {t('landing.values.companies.title')}
                 </h3>
-                <p className="text-xs text-slate-400 mb-2 leading-relaxed">
+                <p className="text-xs text-slate-400 mb-1.5 leading-relaxed">
                   {t('landing.values.companies.description')}
                 </p>
                 <span className="inline-block px-3 py-1 bg-emerald-950/50 border border-emerald-500/40 text-emerald-400 rounded text-[11px] font-bold tracking-wide">
@@ -105,17 +107,17 @@ const TalentPoolContent = () => {
               </div>
             </div>
           </div>
-          
-          <div {...getItemProps(6)} className="bg-slate-900/50 border border-sky-500/30 rounded-lg p-5 backdrop-blur-md hover:border-sky-500/50 transition-all shadow-lg">
-            <div className="flex items-center gap-4">
-              <div className="h-12 w-12 rounded bg-gradient-to-br from-sky-500/20 to-sky-600/10 border border-sky-500/30 flex items-center justify-center flex-shrink-0">
-                <Users className="h-6 w-6 text-sky-400" />
+
+          <div {...getItemProps(6)} className="bg-slate-900/50 border border-sky-500/30 rounded-lg p-3 backdrop-blur-md hover:border-sky-500/50 transition-all shadow-lg">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded bg-gradient-to-br from-sky-500/20 to-sky-600/10 border border-sky-500/30 flex items-center justify-center flex-shrink-0">
+                <Users className="h-5 w-5 text-sky-400" />
               </div>
               <div className="flex-1">
-                <h3 className="font-bold text-sky-50 text-base mb-1 tracking-tight">
+                <h3 className="font-bold text-sky-50 text-sm mb-0.5 tracking-tight">
                   {t('landing.values.students.title')}
                 </h3>
-                <p className="text-xs text-slate-400 mb-2 leading-relaxed">
+                <p className="text-xs text-slate-400 mb-1.5 leading-relaxed">
                   {t('landing.values.students.description')}
                 </p>
                 <span className="inline-block px-3 py-1 bg-sky-950/50 border border-sky-500/40 text-sky-400 rounded text-[11px] font-bold tracking-wide">
@@ -129,29 +131,29 @@ const TalentPoolContent = () => {
         {/* Role Selection - Premium Cards */}
         <div className="flex items-center justify-center">
           <div className="w-full max-w-5xl">
-            <h2 className="text-lg md:text-2xl font-bold text-sky-50 text-center mb-3 md:mb-4 tracking-tight">
+            <h2 className="text-lg md:text-xl font-bold text-sky-50 text-center mb-2 md:mb-3 tracking-tight">
               {t('landing.roleSelection.title')}
             </h2>
 
             {/* Desktop: 2-up grid. Mobile: two cards side by side or stacked. */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-5 max-w-3xl mx-auto">
               {/* Student Card */}
-              <Card 
+              <Card
                 {...getItemProps(7)}
                 className="group relative overflow-hidden border border-slate-700/50 hover:border-sky-500/50 transition-all duration-500 cursor-pointer bg-slate-900/70 backdrop-blur-xl hover:shadow-2xl hover:shadow-sky-500/10 hover:-translate-y-2 hover:scale-105"
                 onClick={() => handleRoleSelect('student')}
               >
                 <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-sky-500/5 to-transparent rounded-full -mr-16 -mt-16 group-hover:scale-150 transition-transform duration-700" />
-                <div className="relative p-5">
-                  <div className="mb-3 flex justify-center">
-                    <div className="h-16 w-16 rounded bg-gradient-to-br from-slate-700 to-slate-800 border border-sky-500/20 flex items-center justify-center shadow-xl shadow-sky-500/10 group-hover:scale-105 transition-transform duration-500">
-                      <Users className="h-8 w-8 text-sky-400" />
+                <div className="relative p-3 md:p-4">
+                  <div className="mb-2 flex justify-center">
+                    <div className="h-12 w-12 md:h-14 md:w-14 rounded bg-gradient-to-br from-slate-700 to-slate-800 border border-sky-500/20 flex items-center justify-center shadow-xl shadow-sky-500/10 group-hover:scale-105 transition-transform duration-500">
+                      <Users className="h-6 w-6 md:h-7 md:w-7 text-sky-400" />
                     </div>
                   </div>
-                  <h3 className="text-xl font-bold text-sky-50 text-center mb-2 tracking-tight">
+                  <h3 className="text-lg md:text-xl font-bold text-sky-50 text-center mb-1 tracking-tight">
                     {t('landing.roleSelection.student.title')}
                   </h3>
-                  <p className="text-slate-400 text-center mb-4 text-xs leading-relaxed">
+                  <p className="text-slate-400 text-center mb-2 md:mb-3 text-xs leading-relaxed">
                     {t('landing.roleSelection.student.description')}
                   </p>
                   <Button className="w-full bg-slate-800 hover:bg-slate-700 border border-sky-500/30 hover:border-sky-500/50 text-sky-100 shadow-lg font-bold text-sm tracking-wide">
@@ -161,22 +163,22 @@ const TalentPoolContent = () => {
               </Card>
 
               {/* Company Card */}
-              <Card 
+              <Card
                 {...getItemProps(8)}
                 className="group relative overflow-hidden border border-slate-700/50 hover:border-emerald-500/50 transition-all duration-500 cursor-pointer bg-slate-900/70 backdrop-blur-xl hover:shadow-2xl hover:shadow-emerald-500/10 hover:-translate-y-2 hover:scale-105"
                 onClick={() => handleRoleSelect('company')}
               >
                 <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-emerald-500/5 to-transparent rounded-full -mr-16 -mt-16 group-hover:scale-150 transition-transform duration-700" />
-                <div className="relative p-5">
-                  <div className="mb-3 flex justify-center">
-                    <div className="h-16 w-16 rounded bg-gradient-to-br from-emerald-600 to-emerald-700 border border-emerald-400/20 flex items-center justify-center shadow-xl shadow-emerald-500/20 group-hover:scale-105 transition-transform duration-500">
-                      <Building className="h-8 w-8 text-white" />
+                <div className="relative p-3 md:p-4">
+                  <div className="mb-2 flex justify-center">
+                    <div className="h-12 w-12 md:h-14 md:w-14 rounded bg-gradient-to-br from-emerald-600 to-emerald-700 border border-emerald-400/20 flex items-center justify-center shadow-xl shadow-emerald-500/20 group-hover:scale-105 transition-transform duration-500">
+                      <Building className="h-6 w-6 md:h-7 md:w-7 text-white" />
                     </div>
                   </div>
-                  <h3 className="text-xl font-bold text-sky-50 text-center mb-2 tracking-tight">
+                  <h3 className="text-lg md:text-xl font-bold text-sky-50 text-center mb-1 tracking-tight">
                     {t('landing.roleSelection.company.title')}
                   </h3>
-                  <p className="text-slate-400 text-center mb-4 text-xs leading-relaxed">
+                  <p className="text-slate-400 text-center mb-2 md:mb-3 text-xs leading-relaxed">
                     {t('landing.roleSelection.company.description')}
                   </p>
                   <Button className="w-full bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white shadow-lg font-bold text-sm tracking-wide">
@@ -187,9 +189,9 @@ const TalentPoolContent = () => {
             </div>
 
             {/* CV Builder AI - alternative CTA */}
-            <div {...getItemProps(9)} className="mt-5 md:mt-6 max-w-3xl mx-auto">
+            <div {...getItemProps(9)} className="mt-3 md:mt-4 max-w-3xl mx-auto">
               <div
-                className="group flex flex-col sm:flex-row items-center justify-between gap-3 rounded-lg border border-emerald-500/30 bg-slate-900/60 backdrop-blur-md px-5 py-4 hover:border-emerald-500/50 transition-all cursor-pointer"
+                className="group flex flex-col sm:flex-row items-center justify-between gap-3 rounded-lg border border-emerald-500/30 bg-slate-900/60 backdrop-blur-md px-5 py-2.5 md:py-3 hover:border-emerald-500/50 transition-all cursor-pointer"
                 onClick={() => window.open('/cv-builder', '_blank', 'noopener,noreferrer')}
               >
                 <div className="flex items-center gap-3 text-center sm:text-left">
