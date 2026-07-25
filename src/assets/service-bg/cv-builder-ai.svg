@@ -1,0 +1,63 @@
+<svg width="1200" height="700" viewBox="0 0 1200 700" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0C2C7E"/>
+      <stop offset="100%" stop-color="#3388FF"/>
+    </linearGradient>
+    <linearGradient id="sparkle" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFE29A"/>
+      <stop offset="100%" stop-color="#FFB74D"/>
+    </linearGradient>
+    <filter id="soft" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="18"/>
+    </filter>
+  </defs>
+
+  <rect width="1200" height="700" fill="url(#bg)"/>
+
+  <circle cx="120" cy="580" r="220" fill="#ffffff" opacity="0.06" filter="url(#soft)"/>
+  <circle cx="1080" cy="90" r="260" fill="#ffffff" opacity="0.08" filter="url(#soft)"/>
+  <circle cx="950" cy="600" r="140" fill="#FFB74D" opacity="0.10" filter="url(#soft)"/>
+
+  <!-- CV document card -->
+  <g transform="translate(430,90)">
+    <rect x="0" y="0" width="360" height="500" rx="18" fill="#ffffff" opacity="0.97"/>
+    <rect x="0" y="0" width="360" height="500" rx="18" fill="none" stroke="#0C2C7E" stroke-opacity="0.08" stroke-width="2"/>
+
+    <!-- name line -->
+    <rect x="40" y="52" width="180" height="18" rx="4" fill="#0C2C7E"/>
+    <rect x="40" y="82" width="120" height="10" rx="3" fill="#3388FF" opacity="0.6"/>
+
+    <!-- section rule -->
+    <rect x="40" y="122" width="280" height="4" rx="2" fill="#0C2C7E" opacity="0.15"/>
+
+    <!-- text block lines -->
+    <rect x="40" y="150" width="280" height="9" rx="3" fill="#0C2C7E" opacity="0.18"/>
+    <rect x="40" y="170" width="260" height="9" rx="3" fill="#0C2C7E" opacity="0.18"/>
+    <rect x="40" y="190" width="230" height="9" rx="3" fill="#0C2C7E" opacity="0.18"/>
+
+    <rect x="40" y="230" width="280" height="4" rx="2" fill="#0C2C7E" opacity="0.15"/>
+    <rect x="40" y="258" width="200" height="9" rx="3" fill="#0C2C7E" opacity="0.18"/>
+    <rect x="60" y="280" width="240" height="7" rx="3" fill="#0C2C7E" opacity="0.12"/>
+    <rect x="60" y="298" width="220" height="7" rx="3" fill="#0C2C7E" opacity="0.12"/>
+    <rect x="40" y="330" width="200" height="9" rx="3" fill="#0C2C7E" opacity="0.18"/>
+    <rect x="60" y="352" width="240" height="7" rx="3" fill="#0C2C7E" opacity="0.12"/>
+    <rect x="60" y="370" width="200" height="7" rx="3" fill="#0C2C7E" opacity="0.12"/>
+
+    <rect x="40" y="410" width="280" height="4" rx="2" fill="#0C2C7E" opacity="0.15"/>
+    <rect x="40" y="438" width="150" height="7" rx="3" fill="#0C2C7E" opacity="0.12"/>
+    <rect x="40" y="456" width="190" height="7" rx="3" fill="#0C2C7E" opacity="0.12"/>
+  </g>
+
+  <!-- AI sparkle badge -->
+  <g transform="translate(720,60)">
+    <circle cx="0" cy="0" r="46" fill="url(#sparkle)"/>
+    <path d="M0 -22 L6 -6 L22 0 L6 6 L0 22 L-6 6 L-22 0 L-6 -6 Z" fill="#ffffff"/>
+  </g>
+  <g transform="translate(250,420) scale(0.6)">
+    <path d="M0 -22 L6 -6 L22 0 L6 6 L0 22 L-6 6 L-22 0 L-6 -6 Z" fill="#FFE29A" opacity="0.9"/>
+  </g>
+  <g transform="translate(850,540) scale(0.4)">
+    <path d="M0 -22 L6 -6 L22 0 L6 6 L0 22 L-6 6 L-22 0 L-6 -6 Z" fill="#ffffff" opacity="0.8"/>
+  </g>
+</svg>

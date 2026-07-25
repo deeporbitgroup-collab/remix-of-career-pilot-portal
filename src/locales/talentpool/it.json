@@ -39,6 +39,11 @@
         "title": "Azienda",
         "description": "Accesso gratuito ai migliori talenti selezionati",
         "button": "REGISTRATI"
+      },
+      "cvBuilder": {
+        "title": "Non sei ancora pronto a registrarti?",
+        "description": "Rifai prima il tuo CV con l'AI — gratis, ci vogliono 2 minuti.",
+        "button": "Rifai il mio CV con l'AI"
       }
     },
     "footer": {

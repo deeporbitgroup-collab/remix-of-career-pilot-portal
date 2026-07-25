@@ -36,6 +36,7 @@ import AssociateChoiceCarousel from "./AssociateChoiceCarousel";
 import OutreachCheckinDialog from "./OutreachCheckinDialog";
 
 const isOutreachName = (n?: string) => !!n?.startsWith("Outreach Power Pack");
+const isCvBuilderAiName = (n?: string) => n === "CV Builder AI";
 const isComparativeName = (n?: string) => /comparative\s+(presentation|analysis)/i.test(n || "");
 import CoveredLogos from "./CoveredLogos";
 import PartnerMaterials from "./PartnerMaterials";
@@ -1599,8 +1600,8 @@ const PackageExperience = ({
                         </div>
                       )}
                       <div className="absolute bottom-2 right-2">
-                        <Badge className="bg-primary text-primary-foreground font-bold shadow">
-                          {isOutreachName(service.name) ? "Pay per interview" : `€${Number(service.price).toFixed(2)}`}
+                        <Badge className={cn("font-bold shadow", isCvBuilderAiName(service.name) ? "bg-green-600 text-white" : "bg-primary text-primary-foreground")}>
+                          {isOutreachName(service.name) ? "Pay per interview" : isCvBuilderAiName(service.name) ? "Free beta" : `€${Number(service.price).toFixed(2)}`}
                         </Badge>
                       </div>
                     </div>
@@ -1626,6 +1627,14 @@ const PackageExperience = ({
                           onClick={() => { setOutreachSvc(service); setOutreachOpen(true); }}
                         >
                           Book free check-in
+                        </Button>
+                      ) : isCvBuilderAiName(service.name) ? (
+                        <Button
+                          className="w-full bg-gradient-to-r from-green-600 to-emerald-600 font-semibold text-white shadow-md hover:opacity-90"
+                          onClick={() => window.open('/cv-builder', '_blank', 'noopener,noreferrer')}
+                        >
+                          <Sparkles className="mr-2 h-4 w-4" />
+                          Try CV Builder AI
                         </Button>
                       ) : (
                         <Button className="w-full bg-gradient-to-r from-primary to-secondary font-semibold shadow-md hover:opacity-90" onClick={() => onSelectService(service)}>

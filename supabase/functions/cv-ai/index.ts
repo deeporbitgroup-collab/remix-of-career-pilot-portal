@@ -80,27 +80,30 @@ const CV_DATA_SCHEMA = {
 };
 
 const TEMPLATE_EXPLAINER =
-  "Il CV segue SEMPRE questo formato fisso a una pagina: Header (nome, " +
-  "località, telefono, email, LinkedIn) · Professional Summary (2-3 righe) · " +
-  "Education (blocchi: istituzione+luogo, corso/laurea+periodo, bullet con " +
-  "GPA/corsi/tesi/awards) · Professional Experience (blocchi: azienda+luogo, " +
-  "ruolo+periodo, 2-4 bullet con risultati concreti e verbi d'azione) · " +
-  "Leadership & Entrepreneurship (stessa struttura, OPZIONALE, solo se il " +
-  "candidato ha esperienze extracurriculari/imprenditoriali rilevanti) · " +
-  "Community & Volunteering (bullet brevi, OPZIONALE) · Additional " +
-  "Information (bullet raggruppati per etichetta: Languages, Skills/Tools, " +
-  "Certifications...). Tu non decidi mai il layout, solo i contenuti.";
+  "The CV ALWAYS follows this fixed one-page format: Header (name, " +
+  "location, phone, email, LinkedIn) · Professional Summary (2-3 lines) · " +
+  "Education (blocks: institution+location, degree/program+date range, " +
+  "bullets with GPA/key courses/thesis/awards) · Professional Experience " +
+  "(blocks: company+location, role+date range, 2-4 bullets with concrete, " +
+  "quantified achievements) · Leadership & Entrepreneurship (same " +
+  "structure, OPTIONAL — only if the candidate has relevant extracurricular " +
+  "or entrepreneurial experience) · Community & Volunteering (short " +
+  "bullets, OPTIONAL) · Additional Information (bullets grouped by label: " +
+  "Languages, Skills/Tools, Certifications...). You never decide the " +
+  "layout, only the content.";
 
 const COMPILE_SYSTEM_PROMPT =
-  "Compila ESATTAMENTE lo schema JSON richiesto, che rispecchia un CV " +
-  "professionale a una pagina. " + TEMPLATE_EXPLAINER + " Scrivi tutti i " +
-  "testi in inglese professionale da CV: bullet concisi con verbi d'azione " +
-  "al passato, risultati quantificati quando disponibili, NON frasi " +
-  "complete/discorsive. Non inventare MAI fatti, aziende, numeri o date non " +
-  "presenti nell'input. Se il campo Professional Summary è vuoto o assente, " +
-  "scrivine uno tu basandoti sul resto del CV. Se una sezione opzionale " +
-  "(leadership, community, additionalInfo) non ha contenuto sufficiente " +
-  "nell'input, restituiscila come array vuoto — non inventare riempitivo.";
+  "Fill in EXACTLY the requested JSON schema, which mirrors a professional " +
+  "one-page CV. " + TEMPLATE_EXPLAINER + " Write all text in professional " +
+  "CV English: concise bullets with past-tense action verbs, quantified " +
+  "achievements where available, NOT full/conversational sentences. NEVER " +
+  "invent facts, companies, numbers, or dates that are not present in the " +
+  "input. Do not add months or days to a date range if the input only gives " +
+  "years (e.g. keep '2021-2024' as given — do not turn it into specific " +
+  "months). If the Professional Summary field is empty or missing, write " +
+  "one yourself based on the rest of the CV. If an optional section " +
+  "(leadership, community, additionalInfo) doesn't have enough content in " +
+  "the input, return it as an empty array — never invent filler.";
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
@@ -124,13 +127,13 @@ serve(async (req) => {
 function buildCompileUserText(mode: "improve" | "scratch", rawCv?: string, rawData?: unknown): string {
   if (mode === "improve") {
     if (!rawCv?.trim()) throw new HttpError(400, "rawCv is required in 'improve' mode");
-    return ["=== CV ESISTENTE (testo incollato dal candidato) ===", rawCv.trim()].join("\n");
+    return ["=== EXISTING CV (text pasted by the candidate) ===", rawCv.trim()].join("\n");
   }
   if (!rawData) throw new HttpError(400, "rawData is required in 'scratch' mode");
   return [
-    "=== BOZZA COMPILATA DAL CANDIDATO NEL FORM (JSON, può essere " +
-      "informale, incompleta o con testo grezzo — riscrivi bene i testi " +
-      "mantenendo gli stessi fatti) ===",
+    "=== DRAFT FILLED IN BY THE CANDIDATE IN THE FORM (JSON, may be " +
+      "informal, incomplete, or rough text — rewrite the wording well while " +
+      "keeping the same facts) ===",
     JSON.stringify(rawData, null, 2),
   ].join("\n");
 }

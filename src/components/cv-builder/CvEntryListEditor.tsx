@@ -39,13 +39,13 @@ export function CvEntryListEditor({
             <Input placeholder="Location" value={e.location} onChange={(ev) => update(i, { location: ev.target.value })} />
             <Input placeholder={roleLabel} value={e.role} onChange={(ev) => update(i, { role: ev.target.value })} />
             <Input
-              placeholder="Date range (es. Jan 2024 – Present)"
+              placeholder="Date range (e.g. Jan 2024 – Present)"
               value={e.dateRange}
               onChange={(ev) => update(i, { dateRange: ev.target.value })}
             />
           </div>
           <Textarea
-            placeholder="Bullet points, uno per riga"
+            placeholder="Bullet points, one per line"
             rows={3}
             value={e.bullets.join("\n")}
             onChange={(ev) => update(i, { bullets: ev.target.value.split("\n") })}
@@ -53,7 +53,7 @@ export function CvEntryListEditor({
         </div>
       ))}
       <Button type="button" variant="outline" size="sm" onClick={add}>
-        <Plus className="h-3.5 w-3.5 mr-1" /> Aggiungi voce
+        <Plus className="h-3.5 w-3.5 mr-1" /> Add entry
       </Button>
     </div>
   );

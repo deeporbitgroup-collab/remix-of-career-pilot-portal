@@ -39,6 +39,11 @@
         "title": "Company",
         "description": "Free access to the best selected talents",
         "button": "SIGN UP"
+      },
+      "cvBuilder": {
+        "title": "Not ready to sign up yet?",
+        "description": "Rewrite your CV with AI first — free, takes 2 minutes.",
+        "button": "Rewrite my CV with AI"
       }
     },
     "footer": {
