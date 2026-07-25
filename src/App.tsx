@@ -53,6 +53,7 @@ import KnowledgeBaseCheckout from "./pages/KnowledgeBaseCheckout";
 import KnowledgeBaseAdmin from "./pages/admin/KnowledgeBaseAdmin";
 import PaymentSuccess from "./pages/PaymentSuccess";
 import PaymentCanceled from "./pages/PaymentCanceled";
+import CvBuilder from "./pages/CvBuilder";
 
 const queryClient = new QueryClient();
 
@@ -105,6 +106,9 @@ const App = () => (
               <Route path="/client-portal/dashboard" element={<ClientDashboard />} />
               <Route path="/client-portal/pay" element={<PayOrder />} />
               <Route path="/client-portal/reset-password" element={<ClientResetPassword />} />
+
+              {/* CV Builder */}
+              <Route path="/cv-builder" element={<CvBuilder />} />
 
               {/* Knowledge Base */}
               <Route path="/knowledge-base" element={<KnowledgeBase />} />

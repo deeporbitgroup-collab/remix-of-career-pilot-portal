@@ -774,3 +774,22 @@ body {
   pointer-events: none;
 }
 
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  #cv-print-root, #cv-print-root * {
+    visibility: visible;
+  }
+  #cv-print-root {
+    position: absolute;
+    top: 0;
+    left: 0;
+    box-shadow: none !important;
+  }
+  @page {
+    size: A4;
+    margin: 0;
+  }
+}
+
