@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -8,83 +8,31 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "@/hooks/use-toast";
 import { CvPreview } from "@/components/cv-builder/CvPreview";
 import { CvEntryListEditor } from "@/components/cv-builder/CvEntryListEditor";
-import { CvBuilderMode, CvChatTurn, CvData, EMPTY_CV_DATA } from "@/lib/cvBuilder/types";
-import { FileEdit, Sparkles, Loader2, Send, Printer, RotateCcw, AlertTriangle } from "lucide-react";
+import { CvBuilderMode, CvData, EMPTY_CV_DATA } from "@/lib/cvBuilder/types";
+import { FileEdit, Sparkles, Loader2, Printer, RotateCcw, AlertTriangle } from "lucide-react";
 
-type Step = "mode" | "paste" | "interview" | "result";
+type Step = "mode" | "paste" | "form" | "result";
 
 export default function CvBuilder() {
   const [step, setStep] = useState<Step>("mode");
-  const [mode, setMode] = useState<CvBuilderMode | null>(null);
   const [rawCv, setRawCv] = useState("");
-  const [history, setHistory] = useState<CvChatTurn[]>([]);
-  const [question, setQuestion] = useState("");
-  const [answer, setAnswer] = useState("");
+  const [draft, setDraft] = useState<CvData>(EMPTY_CV_DATA);
   const [busy, setBusy] = useState(false);
   const [cvData, setCvData] = useState<CvData>(EMPTY_CV_DATA);
-  const scrollRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
-  }, [history]);
-
   const [overflowing, setOverflowing] = useState(false);
 
-  const startInterview = async (m: CvBuilderMode, initialRawCv?: string) => {
-    setMode(m);
-    setBusy(true);
-    setStep("interview");
-    try {
-      const { data, error } = await supabase.functions.invoke("cv-ai", {
-        body: { action: "ask", mode: m, history: [], rawCv: initialRawCv ?? "" },
-      });
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
-      setQuestion(data.question);
-    } catch (e) {
-      toast({ title: "Errore", description: (e as Error).message, variant: "destructive" });
-      setStep("mode");
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  const submitAnswer = async () => {
-    if (!answer.trim() || busy) return;
-    const newHistory = [...history, { role: "assistant" as const, text: question }, { role: "user" as const, text: answer }];
-    setHistory(newHistory);
-    setAnswer("");
+  const compile = async (mode: CvBuilderMode, body: { rawCv?: string; rawData?: CvData }) => {
     setBusy(true);
     try {
       const { data, error } = await supabase.functions.invoke("cv-ai", {
-        body: { action: "ask", mode, history: newHistory, rawCv },
-      });
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
-      if (data.isComplete) {
-        await compile(newHistory);
-      } else {
-        setQuestion(data.question);
-      }
-    } catch (e) {
-      toast({ title: "Errore", description: (e as Error).message, variant: "destructive" });
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  const compile = async (finalHistory: CvChatTurn[]) => {
-    setBusy(true);
-    try {
-      const { data, error } = await supabase.functions.invoke("cv-ai", {
-        body: { action: "compile", mode, history: finalHistory, rawCv },
+        body: { action: "compile", mode, ...body },
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
       setCvData(data.data);
       setStep("result");
     } catch (e) {
-      toast({ title: "Errore nella compilazione", description: (e as Error).message, variant: "destructive" });
+      toast({ title: "Errore nella generazione", description: (e as Error).message, variant: "destructive" });
     } finally {
       setBusy(false);
     }
@@ -92,11 +40,8 @@ export default function CvBuilder() {
 
   const restart = () => {
     setStep("mode");
-    setMode(null);
     setRawCv("");
-    setHistory([]);
-    setQuestion("");
-    setAnswer("");
+    setDraft(EMPTY_CV_DATA);
     setCvData(EMPTY_CV_DATA);
   };
 
@@ -108,7 +53,7 @@ export default function CvBuilder() {
             <Sparkles className="h-6 w-6 text-primary" /> CV Builder
           </h1>
           <p className="text-muted-foreground text-sm mt-1">
-            L'AI intervista, tu rispondi: il CV viene compilato in un formato professionale a una pagina.
+            Inserisci le tue informazioni, l'AI le scrive bene e le mette nel formato professionale a una pagina.
           </p>
         </div>
 
@@ -121,11 +66,11 @@ export default function CvBuilder() {
                 Hai già un CV o degli appunti: incollali e l'AI li riscrive e riformatta nel nostro formato.
               </p>
             </Card>
-            <Card className="p-6 cursor-pointer hover:border-primary transition-colors" onClick={() => startInterview("scratch")}>
+            <Card className="p-6 cursor-pointer hover:border-primary transition-colors" onClick={() => setStep("form")}>
               <Sparkles className="h-6 w-6 mb-2 text-primary" />
               <h2 className="font-semibold mb-1">Costruiscilo da zero</h2>
               <p className="text-sm text-muted-foreground">
-                Non hai niente di pronto: rispondi alle domande e l'AI scrive tutto il CV per te.
+                Non hai niente di pronto: compila le tue informazioni nel form e l'AI scrive tutto il CV per te.
               </p>
             </Card>
           </div>
@@ -139,52 +84,27 @@ export default function CvBuilder() {
               placeholder="Incolla qui il testo del tuo CV attuale (anche disordinato, ci pensa l'AI a riscriverlo)..."
               value={rawCv}
               onChange={(e) => setRawCv(e.target.value)}
+              disabled={busy}
             />
             <div className="flex gap-2">
-              <Button variant="outline" onClick={() => setStep("mode")}>Indietro</Button>
-              <Button onClick={() => startInterview("improve", rawCv)}>Continua</Button>
+              <Button variant="outline" onClick={() => setStep("mode")} disabled={busy}>Indietro</Button>
+              <Button onClick={() => compile("improve", { rawCv })} disabled={busy || !rawCv.trim()}>
+                {busy && <Loader2 className="h-4 w-4 mr-1 animate-spin" />} Migliora con AI
+              </Button>
             </div>
           </Card>
         )}
 
-        {step === "interview" && (
-          <Card className="p-0 overflow-hidden flex flex-col h-[70vh]">
-            <div ref={scrollRef} className="flex-1 overflow-y-auto p-6 space-y-4">
-              {history.map((t, i) => (
-                <div key={i} className={`flex ${t.role === "user" ? "justify-end" : "justify-start"}`}>
-                  <div
-                    className={`max-w-[80%] rounded-lg px-4 py-2 text-sm ${
-                      t.role === "user" ? "bg-primary text-primary-foreground" : "bg-muted"
-                    }`}
-                  >
-                    {t.text}
-                  </div>
-                </div>
-              ))}
-              {question && (
-                <div className="flex justify-start">
-                  <div className="max-w-[80%] rounded-lg px-4 py-2 text-sm bg-muted">{question}</div>
-                </div>
-              )}
-              {busy && (
-                <div className="flex justify-start">
-                  <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-                </div>
-              )}
-            </div>
-            <div className="border-t p-3 flex gap-2">
-              <Input
-                placeholder="Scrivi la tua risposta..."
-                value={answer}
-                onChange={(e) => setAnswer(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && submitAnswer()}
-                disabled={busy}
-              />
-              <Button onClick={submitAnswer} disabled={busy || !answer.trim()}>
-                <Send className="h-4 w-4" />
+        {step === "form" && (
+          <div className="space-y-4">
+            <CvEditForm data={draft} onChange={setDraft} />
+            <div className="flex gap-2 max-w-2xl">
+              <Button variant="outline" onClick={() => setStep("mode")} disabled={busy}>Indietro</Button>
+              <Button onClick={() => compile("scratch", { rawData: draft })} disabled={busy}>
+                {busy && <Loader2 className="h-4 w-4 mr-1 animate-spin" />} Genera CV con AI
               </Button>
             </div>
-          </Card>
+          </div>
         )}
 
         {step === "result" && (
@@ -246,7 +166,12 @@ function CvEditForm({ data, onChange }: { data: CvData; onChange: (d: CvData) =>
 
       <Card className="p-4 space-y-2">
         <h3 className="font-semibold text-sm">Professional Summary</h3>
-        <Textarea rows={3} value={data.summary} onChange={(e) => set("summary", e.target.value)} />
+        <Textarea
+          rows={3}
+          placeholder="Lascia vuoto per farlo scrivere all'AI in base al resto del CV"
+          value={data.summary}
+          onChange={(e) => set("summary", e.target.value)}
+        />
       </Card>
 
       <Card className="p-4 space-y-2">

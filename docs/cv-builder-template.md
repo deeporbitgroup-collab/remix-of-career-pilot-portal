@@ -34,14 +34,23 @@ previsto (mai per riempire pagine vuote).
 
 ## Pipeline
 
-1. Utente sceglie modalità: **Migliora** (ha già testi/CV) o **Da zero**.
-2. Intervista a chat con l'AI (edge function `cv-ai`, azione `ask`): una
-   domanda alla volta, finché non ha abbastanza materiale per ogni sezione
-   essenziale (Summary, almeno 1 Education, almeno 1 Experience).
-3. Azione `compile`: l'AI restituisce il JSON `CvData` completo (Gemini,
-   structured output).
-4. Anteprima live (`CvPreview`) + editing manuale dei campi.
-5. Export PDF via stampa browser (CSS `@media print`, scoped al nodo
+1. Utente sceglie modalità:
+   - **Migliora un CV esistente** → incolla il testo del CV attuale in una
+     textarea.
+   - **Costruiscilo da zero** → compila un **form con campi fissi** (stessa
+     struttura dello schema `CvData`: header, summary opzionale,
+     Education/Experience/Leadership come liste ripetibili con bullet,
+     Community e Additional Information opzionali) — riusa il componente
+     `CvEditForm` (lo stesso della tab "Modifica" del risultato).
+2. Azione unica `compile` sulla edge function `cv-ai` (Gemini, structured
+   output): riceve o il testo incollato (`rawCv`) o la bozza del form
+   (`rawData`, JSON grezzo/informale) e restituisce il JSON `CvData`
+   completo, riscrivendo i testi in inglese professionale da CV. Se il campo
+   Summary è vuoto lo scrive lei in base al resto. Nessuna intervista a
+   turni: un solo giro di generazione.
+3. Anteprima live (`CvPreview`) + editing manuale dei campi (tab "Modifica",
+   stesso `CvEditForm` del form iniziale).
+4. Export PDF via stampa browser (CSS `@media print`, scoped al nodo
    `#cv-print-root`, formato A4).
-6. **Fase prodotto (dopo)**: paywall Stripe, salvataggio bozze (tabella
+5. **Fase prodotto (dopo)**: paywall Stripe, salvataggio bozze (tabella
    `cv_documents`), watermark/blur prima del pagamento.

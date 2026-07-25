@@ -48,8 +48,3 @@ export const EMPTY_CV_DATA: CvData = {
 };
 
 export type CvBuilderMode = "improve" | "scratch";
-
-export interface CvChatTurn {
-  role: "assistant" | "user";
-  text: string;
-}

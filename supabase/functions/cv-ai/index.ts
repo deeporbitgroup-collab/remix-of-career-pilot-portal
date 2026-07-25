@@ -1,11 +1,10 @@
-// CV Builder AI — interview + fixed-template fill (Gemini).
-//   action: "ask"     -> { isComplete, question }  next interview question, or
-//                          signals enough material has been gathered.
-//   action: "compile" -> { data: CvData }          fills the fixed CV template
-//                          from the conversation (mode "scratch") or from the
-//                          pasted CV text (mode "improve").
-// The layout is fixed on the frontend (CvPreview.tsx) — this function only
-// ever produces text content for the placeholders, never new sections.
+// CV Builder AI — fixed-template fill (Gemini).
+//   action: "compile" -> { data: CvData }
+//     mode "scratch"  -> input is the raw draft the user filled in the form
+//                        (rawData, shaped like CvData but rough/incomplete).
+//     mode "improve"  -> input is an existing CV pasted as free text (rawCv).
+// Either way the AI only rewrites/polishes text content into the fixed
+// template (CvPreview.tsx) — it never invents facts or changes the layout.
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 
 const corsHeaders = {
@@ -29,16 +28,12 @@ const json = (body: unknown, status = 200) =>
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
 
-interface ChatTurn {
-  role: "assistant" | "user";
-  text: string;
-}
-
 interface RequestBody {
-  action: "ask" | "compile";
+  action: "compile";
   mode: "improve" | "scratch";
-  history: ChatTurn[];
-  rawCv?: string; // pasted existing CV/text, only used in "improve" mode
+  rawCv?: string; // pasted existing CV/text — mode "improve"
+  // deno-lint-ignore no-explicit-any
+  rawData?: any; // draft filled in the form — mode "scratch" (shape: CvData)
 }
 
 const CV_ENTRY_SCHEMA = {
@@ -84,15 +79,6 @@ const CV_DATA_SCHEMA = {
   required: ["header", "summary", "education", "experience", "leadership", "community", "additionalInfo"],
 };
 
-const ASK_SCHEMA = {
-  type: "OBJECT",
-  properties: {
-    isComplete: { type: "BOOLEAN" },
-    question: { type: "STRING" },
-  },
-  required: ["isComplete", "question"],
-};
-
 const TEMPLATE_EXPLAINER =
   "Il CV segue SEMPRE questo formato fisso a una pagina: Header (nome, " +
   "località, telefono, email, LinkedIn) · Professional Summary (2-3 righe) · " +
@@ -105,6 +91,17 @@ const TEMPLATE_EXPLAINER =
   "Information (bullet raggruppati per etichetta: Languages, Skills/Tools, " +
   "Certifications...). Tu non decidi mai il layout, solo i contenuti.";
 
+const COMPILE_SYSTEM_PROMPT =
+  "Compila ESATTAMENTE lo schema JSON richiesto, che rispecchia un CV " +
+  "professionale a una pagina. " + TEMPLATE_EXPLAINER + " Scrivi tutti i " +
+  "testi in inglese professionale da CV: bullet concisi con verbi d'azione " +
+  "al passato, risultati quantificati quando disponibili, NON frasi " +
+  "complete/discorsive. Non inventare MAI fatti, aziende, numeri o date non " +
+  "presenti nell'input. Se il campo Professional Summary è vuoto o assente, " +
+  "scrivine uno tu basandoti sul resto del CV. Se una sezione opzionale " +
+  "(leadership, community, additionalInfo) non ha contenuto sufficiente " +
+  "nell'input, restituiscila come array vuoto — non inventare riempitivo.";
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
   try {
@@ -112,91 +109,30 @@ serve(async (req) => {
     if (!key) throw new HttpError(400, "GEMINI_API_KEY secret is not set");
 
     const body: RequestBody = await req.json();
-    const { action, mode, history = [], rawCv } = body;
-    if (!action || !mode) throw new HttpError(400, "action and mode are required");
+    const { action, mode, rawCv, rawData } = body;
+    if (action !== "compile" || !mode) throw new HttpError(400, "action must be 'compile' and mode is required");
 
-    if (action === "ask") {
-      const system = buildAskSystemPrompt(mode);
-      const userText = buildAskUserText(mode, history, rawCv);
-      const result = await generateJson(key, system, userText, ASK_SCHEMA, 0.4);
-      return json(result);
-    }
-
-    if (action === "compile") {
-      const system = buildCompileSystemPrompt();
-      const userText = buildCompileUserText(mode, history, rawCv);
-      const result = await generateJson(key, system, userText, CV_DATA_SCHEMA, 0.3);
-      return json({ data: result });
-    }
-
-    throw new HttpError(400, `Unknown action: ${action}`);
+    const userText = buildCompileUserText(mode, rawCv, rawData);
+    const result = await generateJson(key, COMPILE_SYSTEM_PROMPT, userText, CV_DATA_SCHEMA, 0.3);
+    return json({ data: result });
   } catch (e) {
     const status = e instanceof HttpError ? e.status : 500;
     return json({ error: (e as Error).message }, status);
   }
 });
 
-function buildAskSystemPrompt(mode: "improve" | "scratch"): string {
-  const modeNote =
-    mode === "improve"
-      ? "Il candidato ha già un CV o dei testi (forniti come 'CV ESISTENTE' " +
-        "qui sotto): fai SOLO le domande di chiarimento indispensabili per " +
-        "colmare lacune (date mancanti, risultati poco concreti, dati di " +
-        "contatto assenti). Se il CV esistente è già completo per una " +
-        "sezione, non chiedere nulla su quella sezione."
-      : "Il candidato parte da zero: fai domande in ordine, una sezione alla " +
-        "volta (contatti → summary → education → experience → leadership → " +
-        "community → additional info), raccogliendo per ogni voce " +
-        "istituzione/azienda, luogo, ruolo/corso, periodo e 2-4 risultati " +
-        "concreti (con numeri quando possibile).";
-  return (
-    "Sei un assistente che intervista un candidato per costruire un CV " +
-    "professionale in inglese. " + TEMPLATE_EXPLAINER + " " + modeNote +
-    " Fai UNA domanda alla volta, breve, concreta, in italiano. Non generare " +
-    "mai il CV in questa fase, solo domande. Quando hai raccolto abbastanza " +
-    "per compilare almeno Summary, un'istruzione (Education) e un'esperienza " +
-    "(Experience), imposta isComplete=true e question=\"\" — le sezioni " +
-    "Leadership/Community/Additional Information sono opzionali, non " +
-    "insistere se il candidato non ha nulla da aggiungere lì (una sola " +
-    "domanda di verifica basta)."
-  );
-}
-
-function buildAskUserText(mode: "improve" | "scratch", history: ChatTurn[], rawCv?: string): string {
-  const parts: string[] = [];
-  if (mode === "improve" && rawCv?.trim()) {
-    parts.push("=== CV ESISTENTE (testo incollato dal candidato) ===", rawCv.trim());
+function buildCompileUserText(mode: "improve" | "scratch", rawCv?: string, rawData?: unknown): string {
+  if (mode === "improve") {
+    if (!rawCv?.trim()) throw new HttpError(400, "rawCv is required in 'improve' mode");
+    return ["=== CV ESISTENTE (testo incollato dal candidato) ===", rawCv.trim()].join("\n");
   }
-  parts.push("=== CONVERSAZIONE FINORA ===");
-  if (!history.length) {
-    parts.push("(nessuna domanda ancora fatta — fai la prima domanda)");
-  } else {
-    for (const t of history) parts.push(`${t.role === "assistant" ? "Tu" : "Candidato"}: ${t.text}`);
-  }
-  return parts.join("\n");
-}
-
-function buildCompileSystemPrompt(): string {
-  return (
-    "Compila ESATTAMENTE lo schema JSON richiesto, che rispecchia un CV " +
-    "professionale a una pagina. " + TEMPLATE_EXPLAINER + " Scrivi tutti i " +
-    "testi in inglese professionale da CV: bullet concisi con verbi d'azione " +
-    "al passato, risultati quantificati quando disponibili, NON frasi " +
-    "complete/discorsive. Non inventare MAI fatti, aziende, numeri o date non " +
-    "menzionati dal candidato. Se una sezione opzionale (leadership, " +
-    "community, additionalInfo) non ha contenuto sufficiente, restituiscila " +
-    "come array vuoto — non inventare riempitivo."
-  );
-}
-
-function buildCompileUserText(mode: "improve" | "scratch", history: ChatTurn[], rawCv?: string): string {
-  const parts: string[] = [];
-  if (mode === "improve" && rawCv?.trim()) {
-    parts.push("=== CV ESISTENTE (testo incollato dal candidato) ===", rawCv.trim());
-  }
-  parts.push("=== RISPOSTE RACCOLTE NELL'INTERVISTA ===");
-  for (const t of history) parts.push(`${t.role === "assistant" ? "Domanda" : "Risposta"}: ${t.text}`);
-  return parts.join("\n");
+  if (!rawData) throw new HttpError(400, "rawData is required in 'scratch' mode");
+  return [
+    "=== BOZZA COMPILATA DAL CANDIDATO NEL FORM (JSON, può essere " +
+      "informale, incompleta o con testo grezzo — riscrivi bene i testi " +
+      "mantenendo gli stessi fatti) ===",
+    JSON.stringify(rawData, null, 2),
+  ].join("\n");
 }
 
 async function generateJson(

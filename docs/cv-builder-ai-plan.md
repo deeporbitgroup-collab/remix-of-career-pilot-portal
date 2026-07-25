@@ -8,16 +8,22 @@
 
 ## Obiettivo
 
-Un **CV Builder a intervista**: l'AI fa domande → l'utente risponde → l'AI
-**riempie un formato fisso di CV (il template deciso da noi)** con le risposte,
-scrivendo bene i testi. Il layout/formato lo decidiamo noi; l'AI compila solo i
-contenuti, non inventa il layout.
+Un **CV Builder**: l'utente inserisce le sue informazioni (form o CV
+esistente) → l'AI **riempie un formato fisso di CV (il template deciso da
+noi)** scrivendo bene i testi. Il layout/formato lo decidiamo noi; l'AI
+compila solo i contenuti, non inventa il layout.
 
 ### Due modalità
-- **Modalità A — "Migliora"**: l'utente ha già un CV / dei testi → l'AI li
-  **riscrive e riformatta meglio** dentro il nostro formato.
-- **Modalità B — "Da zero"**: l'utente non ha niente → risponde alle domande →
-  l'AI **scrive tutto il CV da zero** dentro il nostro formato.
+- **Modalità A — "Migliora"**: l'utente ha già un CV / dei testi → li incolla
+  in una textarea → l'AI li **riscrive e riformatta meglio** dentro il nostro
+  formato.
+- **Modalità B — "Da zero"**: l'utente non ha niente di pronto → compila un
+  **form con campi fissi** (nome, contatti, education/experience/leadership
+  come voci ripetibili con bullet, ecc.) → l'AI **scrive bene i testi** dentro
+  il nostro formato, mettendo ogni informazione nella sezione giusta.
+
+(Deciso il 25 luglio 2026: niente intervista a chat con domande a turni — un
+form diretto è più prevedibile e più veloce da compilare per l'utente.)
 
 Il template fisso è documentato in `docs/cv-builder-template.md`, basato sul
 CV di riferimento fornito dall'utente (un CV professionale classico a una
@@ -41,18 +47,17 @@ istituzione/luogo e ruolo/date).
   voce, bullet multi-riga.
 - **`supabase/functions/cv-ai/index.ts`** — edge function Gemini, self-contained
   (pattern `service-advisor-chat`, non `crm-ai` che richiede JWT admin).
-  Due azioni:
-  - `ask` → intervista una domanda alla volta (in italiano), decide da sola
-    quando ha raccolto abbastanza per compilare Summary + almeno 1 Education +
-    1 Experience (`isComplete`).
-  - `compile` → restituisce il JSON `CvData` completo (Gemini structured
-    output / `responseSchema`), scrivendo i testi in inglese professionale da
-    CV. Non inventa mai fatti non menzionati.
-  Registrata in `supabase/config.toml` con `verify_jwt = false` (tool pubblico,
-  nessun login richiesto per l'MVP).
+  Una sola azione `compile`: riceve `rawCv` (testo incollato, modalità
+  Migliora) oppure `rawData` (bozza JSON compilata nel form, modalità Da
+  zero) e restituisce il JSON `CvData` completo (Gemini structured output /
+  `responseSchema`), scrivendo i testi in inglese professionale da CV. Se
+  Summary è vuoto lo scrive lei in base al resto. Non inventa mai fatti non
+  presenti nell'input. Registrata in `supabase/config.toml` con
+  `verify_jwt = false` (tool pubblico, nessun login richiesto per l'MVP).
 - **`src/pages/CvBuilder.tsx`** (route `/cv-builder`) — schermata scelta
-  modalità → (modalità Migliora: incolla testo) → chat intervista →
-  risultato con tab Anteprima/Modifica manuale + pulsante "Scarica PDF".
+  modalità → (Migliora: incolla testo / Da zero: form con campi fissi,
+  componente `CvEditForm` condiviso con la tab "Modifica") → risultato con tab
+  Anteprima/Modifica manuale + pulsante "Scarica PDF".
 - **Export PDF** — `window.print()` con CSS `@media print` scoped al nodo
   `#cv-print-root` (in `src/index.css`), formato A4: l'utente stampa/salva PDF
   dal dialogo nativo del browser, garantendo fedeltà pixel-perfect
