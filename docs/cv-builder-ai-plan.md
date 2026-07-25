@@ -1,10 +1,28 @@
 # CV Builder AI — Piano di lavoro
 
-> STATO (25 luglio 2026): **strumento funzionante costruito e testato in locale**
-> (branch `feature/cv-builder-ai`). Manca solo il deploy della edge function
-> `cv-ai` su Supabase (serve token/CLI) + un giro di test live con l'AI vera,
-> poi il push del frontend su `main` per il Publish Lovable. Paywall/Stripe
-> resta per dopo, come da piano originale.
+> STATO (25 luglio 2026): **funzionante e testato end-to-end con l'AI vera**.
+> Edge function `cv-ai` **deployata su Supabase** (progetto
+> `gqmmgyoviwhgqvzqbbja`, `GEMINI_API_KEY` già presente come secret). Testate
+> dal vivo entrambe le modalità: "Migliora" con un CV finto volutamente
+> disordinato/informale di due pagine (risultato: estratti i fatti corretti,
+> ignorato il materiale irrilevante, rispettata una richiesta di riservatezza
+> nel testo senza inventare il nome dell'azienda, tutto compresso in una
+> pagina) e "Da zero" col form (bullet informali riscritti in inglese
+> professionale, summary scritto dall'AI perché lasciato vuoto). Nessun
+> errore console in nessuno dei due flussi.
+>
+> **Non ancora fatto**: push del branch `feature/cv-builder-ai` su GitHub +
+> Publish su Lovable — quindi il tool NON è ancora raggiungibile su
+> careerpilot.it. Nessun link/pulsante verso `/cv-builder` è stato aggiunto
+> alla navigazione del sito (va deciso dove metterlo). Paywall/Stripe resta
+> per dopo, come da piano originale.
+>
+> Piccola imprecisione notata nel test "Da zero": con un range tipo
+> "2021-2024" (solo anni, senza mesi) l'AI a volte aggiunge mesi plausibili
+> (es. "September 2021 - July 2024", tipico anno accademico italiano) non
+> esplicitamente forniti dall'utente. Non blocca nulla, ma da tenere
+> d'occhio — se dà fastidio si può istruire l'AI a lasciare il range così
+> com'è quando l'utente non specifica i mesi.
 
 ## Obiettivo
 
@@ -87,22 +105,17 @@ re-render a parità di stato) — il DOM restava bloccato sul valore imperativo
 sbagliato. Rimossa la mutazione inutile (i transform CSS non influenzano mai
 `scrollHeight`).
 
-**Non ancora testato dal vivo**: la chiamata reale a Gemini (la edge function
-`cv-ai` non è ancora deployata su Supabase — serve un token/CLI per il
-deploy, che va fatto dalla macchina con accesso).
-
 ## Prossimi passi
 
-1. Deploy edge function `cv-ai` su Supabase (progetto `gqmmgyoviwhgqvzqbbja`,
-   attenzione al cap funzioni — 93/100 al momento, c'è margine) + verificare
-   che il secret `GEMINI_API_KEY` sia impostato.
-2. Test end-to-end con l'AI vera: intervista completa modalità A e B,
-   controllare qualità dei testi generati e che l'intervista non faccia
-   troppe/troppo poche domande.
-3. Push su `main` (branch `feature/cv-builder-ai`) → Publish su Lovable.
-4. Validazione utente finale (tu) con un CV vero, anche di chi ha poca
+1. ~~Deploy edge function `cv-ai` su Supabase~~ — **fatto** (25 luglio 2026,
+   94/100 funzioni ora).
+2. ~~Test end-to-end con l'AI vera~~ — **fatto**, vedi nota di stato in cima.
+3. Decidere dove mettere il link a `/cv-builder` nella navigazione del sito
+   (homepage? client-portal? un CTA dedicato?).
+4. Push su `main` (branch `feature/cv-builder-ai`) → Publish su Lovable.
+5. Validazione utente finale (tu) con un CV vero, anche di chi ha poca
    esperienza.
-5. **Poi**: fase prodotto — paywall Stripe, tabella `cv_documents` per
+6. **Poi**: fase prodotto — paywall Stripe, tabella `cv_documents` per
    salvare le bozze, eventuale generazione PDF "pulita" lato server.
 
 ## Note operative del progetto (già note)
