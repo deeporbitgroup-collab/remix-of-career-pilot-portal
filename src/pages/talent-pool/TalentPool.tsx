@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Building, Users, Shield } from "lucide-react";
+import { Building, Users, Shield, Sparkles } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { TalentPoolLanguageProvider, useTalentPoolLanguage } from "@/contexts/TalentPoolLanguageContext";
 import { useStaggeredAnimation } from "@/hooks/useScrollAnimation";
@@ -184,6 +184,27 @@ const TalentPoolContent = () => {
                   </Button>
                 </div>
               </Card>
+            </div>
+
+            {/* CV Builder AI - alternative CTA */}
+            <div {...getItemProps(9)} className="mt-5 md:mt-6 max-w-3xl mx-auto">
+              <div
+                className="group flex flex-col sm:flex-row items-center justify-between gap-3 rounded-lg border border-emerald-500/30 bg-slate-900/60 backdrop-blur-md px-5 py-4 hover:border-emerald-500/50 transition-all cursor-pointer"
+                onClick={() => window.open('/cv-builder', '_blank', 'noopener,noreferrer')}
+              >
+                <div className="flex items-center gap-3 text-center sm:text-left">
+                  <div className="h-10 w-10 shrink-0 rounded bg-gradient-to-br from-emerald-500/20 to-emerald-600/10 border border-emerald-500/30 flex items-center justify-center">
+                    <Sparkles className="h-5 w-5 text-emerald-400" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold text-sky-50">{t('landing.roleSelection.cvBuilder.title')}</p>
+                    <p className="text-xs text-slate-400">{t('landing.roleSelection.cvBuilder.description')}</p>
+                  </div>
+                </div>
+                <Button className="w-full sm:w-auto shrink-0 bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white shadow-lg font-bold text-sm tracking-wide">
+                  {t('landing.roleSelection.cvBuilder.button')}
+                </Button>
+              </div>
             </div>
           </div>
         </div>

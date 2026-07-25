@@ -34,6 +34,7 @@ import bgKnowledgeBase1 from "@/assets/service-bg/knowledge-base-1.png";
 import bgKnowledgeBase2 from "@/assets/service-bg/knowledge-base-2.png";
 import bgCvCoverLetter from "@/assets/service-bg/cv-cover-letter.png";
 import bgUniversityEligibility from "@/assets/service-bg/university-eligibility.png";
+import bgCvBuilderAi from "@/assets/service-bg/cv-builder-ai.svg";
 const sb = supabase as any;
 
 // Associate type for avatar previews
@@ -66,6 +67,7 @@ const serviceBgImages: Record<string, string> = {
   "CV / Cover Letter Rewrite": bgCvCoverLetter,
   "CV Rewriting / Cover Letter Rewriting": bgCvCoverLetter,
   "University Eligibility Verification": bgUniversityEligibility,
+  "CV Builder AI": bgCvBuilderAi,
 };
 
 // Services that show TWO side-by-side images
@@ -852,9 +854,11 @@ const ClientServicesPage = () => {
                                     </Badge>
                                   </a>
                                 ) : (
-                                  <Badge className="text-base font-bold whitespace-nowrap bg-primary text-primary-foreground shadow-lg px-3 py-1.5">
+                                  <Badge className={`text-base font-bold whitespace-nowrap shadow-lg px-3 py-1.5 ${service.name === 'CV Builder AI' ? 'bg-green-600 text-white' : 'bg-primary text-primary-foreground'}`}>
                                     {service.name === 'Masterclass Managed by CareerBoost'
                                       ? 'On request'
+                                      : service.name === 'CV Builder AI'
+                                      ? 'Free beta'
                                       : isMonthlyService(service.name) ? `€${service.price.toFixed(0)}/3 mo` : `€${service.price.toFixed(2)}`}
                                   </Badge>
                                 )}
@@ -905,6 +909,9 @@ const ClientServicesPage = () => {
                                 </Button> : service.name === 'University Eligibility Verification' ? <Button onClick={() => handleDirectAddToCart(service)} className="w-full bg-gradient-to-r from-primary to-secondary hover:opacity-90 shadow-md">
                                   <ShoppingCart className="h-4 w-4 mr-2" />
                                   Add to Cart
+                                </Button> : service.name === 'CV Builder AI' ? <Button onClick={() => window.open('/cv-builder', '_blank', 'noopener,noreferrer')} className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:opacity-90 shadow-md font-bold text-base">
+                                  <Sparkles className="h-5 w-5 mr-2" />
+                                  Try CV Builder AI
                                 </Button> : <Button onClick={() => setSelectedService(service)} className="w-full bg-gradient-to-r from-primary to-secondary hover:opacity-90 shadow-md font-bold text-base">
                                   <ShoppingCart className="h-5 w-5 mr-2" />
                                   Select Associate
@@ -1025,7 +1032,13 @@ const ClientServicesPage = () => {
           initialServiceName={highlightService ?? undefined}
           servicesByCategory={orderedGroupedServices as any}
           onInfo={(s) => setInfoService(s as any)}
-          onChoose={(s) => setSelectedService(s as any)}
+          onChoose={(s) => {
+            if ((s as Service).name === 'CV Builder AI') {
+              window.open('/cv-builder', '_blank', 'noopener,noreferrer');
+              return;
+            }
+            setSelectedService(s as any);
+          }}
           onDownloadDemo={handleDownloadPdf}
           hasDemo={hasDemoPdf}
           getPreviewImage={(category, name) => getServicePreview(category, name)}
@@ -1050,6 +1063,8 @@ const ClientServicesPage = () => {
             <DialogDescription className="text-lg font-semibold text-primary">
               {infoService?.name === 'Masterclass Managed by CareerBoost'
                 ? 'Price on request'
+                : infoService?.name === 'CV Builder AI'
+                ? 'Free during our beta'
                 : `€${Number(infoService?.price ?? 0).toFixed(2)}`}
             </DialogDescription>
           </DialogHeader>
@@ -1094,6 +1109,14 @@ const ClientServicesPage = () => {
                   <MessageCircle className="h-4 w-4 mr-2" />
                   Contact us
                 </a>
+              </Button>
+            ) : infoService?.name === 'CV Builder AI' ? (
+              <Button
+                onClick={() => { setInfoService(null); window.open('/cv-builder', '_blank', 'noopener,noreferrer'); }}
+                className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:opacity-90 font-bold text-base"
+              >
+                <Sparkles className="h-5 w-5 mr-2" />
+                Try CV Builder AI
               </Button>
             ) : (
               <Button onClick={() => {
@@ -1146,6 +1169,10 @@ const ClientServicesPage = () => {
           setBookingOpen(true);
         }}
         onSelectAssociate={(name, category) => {
+          if (name === 'CV Builder AI') {
+            window.open('/cv-builder', '_blank', 'noopener,noreferrer');
+            return;
+          }
           const svc = services.find(s => s.name === name && (!category || s.category === category));
           if (svc) {
             // Keep advisor mounted — GuestAssociateSelector dialog opens on top.
