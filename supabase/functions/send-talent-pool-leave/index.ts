@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { Resend } from "npm:resend@2.0.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { getTpUserLanguage, pick, resolveLang } from "../_shared/tpLanguage.ts";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
@@ -16,6 +17,7 @@ interface LeaveRequest {
   name: string;
   email: string;
   role: string;
+  language?: string; // 'it' | 'en' — site language of the leaving user (fallback only)
 }
 
 serve(async (req: Request) => {
@@ -25,7 +27,7 @@ serve(async (req: Request) => {
 
   try {
     const supabase = createClient(supabaseUrl, supabaseKey);
-    const { userId, name, email, role }: LeaveRequest = await req.json();
+    const { userId, name, email, role, language }: LeaveRequest = await req.json();
 
     console.log("Processing Talent Pool leave:", { userId, name, role });
 
@@ -99,8 +101,56 @@ serve(async (req: Request) => {
       console.error("Admin email error:", adminEmailError);
     }
 
-    // Email to user
-    const userEmailHtml = `
+    // Email to user — recipient = requester: stored preference, then body.language, else Italian.
+    const lang = resolveLang(
+      await getTpUserLanguage(supabase, userId ? { userId } : { email }),
+      language
+    );
+    const timestampIt = new Date().toLocaleString('it-IT', {
+      timeZone: 'Europe/Rome',
+      dateStyle: 'medium',
+      timeStyle: 'short'
+    });
+    const userEmailHtml = lang === 'it' ? `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <div style="background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%); padding: 30px; text-align: center;">
+          <h1 style="color: white; margin: 0;">CareerPilot Talent Pool</h1>
+          <p style="color: #e0e7ff; margin-top: 10px;">Uscita confermata</p>
+        </div>
+        
+        <div style="background: white; padding: 30px; border: 1px solid #e5e7eb;">
+          <h2 style="color: #1e3a8a; margin-top: 0;">Sei uscito dal Talent Pool</h2>
+          
+          <p style="color: #4b5563; line-height: 1.6;">
+            ${role === 'STUDENT' ? 'Ciao' : 'Gentile'} ${name},
+          </p>
+          
+          <p style="color: #4b5563; line-height: 1.6;">
+            Ti confermiamo che sei uscito con successo dal CareerPilot Talent Pool in data <strong>${timestampIt}</strong>.
+          </p>
+          
+          <div style="background: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
+            <p style="margin: 8px 0; color: #4b5563;">
+              Il tuo profilo è stato rimosso dal nostro database attivo e le aziende non avranno più accesso alle tue informazioni.
+            </p>
+          </div>
+          
+          <p style="color: #4b5563; line-height: 1.6;">
+            Se cambi idea o si è trattato di un errore, contattaci a careerpilot2025@gmail.com.
+          </p>
+          
+          <p style="color: #4b5563; line-height: 1.6; margin-top: 20px;">
+            Grazie per aver fatto parte del CareerPilot Talent Pool.
+          </p>
+          
+          <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb; text-align: center;">
+            <p style="color: #6b7280; font-size: 14px; margin: 0;">
+              CareerPilot - Costruiamo carriere insieme
+            </p>
+          </div>
+        </div>
+      </div>
+    ` : `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <div style="background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%); padding: 30px; text-align: center;">
           <h1 style="color: white; margin: 0;">CareerPilot Talent Pool</h1>
@@ -144,7 +194,7 @@ serve(async (req: Request) => {
     const { error: userEmailError } = await resend.emails.send({
       from: "CareerPilot <noreply@careerpilot.it>",
       to: [email],
-      subject: "You have left CareerPilot Talent Pool",
+      subject: pick(lang, "You have left CareerPilot Talent Pool", "Sei uscito dal CareerPilot Talent Pool"),
       html: userEmailHtml,
     });
 

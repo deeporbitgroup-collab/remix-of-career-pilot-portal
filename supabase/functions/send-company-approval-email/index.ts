@@ -1,7 +1,11 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { Resend } from "npm:resend@2.0.0";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { getTpRecipientLanguage, resolveLang, type TpLang } from "../_shared/tpLanguage.ts";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
+const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -12,6 +16,7 @@ interface ApprovalEmailRequest {
   companyName: string;
   companyEmail: string;
   approved: boolean;
+  companyId?: string; // optional: talent_pool_users.id, used to read the company's language
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -20,7 +25,7 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    const { companyName, companyEmail, approved }: ApprovalEmailRequest = await req.json();
+    const { companyName, companyEmail, approved, companyId }: ApprovalEmailRequest = await req.json();
 
     console.log("Sending company approval email:", { companyName, companyEmail, approved });
 
@@ -31,10 +36,94 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
+    // Recipient = the company (sent by the admin, so no body.language fallback).
+    // Lookup by id when given, else by login email, else via company_profiles.reference_email.
+    const supabase = createClient(supabaseUrl, supabaseKey);
+    const dbLang = await getTpRecipientLanguage(supabase, { userId: companyId, email: companyEmail });
+    const lang: TpLang = resolveLang(dbLang);
+
     let emailHtml = "";
     let subject = "";
 
-    if (approved) {
+    if (approved && lang === "it") {
+      subject = "Registrazione approvata - Talent Pool";
+      emailHtml = `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <div style="background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); padding: 30px; text-align: center; border-radius: 8px 8px 0 0;">
+            <h1 style="color: white; margin: 0; font-size: 28px;">✅ Registrazione approvata!</h1>
+          </div>
+
+          <div style="background: white; padding: 30px; border-radius: 0 0 8px 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+            <p style="font-size: 16px; color: #374151; line-height: 1.6;">
+              Gentile <strong>${companyName}</strong>,
+            </p>
+
+            <p style="font-size: 16px; color: #374151; line-height: 1.6;">
+              Siamo lieti di informarti che la registrazione al <strong>CareerPilot Talent Pool</strong> è stata approvata!
+            </p>
+
+            <p style="font-size: 16px; color: #374151; line-height: 1.6;">
+              Ora puoi accedere alla piattaforma e iniziare a consultare i profili degli studenti disponibili.
+            </p>
+
+            <div style="background: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
+              <h3 style="color: #16a34a; margin-top: 0;">🎯 Prossimi passi:</h3>
+              <ul style="color: #4b5563; line-height: 1.8;">
+                <li>Accedi alla piattaforma con le tue credenziali</li>
+                <li>Esplora i profili degli studenti</li>
+                <li>Seleziona i candidati che ti interessano</li>
+                <li>Riceverai una notifica via email per ogni selezione</li>
+              </ul>
+            </div>
+
+            <div style="text-align: center; margin: 30px 0;">
+              <a href="https://careerpilot.it/talent-pool/company"
+                 style="display: inline-block; background: #16a34a; color: white; padding: 14px 28px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 16px;">
+                Accedi al Talent Pool
+              </a>
+            </div>
+
+            <p style="font-size: 14px; color: #6b7280; line-height: 1.6; border-top: 2px solid #e5e7eb; padding-top: 20px; margin-top: 30px;">
+              Benvenuto in CareerPilot!<br>
+              Per qualsiasi domanda o necessità di assistenza, non esitare a contattarci.
+            </p>
+          </div>
+        </div>
+      `;
+    } else if (!approved && lang === "it") {
+      subject = "Registrazione non approvata - Talent Pool";
+      emailHtml = `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <div style="background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); padding: 30px; text-align: center; border-radius: 8px 8px 0 0;">
+            <h1 style="color: white; margin: 0; font-size: 28px;">❌ Registrazione non approvata</h1>
+          </div>
+
+          <div style="background: white; padding: 30px; border-radius: 0 0 8px 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+            <p style="font-size: 16px; color: #374151; line-height: 1.6;">
+              Gentile <strong>${companyName}</strong>,
+            </p>
+
+            <p style="font-size: 16px; color: #374151; line-height: 1.6;">
+              Siamo spiacenti di comunicarti che la registrazione al <strong>CareerPilot Talent Pool</strong> non è stata approvata in questo momento.
+            </p>
+
+            <p style="font-size: 16px; color: #374151; line-height: 1.6;">
+              Per maggiori informazioni o per discutere la tua candidatura, ti invitiamo a contattarci direttamente.
+            </p>
+
+            <div style="background: #fef2f2; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #dc2626;">
+              <p style="color: #991b1b; margin: 0; line-height: 1.6;">
+                <strong>📧 Contatto:</strong> careerpilot2025@gmail.com
+              </p>
+            </div>
+
+            <p style="font-size: 14px; color: #6b7280; line-height: 1.6; border-top: 2px solid #e5e7eb; padding-top: 20px; margin-top: 30px;">
+              Grazie per il tuo interesse in CareerPilot.
+            </p>
+          </div>
+        </div>
+      `;
+    } else if (approved) {
       subject = "Registration Approved - Talent Pool";
       emailHtml = `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">

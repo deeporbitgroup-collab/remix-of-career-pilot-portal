@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -5,6 +7,232 @@
 /* Career Pilot Design System - Aviation Theme
 All colors MUST be HSL.
 */
+
+/* CareerBoost palette as RGB variables so the Talent Pool can switch theme
+   (tailwind cbslate/cbsky/cbind read these). Dark is the default. */
+:root {
+  --cbslate-50: 238 240 247; --cbslate-100: 220 224 236; --cbslate-200: 185 192 214; --cbslate-300: 142 151 181; --cbslate-400: 100 110 146; --cbslate-500: 67 76 110; --cbslate-600: 46 53 80; --cbslate-700: 30 35 64; --cbslate-800: 20 23 46; --cbslate-900: 10 10 31; --cbslate-950: 5 6 13;
+  --cbsky-50: 234 242 255; --cbsky-100: 214 230 255; --cbsky-200: 174 205 255; --cbsky-300: 133 179 255; --cbsky-400: 91 155 255; --cbsky-500: 74 134 255; --cbsky-600: 46 107 240; --cbsky-700: 36 86 196; --cbsky-800: 30 64 145; --cbsky-900: 24 47 102; --cbsky-950: 15 28 61;
+  --cbind-50: 236 237 251; --cbind-100: 217 219 248; --cbind-200: 179 183 241; --cbind-300: 140 147 233; --cbind-400: 94 104 224; --cbind-500: 58 68 216; --cbind-600: 36 48 212; --cbind-700: 30 40 174; --cbind-800: 24 32 134; --cbind-900: 18 24 96; --cbind-950: 10 14 58;
+}
+html.tp-light {
+  --cbslate-50: 10 10 31; --cbslate-100: 20 23 46; --cbslate-200: 46 53 80; --cbslate-300: 67 76 110; --cbslate-400: 90 99 134; --cbslate-500: 122 131 163; --cbslate-600: 185 192 214; --cbslate-700: 211 216 232; --cbslate-800: 227 231 241; --cbslate-900: 238 240 247; --cbslate-950: 247 248 252;
+  --cbsky-50: 15 28 61; --cbsky-100: 24 47 102; --cbsky-200: 30 64 145; --cbsky-300: 36 86 196; --cbsky-400: 46 107 240; --cbsky-500: 74 134 255; --cbsky-600: 46 107 240; --cbsky-700: 174 205 255; --cbsky-800: 214 230 255; --cbsky-900: 234 242 255; --cbsky-950: 243 248 255;
+  --cbind-50: 10 14 58; --cbind-100: 18 24 96; --cbind-200: 24 32 134; --cbind-300: 30 40 174; --cbind-400: 36 48 212; --cbind-500: 58 68 216; --cbind-600: 36 48 212; --cbind-700: 30 40 174; --cbind-800: 217 219 248; --cbind-900: 236 237 251; --cbind-950: 245 246 254;
+}
+
+/* ===================================================================
+   CareerBoost Talent Pool — scoped design system (.tp-cb)
+   Only affects pages wrapped in .tp-cb, never the rest of Career Pilot.
+   =================================================================== */
+.tp-cb {
+  font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  color: #EAF2FF;
+  background-color: #05060D;
+  --radius: 1rem; /* rounder cards within the Talent Pool */
+
+  /* --- Redefine shadcn/design tokens to dark CareerBoost (scoped) --- */
+  --background: 231 45% 4%;        /* #05060D near-black */
+  --foreground: 217 100% 96%;      /* #EAF2FF */
+
+  --card: 240 44% 9%;              /* #0C0E22 navy */
+  --card-foreground: 217 100% 96%;
+
+  --popover: 240 46% 8%;           /* #0A0B1E */
+  --popover-foreground: 217 100% 96%;
+
+  --primary: 228 83% 60%;          /* bright indigo-blue, works as button + heading */
+  --primary-foreground: 0 0% 100%;
+  --primary-light: 217 100% 68%;   /* #5B9BFF */
+  --primary-dark: 235 72% 49%;     /* #2430D4 brand */
+
+  --secondary: 240 38% 15%;        /* dark navy surface */
+  --secondary-foreground: 217 100% 96%;
+
+  --muted: 240 32% 14%;
+  --muted-foreground: 217 35% 74%; /* muted light blue-gray */
+
+  --accent: 228 83% 60%;
+  --accent-foreground: 0 0% 100%;
+
+  --destructive: 0 72% 58%;
+  --destructive-foreground: 0 0% 100%;
+
+  --success: 152 60% 45%;
+  --success-foreground: 0 0% 100%;
+
+  --border: 228 38% 22%;           /* subtle blue border */
+  --input: 228 38% 22%;
+  --ring: 228 83% 60%;
+
+  /* Legacy aviation tokens used across these pages */
+  --cloud-white: 231 42% 6%;       /* used in via-cloud-white gradients */
+  --runway-gray: 240 46% 8%;       /* used in to-runway-gray gradients */
+  --steel-gray: 217 35% 74%;       /* muted text */
+  --aviation-blue: 228 83% 60%;
+  --sky-blue: 217 100% 68%;
+}
+/* Portaled overlays (Dialog/Popover/Select/Dropdown render at <body>) inherit the dark scope */
+.tp-cb-portal {
+  --background: 231 45% 4%;
+  --foreground: 217 100% 96%;
+  --card: 240 44% 9%;
+  --card-foreground: 217 100% 96%;
+  --popover: 240 46% 8%;
+  --popover-foreground: 217 100% 96%;
+  --primary: 228 83% 60%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 240 38% 15%;
+  --secondary-foreground: 217 100% 96%;
+  --muted: 240 32% 14%;
+  --muted-foreground: 217 35% 74%;
+  --accent: 228 83% 60%;
+  --accent-foreground: 0 0% 100%;
+  --border: 228 38% 22%;
+  --input: 228 38% 22%;
+  --ring: 228 83% 60%;
+  color: #EAF2FF;
+}
+.tp-cb h1,
+.tp-cb h2,
+.tp-cb h3 {
+  letter-spacing: -0.01em;
+}
+/* Silk background: diagonal blue bands + soft aurora glows over near-black */
+.cb-silk-bg {
+  background-color: #05060D;
+  background-image:
+    radial-gradient(60% 55% at 80% 12%, rgba(91,155,255,0.16) 0%, transparent 60%),
+    radial-gradient(55% 55% at 10% 92%, rgba(36,48,212,0.22) 0%, transparent 62%),
+    linear-gradient(135deg, #05060D 0%, #080A18 40%, #0A0A1F 100%);
+}
+/* Diagonal silk ribbons overlay (use on an absolutely-positioned layer) */
+.cb-silk-ribbons {
+  background-image: repeating-linear-gradient(
+    125deg,
+    transparent 0px,
+    transparent 46px,
+    rgba(91,155,255,0.05) 46px,
+    rgba(36,48,212,0.08) 92px,
+    transparent 92px,
+    transparent 150px
+  );
+}
+/* Uppercase bold brand title */
+.cb-title {
+  text-transform: uppercase;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+}
+/* Glassy card surface on dark */
+.cb-card {
+  background: rgba(10, 10, 31, 0.55);
+  border: 1px solid rgba(91, 155, 255, 0.18);
+  backdrop-filter: blur(14px);
+}
+/* Safety: hard-coded light surfaces become dark so light text stays readable */
+.tp-cb .bg-white:not(.cb-keep-white) {
+  background-color: hsl(240 44% 9%) !important;
+}
+.tp-cb .bg-gray-50,
+.tp-cb .bg-gray-100,
+.tp-cb .bg-slate-50 {
+  background-color: hsl(240 38% 12%) !important;
+}
+
+/* ===== Light theme (white background, dark text) — toggled from the Talent Pool
+   landing; html.tp-light only changes elements inside .tp-cb / .tp-cb-portal ===== */
+html.tp-light .tp-cb,
+html.tp-light .tp-cb-portal {
+  color: #0A0A1F;
+  background-color: #F7F8FC;
+  --background: 230 45% 98%;       /* #F7F8FC */
+  --foreground: 240 51% 8%;        /* #0A0A1F */
+  --card: 0 0% 100%;
+  --card-foreground: 240 51% 8%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 240 51% 8%;
+  --primary: 235 72% 49%;          /* #2430D4 brand */
+  --primary-foreground: 0 0% 100%;
+  --primary-light: 222 86% 56%;
+  --primary-dark: 235 72% 40%;
+  --secondary: 228 40% 94%;
+  --secondary-foreground: 240 51% 8%;
+  --muted: 228 40% 95%;
+  --muted-foreground: 228 18% 38%;
+  --accent: 235 72% 49%;
+  --accent-foreground: 0 0% 100%;
+  --border: 228 30% 86%;
+  --input: 228 30% 86%;
+  --ring: 235 72% 49%;
+  --cloud-white: 230 45% 98%;
+  --runway-gray: 228 40% 95%;
+  --steel-gray: 228 18% 38%;
+  --aviation-blue: 235 72% 49%;
+  --sky-blue: 222 86% 56%;
+}
+html.tp-light .cb-silk-bg {
+  background-color: #F7F8FC;
+  background-image:
+    radial-gradient(60% 55% at 80% 12%, rgba(91,155,255,0.18) 0%, transparent 60%),
+    radial-gradient(55% 55% at 10% 92%, rgba(36,48,212,0.12) 0%, transparent 62%),
+    linear-gradient(135deg, #FFFFFF 0%, #F3F6FD 45%, #EAF0FC 100%);
+}
+html.tp-light .cb-silk-ribbons {
+  background-image: repeating-linear-gradient(
+    125deg,
+    transparent 0px,
+    transparent 46px,
+    rgba(36,48,212,0.035) 46px,
+    rgba(91,155,255,0.06) 92px,
+    transparent 92px,
+    transparent 150px
+  );
+}
+html.tp-light .cb-card {
+  background: rgba(255, 255, 255, 0.78);
+  border: 1px solid rgba(36, 48, 212, 0.14);
+}
+/* Student area: a deep, saturated night blue (dark but vivid) */
+html.tp-light .tp-cb.tp-student {
+  --primary: 232 68% 33%;          /* #1B2A8E deep royal navy */
+  --primary-light: 230 62% 46%;
+  --primary-dark: 233 72% 24%;
+  --accent: 232 68% 33%;
+  --ring: 232 68% 33%;
+  --aviation-blue: 232 68% 33%;
+  --sky-blue: 230 62% 46%;
+  --cbsky-300: 38 58 178; --cbsky-400: 32 50 165; --cbsky-500: 29 45 152; --cbsky-600: 25 39 140;
+  --cbind-400: 34 50 170; --cbind-500: 30 44 156; --cbind-600: 27 42 142; --cbind-700: 21 32 118;
+}
+/* Undo the dark-mode safety overrides */
+html.tp-light .tp-cb .bg-white:not(.cb-keep-white) {
+  background-color: #FFFFFF !important;
+}
+html.tp-light .tp-cb .bg-gray-50,
+html.tp-light .tp-cb .bg-gray-100,
+html.tp-light .tp-cb .bg-slate-50 {
+  background-color: hsl(228 40% 96%) !important;
+}
+/* White text written for the dark background becomes dark — except on coloured
+   surfaces (buttons, badges, gradients) where white stays readable */
+html.tp-light .tp-cb .text-white:not([class^="bg-"]):not([class*=" bg-"]):not([class^="from-"]):not([class*=" from-"]) {
+  color: #0A0A1F;
+}
+html.tp-light .tp-cb [class*="border-white"] {
+  border-color: rgb(10 10 31 / 0.12);
+}
+html.tp-light .tp-cb [class^="bg-white/"],
+html.tp-light .tp-cb [class*=" bg-white/"] {
+  background-color: rgb(10 10 31 / 0.04);
+}
+html.tp-light .tp-cb [class*="hover:bg-white/"]:hover {
+  background-color: rgb(10 10 31 / 0.07);
+}
+html.tp-light .tp-cb .drop-shadow-lg,
+html.tp-light .tp-cb .drop-shadow-md {
+  filter: none;
+}
 
 @layer base {
   :root {

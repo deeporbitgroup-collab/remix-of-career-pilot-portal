@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { ClipboardCheck, ExternalLink, Building2, Hourglass, CheckCircle2, Clock } from "lucide-react";
+import { useTalentPoolLanguage } from "@/contexts/TalentPoolLanguageContext";
 
 interface Test {
   id: string;
@@ -30,23 +31,26 @@ interface Test {
   company: { company_name: string | null; logo_url: string | null } | null;
 }
 
-const statusBadge: Record<Test["status"], { label: string; className: string }> = {
-  SENT: { label: "To do", className: "bg-amber-100 text-amber-800 border-amber-200" },
-  SUBMITTED: { label: "Submitted", className: "bg-sky-100 text-sky-800 border-sky-200" },
-  PASSED: { label: "Passed", className: "bg-emerald-100 text-emerald-800 border-emerald-200" },
-  FAILED: { label: "Not passed", className: "bg-rose-100 text-rose-800 border-rose-200" },
-  CANCELLED: { label: "Cancelled", className: "bg-muted text-muted-foreground" },
-};
+const getStatusBadge = (tx: (en: string, it: string) => string): Record<Test["status"], { label: string; className: string }> => ({
+  SENT: { label: tx("To do", "Da fare"), className: "bg-amber-100 text-amber-800 border-amber-200" },
+  SUBMITTED: { label: tx("Submitted", "Inviato"), className: "bg-cbsky-100 text-cbsky-800 border-cbsky-200" },
+  PASSED: { label: tx("Passed", "Superato"), className: "bg-cbind-100 text-cbind-800 border-cbind-200" },
+  FAILED: { label: tx("Not passed", "Non superato"), className: "bg-rose-100 text-rose-800 border-rose-200" },
+  CANCELLED: { label: tx("Cancelled", "Annullato"), className: "bg-muted text-muted-foreground" },
+});
 
-const fmtDeadline = (value?: string | null, tz?: string | null) => {
+const fmtDeadline = (value?: string | null, tz?: string | null, locale?: string) => {
   if (!value) return "";
   const d = new Date(value);
-  const label = isNaN(d.getTime()) ? value : d.toLocaleDateString();
+  const label = isNaN(d.getTime()) ? value : d.toLocaleDateString(locale);
   return tz ? `${label} (${tz})` : label;
 };
 
 const StudentTestsTab = ({ studentId, onTestsChange }: { studentId: string; onTestsChange?: () => void }) => {
   const { toast } = useToast();
+  const { tx, language } = useTalentPoolLanguage();
+  const statusBadge = getStatusBadge(tx);
+  const dateLocale = language === "it" ? "it-IT" : "en-US";
   const [tests, setTests] = useState<Test[]>([]);
   const [loading, setLoading] = useState(true);
   const [working, setWorking] = useState<string | null>(null);
@@ -74,17 +78,17 @@ const StudentTestsTab = ({ studentId, onTestsChange }: { studentId: string; onTe
         body: { action: "submit", testId: t.id },
       });
       if (error) throw error;
-      toast({ title: "Marked as completed", description: "The company and Career Pilot have been notified." });
+      toast({ title: tx("Marked as completed", "Segnato come completato"), description: tx("The company and CareerBoost have been notified.", "L'azienda e CareerBoost sono stati avvisati.") });
       await load();
     } catch (e: any) {
       console.error("Submit test error:", e);
-      toast({ title: "Error", description: e.message || "Could not submit the test", variant: "destructive" });
+      toast({ title: tx("Error", "Errore"), description: e.message || tx("Could not submit the test", "Impossibile inviare il test"), variant: "destructive" });
     } finally {
       setWorking(null);
     }
   };
 
-  const companyName = (t: Test) => t.company?.company_name || "A company";
+  const companyName = (t: Test) => t.company?.company_name || tx("A company", "Un'azienda");
 
   const renderCard = (t: Test) => {
     const badge = statusBadge[t.status];
@@ -98,7 +102,7 @@ const StudentTestsTab = ({ studentId, onTestsChange }: { studentId: string; onTe
               <AvatarFallback><Building2 className="h-5 w-5" /></AvatarFallback>
             </Avatar>
             <div className="min-w-0">
-              <p className="font-medium truncate">{t.title || "Test"}</p>
+              <p className="font-medium truncate">{t.title || tx("Test", "Test")}</p>
               <p className="text-sm text-muted-foreground truncate">{companyName(t)}</p>
             </div>
           </div>
@@ -108,7 +112,7 @@ const StudentTestsTab = ({ studentId, onTestsChange }: { studentId: string; onTe
         {t.due_at && (
           <p className="flex items-center gap-1.5 text-sm">
             <Clock className="h-4 w-4 text-muted-foreground" />
-            Deadline: <strong>{fmtDeadline(t.due_at, t.timezone)}</strong>
+            {tx("Deadline:", "Scadenza:")} <strong>{fmtDeadline(t.due_at, t.timezone, dateLocale)}</strong>
           </p>
         )}
         {t.instructions && <p className="text-sm text-muted-foreground whitespace-pre-wrap">{t.instructions}</p>}
@@ -121,7 +125,7 @@ const StudentTestsTab = ({ studentId, onTestsChange }: { studentId: string; onTe
             rel="noreferrer"
             className="inline-flex items-center gap-1 text-sm font-semibold text-primary hover:underline"
           >
-            <ExternalLink className="h-4 w-4" /> Open test
+            <ExternalLink className="h-4 w-4" /> {tx("Open test", "Apri il test")}
           </a>
         )}
 
@@ -129,19 +133,22 @@ const StudentTestsTab = ({ studentId, onTestsChange }: { studentId: string; onTe
           <AlertDialog>
             <AlertDialogTrigger asChild>
               <Button size="sm" disabled={busy} className="w-full sm:w-auto">
-                <CheckCircle2 className="h-4 w-4 mr-1" /> I've completed it
+                <CheckCircle2 className="h-4 w-4 mr-1" /> {tx("I've completed it", "L'ho completato")}
               </Button>
             </AlertDialogTrigger>
             <AlertDialogContent>
               <AlertDialogHeader>
-                <AlertDialogTitle>Mark this test as completed?</AlertDialogTitle>
+                <AlertDialogTitle>{tx("Mark this test as completed?", "Segnare questo test come completato?")}</AlertDialogTitle>
                 <AlertDialogDescription>
-                  {companyName(t)} and Career Pilot will be notified that you finished the test{t.title ? ` "${t.title}"` : ""}.
+                  {tx(
+                    `${companyName(t)} and CareerBoost will be notified that you finished the test${t.title ? ` "${t.title}"` : ""}.`,
+                    `${companyName(t)} e CareerBoost riceveranno una notifica che hai completato il test${t.title ? ` "${t.title}"` : ""}.`
+                  )}
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction onClick={() => submit(t)}>Yes, I've completed it</AlertDialogAction>
+                <AlertDialogCancel>{tx("Cancel", "Annulla")}</AlertDialogCancel>
+                <AlertDialogAction onClick={() => submit(t)}>{tx("Yes, I've completed it", "Sì, l'ho completato")}</AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
@@ -149,7 +156,7 @@ const StudentTestsTab = ({ studentId, onTestsChange }: { studentId: string; onTe
 
         {t.status === "SUBMITTED" && (
           <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
-            <Hourglass className="h-3.5 w-3.5" /> Waiting for {companyName(t)} to review it
+            <Hourglass className="h-3.5 w-3.5" /> {tx(`Waiting for ${companyName(t)} to review it`, `In attesa della valutazione di ${companyName(t)}`)}
           </p>
         )}
       </div>
@@ -172,24 +179,27 @@ const StudentTestsTab = ({ studentId, onTestsChange }: { studentId: string; onTe
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <ClipboardCheck className="h-5 w-5 text-primary" /> Assessments
+          <ClipboardCheck className="h-5 w-5 text-primary" /> {tx("Assessments", "Test di valutazione")}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
         {loading ? (
-          <p className="text-sm text-muted-foreground">Loading tests…</p>
+          <p className="text-sm text-muted-foreground">{tx("Loading tests…", "Caricamento test…")}</p>
         ) : tests.length === 0 ? (
           <div className="text-center py-8">
             <ClipboardCheck className="h-10 w-10 mx-auto text-muted-foreground/40 mb-2" />
             <p className="text-sm text-muted-foreground">
-              No tests yet. When a company assigns you a test or assessment, it will appear here.
+              {tx(
+                "No tests yet. When a company assigns you a test or assessment, it will appear here.",
+                "Ancora nessun test. Quando un'azienda ti assegnerà un test o una prova di valutazione, lo troverai qui."
+              )}
             </p>
           </div>
         ) : (
           <>
-            <Section title="To complete" items={todo} />
-            <Section title="Submitted" items={submitted} />
-            <Section title="Closed" items={closed} />
+            <Section title={tx("To complete", "Da completare")} items={todo} />
+            <Section title={tx("Submitted", "Inviati")} items={submitted} />
+            <Section title={tx("Closed", "Chiusi")} items={closed} />
           </>
         )}
       </CardContent>

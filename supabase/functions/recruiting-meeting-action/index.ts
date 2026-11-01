@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { Resend } from "npm:resend@2.0.0";
+import { getTpUserLanguage, pick, resolveLang, type TpLang } from "../_shared/tpLanguage.ts";
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
 const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -21,7 +22,15 @@ function json(status: number, body: unknown) {
 }
 
 // Resolve display names + notification emails for both parties.
-async function resolveParties(supabase: any, companyId: string, studentId: string) {
+// requester: who performed the action — their body.language is the fallback when
+// their preferred_language can't be read from the DB.
+async function resolveParties(
+  supabase: any,
+  companyId: string,
+  studentId: string,
+  requester?: "company" | "student",
+  bodyLang?: unknown
+) {
   const { data: comp } = await supabase
     .from("company_profiles").select("company_name, reference_email").eq("user_id", companyId).maybeSingle();
   const { data: compUser } = await supabase
@@ -30,29 +39,51 @@ async function resolveParties(supabase: any, companyId: string, studentId: strin
     .from("student_profiles").select("first_name, last_name").eq("user_id", studentId).maybeSingle();
   const { data: stuUser } = await supabase
     .from("talent_pool_users").select("email").eq("id", studentId).maybeSingle();
+  const companyLang: TpLang = resolveLang(
+    await getTpUserLanguage(supabase, { userId: companyId }),
+    requester === "company" ? bodyLang : undefined
+  );
+  const studentLang: TpLang = resolveLang(
+    await getTpUserLanguage(supabase, { userId: studentId }),
+    requester === "student" ? bodyLang : undefined
+  );
+  const rawStudentName = `${stu?.first_name ?? ""} ${stu?.last_name ?? ""}`.trim();
   return {
     companyName: comp?.company_name || "The company",
     companyEmail: comp?.reference_email || compUser?.email || "",
-    studentName: `${stu?.first_name ?? ""} ${stu?.last_name ?? ""}`.trim() || "the candidate",
+    studentName: rawStudentName || "the candidate",
     studentEmail: stuUser?.email || "",
+    // Italian fallbacks for the generic names.
+    companyNameIt: comp?.company_name || "L'azienda",
+    studentNameIt: rawStudentName || "il candidato",
+    companyLang,
+    studentLang,
   };
 }
 
+// Map a "by" value (STUDENT / COMPANY) to the requester side, if known.
+function requesterFromBy(by: unknown): "company" | "student" | undefined {
+  if (by === "STUDENT") return "student";
+  if (by === "COMPANY") return "company";
+  return undefined;
+}
+
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+const MONTHS_IT = ["gen", "feb", "mar", "apr", "mag", "giu", "lug", "ago", "set", "ott", "nov", "dic"];
 // Format a "YYYY-MM-DDTHH:mm" wall-clock slot into "20 Jun 2026, 15:00".
 // No timezone conversion — the tz label is shown separately. Falls back to raw.
-function fmtSlot(datetime?: string): string {
+function fmtSlot(datetime?: string, lang: TpLang = "en"): string {
   if (!datetime) return "";
   const m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/.exec(datetime);
   if (!m) return datetime;
   const [, y, mo, d, h, mi] = m;
-  return `${parseInt(d, 10)} ${MONTHS[parseInt(mo, 10) - 1]} ${y}, ${h}:${mi}`;
+  return `${parseInt(d, 10)} ${(lang === "it" ? MONTHS_IT : MONTHS)[parseInt(mo, 10) - 1]} ${y}, ${h}:${mi}`;
 }
 
-function slotsHtml(slots: any[], timezone?: string) {
+function slotsHtml(slots: any[], timezone?: string, lang: TpLang = "en") {
   const tz = timezone ? ` <span style="color:#64748b">(${timezone})</span>` : "";
   return (slots || [])
-    .map((s, i) => `<li>Option ${i + 1}: <strong>${fmtSlot(s?.datetime)}</strong>${tz}${s?.label ? ` — ${s.label}` : ""}</li>`)
+    .map((s, i) => `<li>${pick(lang, "Option", "Opzione")} ${i + 1}: <strong>${fmtSlot(s?.datetime, lang)}</strong>${tz}${s?.label ? ` — ${s.label}` : ""}</li>`)
     .join("");
 }
 
@@ -93,21 +124,40 @@ async function handlePropose(supabase: any, body: any) {
     .single();
   if (error) throw error;
 
-  const p = await resolveParties(supabase, companyId, studentId);
+  const p = await resolveParties(
+    supabase, companyId, studentId, proposer === "STUDENT" ? "student" : "company", body.language
+  );
   const list = slotsHtml(proposedSlots, timezone);
+  const listFor = (lang: TpLang) => slotsHtml(proposedSlots, timezone, lang);
   const titlePart = title ? ` — <strong>${title}</strong>` : "";
   const subjTitle = title ? `: ${title}` : "";
 
   await sendAll([
     {
       to: p.studentEmail,
-      subject: `New meeting proposal from ${p.companyName}${subjTitle}`,
-      html: `<p><strong>${p.companyName}</strong> proposed a meeting${titlePart}. Open your <strong>Scheduled events</strong> tab to accept one of the times or propose your own:</p><ul>${list}</ul>`,
+      subject: pick(
+        p.studentLang,
+        `New meeting proposal from ${p.companyName}${subjTitle}`,
+        `Nuova proposta di incontro da ${p.companyNameIt}${subjTitle}`
+      ),
+      html: pick(
+        p.studentLang,
+        `<p><strong>${p.companyName}</strong> proposed a meeting${titlePart}. Open your <strong>Scheduled events</strong> tab to accept one of the times or propose your own:</p><ul>${list}</ul>`,
+        `<p><strong>${p.companyNameIt}</strong> ha proposto un incontro${titlePart}. Apri la sezione <strong>Eventi programmati</strong> per accettare uno degli orari o proporne di tuoi:</p><ul>${listFor("it")}</ul>`
+      ),
     },
     {
       to: p.companyEmail,
-      subject: `You proposed a meeting to ${p.studentName}${subjTitle}`,
-      html: `<p>You proposed a meeting to <strong>${p.studentName}</strong>${titlePart}. Proposed times:</p><ul>${list}</ul><p>You'll be notified when they respond.</p>`,
+      subject: pick(
+        p.companyLang,
+        `You proposed a meeting to ${p.studentName}${subjTitle}`,
+        `Hai proposto un incontro a ${p.studentNameIt}${subjTitle}`
+      ),
+      html: pick(
+        p.companyLang,
+        `<p>You proposed a meeting to <strong>${p.studentName}</strong>${titlePart}. Proposed times:</p><ul>${list}</ul><p>You'll be notified when they respond.</p>`,
+        `<p>Hai proposto un incontro a <strong>${p.studentNameIt}</strong>${titlePart}. Orari proposti:</p><ul>${listFor("it")}</ul><p>Riceverai una notifica quando il candidato risponderà.</p>`
+      ),
     },
     {
       to: ADMIN_EMAIL,
@@ -154,22 +204,46 @@ async function handleAccept(supabase: any, body: any) {
     .single();
   if (error) throw error;
 
-  const p = await resolveParties(supabase, meeting.company_id, meeting.student_id);
+  // The accepting party is the one who did NOT propose the slots.
+  const p = await resolveParties(
+    supabase,
+    meeting.company_id,
+    meeting.student_id,
+    requesterFromBy(body.by) ?? (meeting.proposed_by === "STUDENT" ? "company" : "student"),
+    body.language
+  );
   const tz = meeting.timezone ? ` (${meeting.timezone})` : "";
   const when = `<strong>${fmtSlot(acceptedSlot.datetime)}</strong>${tz}`;
+  const whenIt = `<strong>${fmtSlot(acceptedSlot.datetime, "it")}</strong>${tz}`;
   const titlePart = meeting.title ? ` — <strong>${meeting.title}</strong>` : "";
   const subjTitle = meeting.title ? `: ${meeting.title}` : "";
 
   await sendAll([
     {
       to: p.companyEmail,
-      subject: `Meeting confirmed with ${p.studentName}${subjTitle}`,
-      html: `<p><strong>${p.studentName}</strong> confirmed your meeting${titlePart} for ${when}.</p><p>Add the interview link from your dashboard (Selected Students → this candidate) so they can join.</p>`,
+      subject: pick(
+        p.companyLang,
+        `Meeting confirmed with ${p.studentName}${subjTitle}`,
+        `Incontro confermato con ${p.studentNameIt}${subjTitle}`
+      ),
+      html: pick(
+        p.companyLang,
+        `<p><strong>${p.studentName}</strong> confirmed your meeting${titlePart} for ${when}.</p><p>Add the interview link from your dashboard (Selected Students → this candidate) so they can join.</p>`,
+        `<p><strong>${p.studentNameIt}</strong> ha confermato l'incontro${titlePart} per il ${whenIt}.</p><p>Aggiungi il link del colloquio dalla tua dashboard (Candidati selezionati → questo candidato) così potrà collegarsi.</p>`
+      ),
     },
     {
       to: p.studentEmail,
-      subject: `Meeting confirmed with ${p.companyName}${subjTitle}`,
-      html: `<p>You confirmed the meeting with <strong>${p.companyName}</strong>${titlePart} for ${when}.</p><p>The video link will be shared before the call.</p>`,
+      subject: pick(
+        p.studentLang,
+        `Meeting confirmed with ${p.companyName}${subjTitle}`,
+        `Incontro confermato con ${p.companyNameIt}${subjTitle}`
+      ),
+      html: pick(
+        p.studentLang,
+        `<p>You confirmed the meeting with <strong>${p.companyName}</strong>${titlePart} for ${when}.</p><p>The video link will be shared before the call.</p>`,
+        `<p>Hai confermato l'incontro con <strong>${p.companyNameIt}</strong>${titlePart} per il ${whenIt}.</p><p>Il link della videochiamata ti verrà inviato prima della call.</p>`
+      ),
     },
     {
       to: ADMIN_EMAIL,
@@ -208,23 +282,40 @@ async function handleCounter(supabase: any, body: any) {
     .single();
   if (error) throw error;
 
-  const p = await resolveParties(supabase, meeting.company_id, meeting.student_id);
+  const p = await resolveParties(
+    supabase,
+    meeting.company_id,
+    meeting.student_id,
+    proposer === "STUDENT" ? "student" : "company",
+    body.language
+  );
   const list = slotsHtml(proposedSlots, timezone || meeting.timezone);
+  const listIt = slotsHtml(proposedSlots, timezone || meeting.timezone, "it");
   const titlePart = meeting.title ? ` — <strong>${meeting.title}</strong>` : "";
   const subjTitle = meeting.title ? `: ${meeting.title}` : "";
   // The party that did NOT propose is the one who now needs to respond.
   const counteredByStudent = proposer === "STUDENT";
+  const responderLang = counteredByStudent ? p.companyLang : p.studentLang;
+  const proposerLang = counteredByStudent ? p.studentLang : p.companyLang;
 
   await sendAll([
     {
       to: counteredByStudent ? p.companyEmail : p.studentEmail,
-      subject: `New times proposed${subjTitle}`,
-      html: `<p><strong>${counteredByStudent ? p.studentName : p.companyName}</strong> proposed new times${titlePart}. Open your <strong>Scheduled events</strong> tab to accept one or propose your own:</p><ul>${list}</ul>`,
+      subject: pick(responderLang, `New times proposed${subjTitle}`, `Nuovi orari proposti${subjTitle}`),
+      html: pick(
+        responderLang,
+        `<p><strong>${counteredByStudent ? p.studentName : p.companyName}</strong> proposed new times${titlePart}. Open your <strong>Scheduled events</strong> tab to accept one or propose your own:</p><ul>${list}</ul>`,
+        `<p><strong>${counteredByStudent ? p.studentNameIt : p.companyNameIt}</strong> ha proposto nuovi orari${titlePart}. Apri la sezione <strong>Eventi programmati</strong> per accettarne uno o proporne di tuoi:</p><ul>${listIt}</ul>`
+      ),
     },
     {
       to: counteredByStudent ? p.studentEmail : p.companyEmail,
-      subject: `You proposed new times${subjTitle}`,
-      html: `<p>You proposed new times${titlePart}. Proposed times:</p><ul>${list}</ul><p>You'll be notified when they respond.</p>`,
+      subject: pick(proposerLang, `You proposed new times${subjTitle}`, `Hai proposto nuovi orari${subjTitle}`),
+      html: pick(
+        proposerLang,
+        `<p>You proposed new times${titlePart}. Proposed times:</p><ul>${list}</ul><p>You'll be notified when they respond.</p>`,
+        `<p>Hai proposto nuovi orari${titlePart}. Orari proposti:</p><ul>${listIt}</ul><p>Riceverai una notifica quando l'altra parte risponderà.</p>`
+      ),
     },
     {
       to: ADMIN_EMAIL,
@@ -254,20 +345,30 @@ async function handleDecline(supabase: any, body: any) {
     .single();
   if (error) throw error;
 
-  const p = await resolveParties(supabase, meeting.company_id, meeting.student_id);
+  const p = await resolveParties(
+    supabase, meeting.company_id, meeting.student_id, requesterFromBy(body.by), body.language
+  );
   const titlePart = meeting.title ? ` — <strong>${meeting.title}</strong>` : "";
   const subjTitle = meeting.title ? `: ${meeting.title}` : "";
 
   await sendAll([
     {
       to: p.companyEmail,
-      subject: `Meeting declined${subjTitle}`,
-      html: `<p>The meeting${titlePart} with <strong>${p.studentName}</strong> was declined.</p>`,
+      subject: pick(p.companyLang, `Meeting declined${subjTitle}`, `Incontro rifiutato${subjTitle}`),
+      html: pick(
+        p.companyLang,
+        `<p>The meeting${titlePart} with <strong>${p.studentName}</strong> was declined.</p>`,
+        `<p>L'incontro${titlePart} con <strong>${p.studentNameIt}</strong> è stato rifiutato.</p>`
+      ),
     },
     {
       to: p.studentEmail,
-      subject: `Meeting declined${subjTitle}`,
-      html: `<p>The meeting${titlePart} with <strong>${p.companyName}</strong> was declined.</p>`,
+      subject: pick(p.studentLang, `Meeting declined${subjTitle}`, `Incontro rifiutato${subjTitle}`),
+      html: pick(
+        p.studentLang,
+        `<p>The meeting${titlePart} with <strong>${p.companyName}</strong> was declined.</p>`,
+        `<p>L'incontro${titlePart} con <strong>${p.companyNameIt}</strong> è stato rifiutato.</p>`
+      ),
     },
     {
       to: ADMIN_EMAIL,
@@ -305,27 +406,54 @@ async function handleSetLink(supabase: any, body: any) {
     .single();
   if (error) throw error;
 
-  const p = await resolveParties(supabase, meeting.company_id, meeting.student_id);
+  const p = await resolveParties(
+    supabase,
+    meeting.company_id,
+    meeting.student_id,
+    setter === "COMPANY" ? "company" : undefined,
+    body.language
+  );
   const tz = meeting.timezone ? ` (${meeting.timezone})` : "";
   const when = meeting.confirmed_slot?.datetime
     ? ` for <strong>${fmtSlot(meeting.confirmed_slot.datetime)}</strong>${tz}`
+    : "";
+  const whenIt = meeting.confirmed_slot?.datetime
+    ? ` del <strong>${fmtSlot(meeting.confirmed_slot.datetime, "it")}</strong>${tz}`
     : "";
   const titlePart = meeting.title ? ` — <strong>${meeting.title}</strong>` : "";
   const subjTitle = meeting.title ? `: ${meeting.title}` : "";
   const desc = updatePayload.description ? `<p>${updatePayload.description}</p>` : "";
   const linkHtml = `<p>Interview link: <a href="${meetLink}">${meetLink}</a></p>`;
+  const linkHtmlIt = `<p>Link del colloquio: <a href="${meetLink}">${meetLink}</a></p>`;
   const bySuffix = setter === "ADMIN" ? " (added by Career Pilot)" : "";
+  const bySuffixIt = setter === "ADMIN" ? " (aggiunto da Career Pilot)" : "";
 
   await sendAll([
     {
       to: p.studentEmail,
-      subject: `Interview link ready — ${p.companyName}${subjTitle}`,
-      html: `<p>Your interview with <strong>${p.companyName}</strong>${titlePart}${when} now has a link${bySuffix}.</p>${linkHtml}${desc}`,
+      subject: pick(
+        p.studentLang,
+        `Interview link ready — ${p.companyName}${subjTitle}`,
+        `Link del colloquio pronto — ${p.companyNameIt}${subjTitle}`
+      ),
+      html: pick(
+        p.studentLang,
+        `<p>Your interview with <strong>${p.companyName}</strong>${titlePart}${when} now has a link${bySuffix}.</p>${linkHtml}${desc}`,
+        `<p>Il tuo colloquio con <strong>${p.companyNameIt}</strong>${titlePart}${whenIt} ora ha un link${bySuffixIt}.</p>${linkHtmlIt}${desc}`
+      ),
     },
     {
       to: p.companyEmail,
-      subject: `Interview link set — ${p.studentName}${subjTitle}`,
-      html: `<p>The interview link for <strong>${p.studentName}</strong>${titlePart}${when} was saved${bySuffix}.</p>${linkHtml}${desc}`,
+      subject: pick(
+        p.companyLang,
+        `Interview link set — ${p.studentName}${subjTitle}`,
+        `Link del colloquio impostato — ${p.studentNameIt}${subjTitle}`
+      ),
+      html: pick(
+        p.companyLang,
+        `<p>The interview link for <strong>${p.studentName}</strong>${titlePart}${when} was saved${bySuffix}.</p>${linkHtml}${desc}`,
+        `<p>Il link del colloquio con <strong>${p.studentNameIt}</strong>${titlePart}${whenIt} è stato salvato${bySuffixIt}.</p>${linkHtmlIt}${desc}`
+      ),
     },
     {
       to: ADMIN_EMAIL,

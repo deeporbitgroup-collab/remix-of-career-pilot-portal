@@ -34,7 +34,6 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { PDFDocument } from 'pdf-lib';
-import KnowledgeBaseAdmin from "@/pages/admin/KnowledgeBaseAdmin";
 
 const COMPANY_SIZES = [
   { value: "STARTUP", label: "Startup (1-10)" },
@@ -61,7 +60,7 @@ const AdminDashboard = ({ embedded = false }: { embedded?: boolean }) => {
   const [students, setStudents] = useState<any[]>([]);
   const [companies, setCompanies] = useState<any[]>([]);
   const [paymentReceipts, setPaymentReceipts] = useState<any[]>([]);
-  const [activeTab, setActiveTab] = useState<'students' | 'companies' | 'payments' | 'notifications' | 'knowledge-base'>('students');
+  const [activeTab, setActiveTab] = useState<'students' | 'companies' | 'payments' | 'notifications'>('students');
   const [actionLoading, setActionLoading] = useState<{ [key: string]: boolean }>({});
   const [notifications, setNotifications] = useState<any[]>([]);
   const [selections, setSelections] = useState<any[]>([]);
@@ -1287,8 +1286,8 @@ const AdminDashboard = ({ embedded = false }: { embedded?: boolean }) => {
         </div>
 
         {/* Main Content */}
-        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'students' | 'companies' | 'payments' | 'notifications' | 'knowledge-base')} className="space-y-4">
-          <TabsList className="grid w-full grid-cols-5">
+        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'students' | 'companies' | 'payments' | 'notifications')} className="space-y-4">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="students" className="flex items-center gap-2">
               <Users className="h-4 w-4" />
               Students
@@ -1307,10 +1306,6 @@ const AdminDashboard = ({ embedded = false }: { embedded?: boolean }) => {
               {selections.length > 0 && (
                 <Badge className="ml-1 bg-primary">{selections.length}</Badge>
               )}
-            </TabsTrigger>
-            <TabsTrigger value="knowledge-base" className="flex items-center gap-2">
-              <BookOpen className="h-4 w-4" />
-              Knowledge Base
             </TabsTrigger>
           </TabsList>
 
@@ -1491,7 +1486,7 @@ const AdminDashboard = ({ embedded = false }: { embedded?: boolean }) => {
                         })()}
 
                         {/* Visibilità Aziende */}
-                        <div className="p-3 bg-sky-50 border border-sky-200 rounded-lg">
+                        <div className="p-3 bg-cbsky-50 border border-cbsky-200 rounded-lg">
                           <div className="flex items-center justify-between">
                             <div>
                               <p className="text-sm font-semibold text-steel-gray">👁️ Company Visibility</p>
@@ -2024,11 +2019,6 @@ const AdminDashboard = ({ embedded = false }: { embedded?: boolean }) => {
             </Card>
           </TabsContent>
 
-          {/* Knowledge Base Tab — reuses the full KB admin management (products,
-              bundles, orders, clients, audit) embedded, with tier selector. */}
-          <TabsContent value="knowledge-base">
-            <KnowledgeBaseAdmin embedded />
-          </TabsContent>
         </Tabs>
 
         {/* Admin: edit a company's profile — writes the SAME company_profiles row /

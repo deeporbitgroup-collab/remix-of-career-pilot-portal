@@ -5,19 +5,68 @@ import { Building, Users, Shield } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { TalentPoolLanguageProvider, useTalentPoolLanguage } from "@/contexts/TalentPoolLanguageContext";
 import { useStaggeredAnimation } from "@/hooks/useScrollAnimation";
-import londonCityBg from "@/assets/london-city.jpg";
 import careerPilotLogo from "@/assets/career-pilot-logo.png";
+import careerBoostMark from "@/assets/careerboost-mark-white.png";
+import TrustedLogos from "@/components/talent-pool/TrustedLogos";
+
+
+/**
+ * Hero title typed out letter by letter once, with the key word in the brand gradient;
+ * the caret disappears as soon as the sentence is complete. The full sentence is reserved invisibly underneath so the
+ * layout never jumps, and screen readers / reduced-motion users get it at once.
+ */
+const TypedHeadline = ({ prefix, highlight }: { prefix: string; highlight: string }) => {
+  const full = prefix + highlight;
+  const [count, setCount] = useState(0);
+
+  useEffect(() => {
+    const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    if (reduceMotion) {
+      setCount(full.length);
+      return;
+    }
+    setCount(0);
+    let i = 0;
+    let timer: ReturnType<typeof setTimeout>;
+    const tick = () => {
+      i += 1;
+      setCount(i);
+      if (i < full.length) timer = setTimeout(tick, 55 + Math.random() * 45);
+    };
+    timer = setTimeout(tick, 450);
+    return () => clearTimeout(timer);
+  }, [full]);
+
+  const typedPrefix = full.slice(0, Math.min(count, prefix.length));
+  const typedHighlight = count > prefix.length ? highlight.slice(0, count - prefix.length) : '';
+  const done = count >= full.length;
+
+  return (
+    <span className="relative block mx-auto max-w-4xl" aria-label={full}>
+      <span className="invisible" aria-hidden="true">
+        {prefix}{highlight}
+      </span>
+      <span className="absolute inset-0" aria-hidden="true">
+        {typedPrefix}
+        <span className="bg-gradient-to-r from-cbsky-300 via-cbsky-400 to-cbind-400 bg-clip-text text-transparent">
+          {typedHighlight}
+        </span>
+        {/* caret only while typing; zero-width so it never pushes the text onto a new line */}
+        {!done && (
+          <span className="inline-block w-0 overflow-visible">
+            <span className="inline-block w-[3px] h-[0.85em] -mb-[0.06em] ml-1 rounded-sm bg-cbsky-400 align-baseline" />
+          </span>
+        )}
+      </span>
+    </span>
+  );
+};
 
 const TalentPoolContent = () => {
   const navigate = useNavigate();
-  const { t, setLanguage } = useTalentPoolLanguage();
+  const { t, tx, language, setLanguage } = useTalentPoolLanguage();
   const [selectedRole, setSelectedRole] = useState<string | null>(null);
   const { containerRef, getItemProps } = useStaggeredAnimation(100);
-
-  // Force English — Talent Pool landing is English-only
-  useEffect(() => {
-    setLanguage('en');
-  }, [setLanguage]);
 
   const handleRoleSelect = (role: 'student' | 'company') => {
     setSelectedRole(role);
@@ -25,39 +74,54 @@ const TalentPoolContent = () => {
   };
 
   return (
-    <div className="min-h-[100svh] md:h-[100svh] md:overflow-hidden relative flex flex-col animate-fade-in">
-      {/* Background Image with Overlay */}
-      <div 
-        className="fixed inset-0 z-0 animate-scale-in"
-        style={{
-          backgroundImage: `url(${londonCityBg})`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          backgroundRepeat: 'no-repeat'
-        }}
-      />
-      <div className="fixed inset-0 z-0 bg-gradient-to-br from-slate-950/85 via-slate-900/80 to-slate-950/90 backdrop-blur-[2px] animate-fade-in" />
+    <div className="h-[100svh] overflow-hidden relative flex flex-col animate-fade-in">
+      {/* CareerBoost silk background: near-black + diagonal blue bands + aurora glows */}
+      <div className="fixed inset-0 z-0 cb-silk-bg animate-fade-in" />
+      <div className="fixed inset-0 z-0 cb-silk-ribbons opacity-70 animate-fade-in" />
+      <div className="fixed inset-0 z-0 bg-gradient-to-b from-transparent via-transparent to-cbslate-950/60 animate-fade-in" />
       
       {/* Navigation Bar - Elegant */}
-      <nav className="relative z-20 border-b border-sky-500/20 bg-slate-950/80 backdrop-blur-md animate-fade-in">
-        <div className="container mx-auto px-6 py-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="h-9 w-9 bg-gradient-to-br from-sky-500 to-sky-600 rounded flex items-center justify-center shadow-lg shadow-sky-500/20">
-                <Building className="h-5 w-5 text-slate-950" />
-              </div>
-              <div>
-                <h2 className="text-lg font-bold text-sky-50 tracking-tight">{t('landing.nav.title')}</h2>
-                <p className="text-[10px] text-sky-500/90 font-semibold tracking-widest">{t('landing.nav.subtitle')}</p>
-              </div>
+      <nav className="relative z-20 border-b border-cbsky-500/20 bg-cbslate-950/80 backdrop-blur-md animate-fade-in">
+        <div className="container mx-auto px-4 md:px-6 py-3">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 md:gap-3 min-w-0">
+              <img
+                src={careerBoostMark}
+                alt="CareerBoost"
+                className="h-9 md:h-10 w-auto shrink-0 select-none"
+                draggable={false}
+              />
+              <p className="text-base md:text-xl font-normal text-white whitespace-nowrap" style={{ fontFamily: "'Times New Roman', Times, serif" }}>
+                careerboost.it
+                <span className="mx-1.5 md:mx-2 text-cbsky-500/50 font-light">|</span>
+                <span className="text-cbsky-400">Summit</span>
+              </p>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-1.5 md:gap-3 shrink-0">
+              {/* Language choice for the whole Talent Pool (student + company areas, texts and emails) */}
+              <div role="group" aria-label={tx("Language", "Lingua")} className="flex items-center rounded-full border border-cbsky-500/30 bg-cbslate-900/70 p-0.5">
+                {(['it', 'en'] as const).map((lang) => (
+                  <button
+                    key={lang}
+                    type="button"
+                    onClick={() => setLanguage(lang)}
+                    aria-pressed={language === lang}
+                    className={`px-2 md:px-3 py-1 rounded-full text-xs font-bold whitespace-nowrap tracking-wide transition-colors ${
+                      language === lang
+                        ? 'bg-cbsky-500 text-cbslate-950'
+                        : 'text-cbsky-100/70 hover:text-cbsky-50'
+                    }`}
+                  >
+                    {lang.toUpperCase()}
+                  </button>
+                ))}
+              </div>
               <Button
                 variant="ghost"
                 onClick={() => navigate('/')}
-                className="text-sm text-sky-100/70 hover:text-sky-50 hover:bg-white/5 border border-transparent hover:border-sky-500/20"
+                className="px-2 md:px-4 text-sm text-cbsky-100/70 hover:text-cbsky-50 hover:bg-white/5 border border-transparent hover:border-cbsky-500/20"
               >
-                ← {t('landing.nav.back')}
+                ←<span className="hidden sm:inline ml-1">{t('landing.nav.back')}</span>
               </Button>
             </div>
           </div>
@@ -65,62 +129,56 @@ const TalentPoolContent = () => {
       </nav>
 
       {/* Main Content */}
-      <div ref={containerRef} className="relative z-10 flex-1 md:min-h-0 flex flex-col justify-center container mx-auto px-4 md:px-6 py-6 md:py-4">
+      <div ref={containerRef} className="relative z-10 flex-1 min-h-0 flex flex-col justify-center container mx-auto px-4 md:px-6 py-3 md:py-4">
         {/* Hero Section */}
-        <div className="text-center mb-5 md:mb-6">
-          <div {...getItemProps(0)} className="inline-flex items-center gap-2 bg-slate-900/70 border border-sky-500/40 text-sky-100 px-4 py-2 rounded text-xs font-bold mb-4 backdrop-blur-sm shadow-lg">
-            <Shield className="h-3.5 w-3.5 text-sky-400" />
+        <div className="text-center mb-3 md:mb-5">
+          <div {...getItemProps(0)} className="inline-flex items-center gap-2 bg-cbslate-900/70 border border-cbsky-500/40 text-cbsky-100 px-3 py-1.5 rounded text-xs font-bold mb-2 md:mb-3 backdrop-blur-sm shadow-lg">
+            <Shield className="h-3.5 w-3.5 text-cbsky-400" />
             {t('landing.hero.badge')}
           </div>
-          
-          <h1 {...getItemProps(1)} className="text-2xl md:text-3xl lg:text-4xl font-bold text-sky-50 mb-2 tracking-tight drop-shadow-lg px-4">
-            {t('landing.hero.title')}
+
+          <h1 {...getItemProps(1)} className="text-2xl md:text-4xl lg:text-5xl font-semibold tracking-tight leading-tight text-white mb-2 px-4">
+            <TypedHeadline
+              prefix={tx('Connect talent and ', 'Connetti talento e ')}
+              highlight={tx('opportunity', 'opportunità')}
+            />
           </h1>
-          <div {...getItemProps(2)} className="w-24 h-0.5 bg-gradient-to-r from-transparent via-sky-500 to-transparent mx-auto mb-3"></div>
-          <p {...getItemProps(3)} className="text-sm text-slate-200 max-w-2xl mx-auto font-light leading-relaxed drop-shadow-md">
+          <div {...getItemProps(2)} className="w-24 h-0.5 bg-gradient-to-r from-transparent via-cbsky-500 to-transparent mx-auto mb-2"></div>
+          <p {...getItemProps(3)} className="hidden sm:block text-sm text-cbslate-200 max-w-2xl mx-auto font-light leading-relaxed drop-shadow-md">
             {t('landing.hero.subtitle')}
-          </p>
-          <p {...getItemProps(4)} className="text-xs text-sky-300 mt-2 font-semibold">
-            {t('landing.hero.limited')}
           </p>
         </div>
         
         {/* Value Proposition - Elite Style (desktop only; mobile keeps the screen to the access cards) */}
-        <div className="hidden md:grid md:grid-cols-2 gap-4 max-w-4xl mx-auto mb-6">
-          <div {...getItemProps(5)} className="bg-slate-900/50 border border-emerald-500/30 rounded-lg p-5 backdrop-blur-md hover:border-emerald-500/50 transition-all shadow-lg">
+        <div className="hidden md:grid md:grid-cols-2 gap-4 max-w-4xl mx-auto mb-4">
+          <div {...getItemProps(5)} className="bg-cbslate-900/50 border border-cbind-500/30 rounded-lg p-5 backdrop-blur-md hover:border-cbind-500/50 transition-all shadow-lg">
             <div className="flex items-center gap-4">
-              <div className="h-12 w-12 rounded bg-gradient-to-br from-emerald-500/20 to-emerald-600/10 border border-emerald-500/30 flex items-center justify-center flex-shrink-0">
-                <Building className="h-6 w-6 text-emerald-400" />
+              <div className="h-12 w-12 rounded bg-gradient-to-br from-cbind-500/20 to-cbind-600/10 border border-cbind-500/30 flex items-center justify-center flex-shrink-0">
+                <Building className="h-6 w-6 text-cbind-400" />
               </div>
               <div className="flex-1">
-                <h3 className="font-bold text-sky-50 text-base mb-1 tracking-tight">
+                <h3 className="font-bold text-cbsky-50 text-base mb-1 tracking-tight">
                   {t('landing.values.companies.title')}
                 </h3>
-                <p className="text-xs text-slate-400 mb-2 leading-relaxed">
+                <p className="text-xs text-cbslate-400 leading-relaxed">
                   {t('landing.values.companies.description')}
                 </p>
-                <span className="inline-block px-3 py-1 bg-emerald-950/50 border border-emerald-500/40 text-emerald-400 rounded text-[11px] font-bold tracking-wide">
-                  {t('landing.values.companies.badge')}
-                </span>
               </div>
             </div>
           </div>
           
-          <div {...getItemProps(6)} className="bg-slate-900/50 border border-sky-500/30 rounded-lg p-5 backdrop-blur-md hover:border-sky-500/50 transition-all shadow-lg">
+          <div {...getItemProps(6)} className="bg-cbslate-900/50 border border-cbsky-500/30 rounded-lg p-5 backdrop-blur-md hover:border-cbsky-500/50 transition-all shadow-lg">
             <div className="flex items-center gap-4">
-              <div className="h-12 w-12 rounded bg-gradient-to-br from-sky-500/20 to-sky-600/10 border border-sky-500/30 flex items-center justify-center flex-shrink-0">
-                <Users className="h-6 w-6 text-sky-400" />
+              <div className="h-12 w-12 rounded bg-gradient-to-br from-cbsky-500/20 to-cbsky-600/10 border border-cbsky-500/30 flex items-center justify-center flex-shrink-0">
+                <Users className="h-6 w-6 text-cbsky-400" />
               </div>
               <div className="flex-1">
-                <h3 className="font-bold text-sky-50 text-base mb-1 tracking-tight">
+                <h3 className="font-bold text-cbsky-50 text-base mb-1 tracking-tight">
                   {t('landing.values.students.title')}
                 </h3>
-                <p className="text-xs text-slate-400 mb-2 leading-relaxed">
+                <p className="text-xs text-cbslate-400 leading-relaxed">
                   {t('landing.values.students.description')}
                 </p>
-                <span className="inline-block px-3 py-1 bg-sky-950/50 border border-sky-500/40 text-sky-400 rounded text-[11px] font-bold tracking-wide">
-                  {t('landing.values.students.pricing')}
-                </span>
               </div>
             </div>
           </div>
@@ -129,88 +187,105 @@ const TalentPoolContent = () => {
         {/* Role Selection - Premium Cards */}
         <div className="flex items-center justify-center">
           <div className="w-full max-w-5xl">
-            <h2 className="text-lg md:text-2xl font-bold text-sky-50 text-center mb-3 md:mb-4 tracking-tight">
+            <h2 className="text-base md:text-2xl font-bold text-cbsky-50 text-center mb-2 md:mb-3 tracking-tight">
               {t('landing.roleSelection.title')}
             </h2>
 
-            {/* Desktop: 2-up grid. Mobile: two cards side by side or stacked. */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-5 max-w-3xl mx-auto">
+            {/* Mobile: horizontal scroll — Student full, Company peeks in (sneak peek), swipe to reveal.
+                sm+: standard 2-up grid. */}
+            <div className="flex sm:grid sm:grid-cols-2 gap-4 md:gap-5 max-w-3xl mx-auto overflow-x-auto sm:overflow-visible snap-x snap-mandatory sm:snap-none scrollbar-hide pb-2">
               {/* Student Card */}
-              <Card 
+              <Card
                 {...getItemProps(7)}
-                className="group relative overflow-hidden border border-slate-700/50 hover:border-sky-500/50 transition-all duration-500 cursor-pointer bg-slate-900/70 backdrop-blur-xl hover:shadow-2xl hover:shadow-sky-500/10 hover:-translate-y-2 hover:scale-105"
+                className="group relative overflow-hidden shrink-0 w-[85%] sm:w-auto snap-start border border-cbslate-700/50 hover:border-cbsky-500/50 transition-all duration-500 cursor-pointer bg-cbslate-900/70 backdrop-blur-xl hover:shadow-2xl hover:shadow-cbsky-500/10 sm:hover:-translate-y-2 sm:hover:scale-105"
                 onClick={() => handleRoleSelect('student')}
               >
-                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-sky-500/5 to-transparent rounded-full -mr-16 -mt-16 group-hover:scale-150 transition-transform duration-700" />
-                <div className="relative p-5">
-                  <div className="mb-3 flex justify-center">
-                    <div className="h-16 w-16 rounded bg-gradient-to-br from-slate-700 to-slate-800 border border-sky-500/20 flex items-center justify-center shadow-xl shadow-sky-500/10 group-hover:scale-105 transition-transform duration-500">
-                      <Users className="h-8 w-8 text-sky-400" />
+                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-cbsky-500/5 to-transparent rounded-full -mr-16 -mt-16 group-hover:scale-150 transition-transform duration-700" />
+                <div className="relative p-4">
+                  <div className="mb-2 flex justify-center">
+                    <div className="h-12 w-12 rounded bg-gradient-to-br from-cbslate-700 to-cbslate-800 border border-cbsky-500/20 flex items-center justify-center shadow-xl shadow-cbsky-500/10 group-hover:scale-105 transition-transform duration-500">
+                      <Users className="h-6 w-6 text-cbsky-400" />
                     </div>
                   </div>
-                  <h3 className="text-xl font-bold text-sky-50 text-center mb-2 tracking-tight">
+                  <h3 className="text-xl font-bold text-cbsky-50 text-center mb-2 tracking-tight">
                     {t('landing.roleSelection.student.title')}
                   </h3>
-                  <p className="text-slate-400 text-center mb-4 text-xs leading-relaxed">
+                  <p className="hidden sm:block text-cbslate-400 text-center mb-3 text-xs leading-relaxed">
                     {t('landing.roleSelection.student.description')}
                   </p>
-                  <Button className="w-full bg-slate-800 hover:bg-slate-700 border border-sky-500/30 hover:border-sky-500/50 text-sky-100 shadow-lg font-bold text-sm tracking-wide">
-                    {t('landing.roleSelection.student.button')}
+                  <Button className="w-full bg-cbslate-800 hover:bg-cbslate-700 border border-cbsky-500/30 hover:border-cbsky-500/50 text-cbsky-100 shadow-lg font-bold text-sm tracking-wide">
+                    Log in
                   </Button>
                 </div>
               </Card>
 
-              {/* Company Card */}
-              <Card 
+              {/* Company Card — peeks in from the right edge on mobile */}
+              <Card
                 {...getItemProps(8)}
-                className="group relative overflow-hidden border border-slate-700/50 hover:border-emerald-500/50 transition-all duration-500 cursor-pointer bg-slate-900/70 backdrop-blur-xl hover:shadow-2xl hover:shadow-emerald-500/10 hover:-translate-y-2 hover:scale-105"
+                className="group relative overflow-hidden shrink-0 w-[85%] sm:w-auto snap-start border border-cbslate-700/50 hover:border-cbind-500/50 transition-all duration-500 cursor-pointer bg-cbslate-900/70 backdrop-blur-xl hover:shadow-2xl hover:shadow-cbind-500/10 sm:hover:-translate-y-2 sm:hover:scale-105"
                 onClick={() => handleRoleSelect('company')}
               >
-                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-emerald-500/5 to-transparent rounded-full -mr-16 -mt-16 group-hover:scale-150 transition-transform duration-700" />
-                <div className="relative p-5">
-                  <div className="mb-3 flex justify-center">
-                    <div className="h-16 w-16 rounded bg-gradient-to-br from-emerald-600 to-emerald-700 border border-emerald-400/20 flex items-center justify-center shadow-xl shadow-emerald-500/20 group-hover:scale-105 transition-transform duration-500">
-                      <Building className="h-8 w-8 text-white" />
+                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-cbind-500/5 to-transparent rounded-full -mr-16 -mt-16 group-hover:scale-150 transition-transform duration-700" />
+                <div className="relative p-4">
+                  <div className="mb-2 flex justify-center">
+                    <div className="h-12 w-12 rounded bg-gradient-to-br from-cbind-600 to-cbind-700 border border-cbind-400/20 flex items-center justify-center shadow-xl shadow-cbind-500/20 group-hover:scale-105 transition-transform duration-500">
+                      <Building className="h-6 w-6 text-white" />
                     </div>
                   </div>
-                  <h3 className="text-xl font-bold text-sky-50 text-center mb-2 tracking-tight">
+                  <h3 className="text-xl font-bold text-cbsky-50 text-center mb-2 tracking-tight">
                     {t('landing.roleSelection.company.title')}
                   </h3>
-                  <p className="text-slate-400 text-center mb-4 text-xs leading-relaxed">
+                  <p className="hidden sm:block text-cbslate-400 text-center mb-3 text-xs leading-relaxed">
                     {t('landing.roleSelection.company.description')}
                   </p>
-                  <Button className="w-full bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white shadow-lg font-bold text-sm tracking-wide">
-                    {t('landing.roleSelection.company.button')}
+                  <Button className="w-full bg-gradient-to-r from-cbind-600 to-cbind-700 hover:from-cbind-700 hover:to-cbind-800 text-white shadow-lg font-bold text-sm tracking-wide">
+                    Log in
                   </Button>
                 </div>
               </Card>
             </div>
+
+            {/* Discreet admin access (CareerBoost team) */}
+            <div className="mt-3 flex justify-center">
+              <button
+                type="button"
+                onClick={() => navigate('/talent-pool/admin')}
+                className="px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-cbslate-500/80 transition-colors hover:text-cbsky-400"
+                aria-label="Admin access"
+              >
+                CPA
+              </button>
+            </div>
+
+            {/* Black & white partner / destination logo marquee */}
+            <TrustedLogos label={tx('Our network', 'Il nostro network')} />
           </div>
+
         </div>
       </div>
 
       {/* Footer - Elegant */}
-      <footer className="relative z-20 border-t border-sky-500/20 bg-slate-950/80 backdrop-blur-md">
+      <footer className="relative z-20 border-t border-cbsky-500/20 bg-cbslate-950/80 backdrop-blur-md">
         <div className="container mx-auto px-6 py-3">
           <div className="flex flex-col md:flex-row items-center justify-between gap-2">
-            <div className="flex flex-wrap items-center justify-center gap-3 text-xs text-slate-400">
-              <a href="/terms" className="hover:text-sky-400 transition-colors font-medium">
+            <div className="flex flex-wrap items-center justify-center gap-3 text-xs text-cbslate-400">
+              <a href="/terms" className="hover:text-cbsky-400 transition-colors font-medium">
                 {t('landing.footer.terms')}
               </a>
-              <span className="text-slate-600">•</span>
-              <a href="/privacy" className="hover:text-sky-400 transition-colors font-medium">
+              <span className="text-cbslate-600">•</span>
+              <a href="/privacy" className="hover:text-cbsky-400 transition-colors font-medium">
                 {t('landing.footer.privacy')}
               </a>
-              <span className="text-slate-600">•</span>
-              <a href="mailto:Careerpilot2025@gmail.com" className="hover:text-sky-400 transition-colors font-medium">
-                Careerpilot2025@gmail.com
+              <span className="text-cbslate-600">•</span>
+              <a href="mailto:info@careerboost.it" className="hover:text-cbsky-400 transition-colors font-medium">
+                info@careerboost.it
               </a>
-              <span className="text-slate-600">•</span>
-              <a href="https://wa.me/447826932893" target="_blank" rel="noopener noreferrer" className="hover:text-sky-400 transition-colors font-medium flex items-center gap-1">
-                <span>📱 WhatsApp Support</span>
+              <span className="text-cbslate-600">•</span>
+              <a href="https://wa.me/447826932893" target="_blank" rel="noopener noreferrer" className="hover:text-cbsky-400 transition-colors font-medium flex items-center gap-1">
+                <span>📱 {tx("WhatsApp Support", "Assistenza WhatsApp")}</span>
               </a>
             </div>
-            <p className="text-[10px] text-slate-500 font-light tracking-wide">
+            <p className="text-[10px] text-cbslate-500 font-light tracking-wide">
               {t('landing.footer.copyright')}
             </p>
           </div>

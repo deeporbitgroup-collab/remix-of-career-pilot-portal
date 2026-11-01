@@ -53,6 +53,7 @@ import KnowledgeBaseCheckout from "./pages/KnowledgeBaseCheckout";
 import KnowledgeBaseAdmin from "./pages/admin/KnowledgeBaseAdmin";
 import PaymentSuccess from "./pages/PaymentSuccess";
 import PaymentCanceled from "./pages/PaymentCanceled";
+import { TalentPoolThemeSync } from "@/lib/talentPoolTheme";
 
 const queryClient = new QueryClient();
 
@@ -64,23 +65,24 @@ const App = () => (
           <Toaster />
           <Sonner />
           <BrowserRouter>
+            <TalentPoolThemeSync />
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/terms" element={<Terms />} />
               <Route path="/associate-terms" element={<AssociateTerms />} />
               <Route path="/privacy" element={<Privacy />} />
-              <Route path="/talent-pool" element={<TalentPoolLanguageProvider><TalentPoolMain /></TalentPoolLanguageProvider>} />
-              <Route path="/talent-pool/admin" element={<TalentPoolLanguageProvider><TalentPoolAdminLogin /></TalentPoolLanguageProvider>} />
-              <Route path="/talent-pool/admin/dashboard" element={<TalentPoolLanguageProvider><TalentPoolAdminDashboard /></TalentPoolLanguageProvider>} />
-              <Route path="/talent-pool/student/auth" element={<TalentPoolLanguageProvider><StudentAuth /></TalentPoolLanguageProvider>} />
-              <Route path="/talent-pool/student" element={<TalentPoolLanguageProvider><StudentAuth /></TalentPoolLanguageProvider>} />
-              <Route path="/talent-pool/student/dashboard" element={<TalentPoolLanguageProvider><StudentDashboard /></TalentPoolLanguageProvider>} />
+              <Route path="/talent-pool" element={<TalentPoolLanguageProvider><div className="tp-cb min-h-screen"><TalentPoolMain /></div></TalentPoolLanguageProvider>} />
+              <Route path="/talent-pool/admin" element={<TalentPoolLanguageProvider><div className="tp-cb min-h-screen"><TalentPoolAdminLogin /></div></TalentPoolLanguageProvider>} />
+              <Route path="/talent-pool/admin/dashboard" element={<TalentPoolLanguageProvider><div className="tp-cb min-h-screen"><TalentPoolAdminDashboard /></div></TalentPoolLanguageProvider>} />
+              <Route path="/talent-pool/student/auth" element={<TalentPoolLanguageProvider><div className="tp-cb tp-student min-h-screen"><StudentAuth /></div></TalentPoolLanguageProvider>} />
+              <Route path="/talent-pool/student" element={<TalentPoolLanguageProvider><div className="tp-cb tp-student min-h-screen"><StudentAuth /></div></TalentPoolLanguageProvider>} />
+              <Route path="/talent-pool/student/dashboard" element={<TalentPoolLanguageProvider><div className="tp-cb tp-student min-h-screen"><StudentDashboard /></div></TalentPoolLanguageProvider>} />
               
-              <Route path="/talent-pool/company/auth" element={<TalentPoolLanguageProvider><CompanyAuth /></TalentPoolLanguageProvider>} />
-              <Route path="/talent-pool/company" element={<TalentPoolLanguageProvider><CompanyAuth /></TalentPoolLanguageProvider>} />
-              <Route path="/talent-pool/company/dashboard" element={<TalentPoolLanguageProvider><CompanyDashboard /></TalentPoolLanguageProvider>} />
-              <Route path="/talent-pool/company/selected-students" element={<TalentPoolLanguageProvider><CompanySelectedStudents /></TalentPoolLanguageProvider>} />
-              <Route path="/talent-pool/reset-password" element={<TalentPoolLanguageProvider><ResetPassword /></TalentPoolLanguageProvider>} />
+              <Route path="/talent-pool/company/auth" element={<TalentPoolLanguageProvider><div className="tp-cb min-h-screen"><CompanyAuth /></div></TalentPoolLanguageProvider>} />
+              <Route path="/talent-pool/company" element={<TalentPoolLanguageProvider><div className="tp-cb min-h-screen"><CompanyAuth /></div></TalentPoolLanguageProvider>} />
+              <Route path="/talent-pool/company/dashboard" element={<TalentPoolLanguageProvider><div className="tp-cb min-h-screen"><CompanyDashboard /></div></TalentPoolLanguageProvider>} />
+              <Route path="/talent-pool/company/selected-students" element={<TalentPoolLanguageProvider><div className="tp-cb min-h-screen"><CompanySelectedStudents /></div></TalentPoolLanguageProvider>} />
+              <Route path="/talent-pool/reset-password" element={<TalentPoolLanguageProvider><div className="tp-cb min-h-screen"><ResetPassword /></div></TalentPoolLanguageProvider>} />
               
               {/* Pathways Routes - Wrapped in PathwaysLayout */}
               <Route element={<PathwaysLayout />}>

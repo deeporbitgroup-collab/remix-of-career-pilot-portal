@@ -1,7 +1,7 @@
 {
   "landing": {
     "nav": {
-      "title": "Talent Pool By Career Pilot",
+      "title": "Talent Pool By CareerBoost",
       "subtitle": "EXCLUSIVE NETWORK",
       "back": "Torna"
     },
@@ -44,7 +44,7 @@
     "footer": {
       "terms": "Termini",
       "privacy": "Privacy",
-      "copyright": "© 2025 Career Pilot"
+      "copyright": "© 2025 CareerBoost"
     }
   },
   "studentAuth": {
@@ -74,7 +74,7 @@
       "coverLetter": "Lettera di Presentazione (PDF, max 10MB)",
       "coverLetterOptional": "(opzionale — altamente consigliata)",
       "photo": "Foto Profilo",
-      "photoHint": "Consigliata - verrà mostrata ad aziende e admin. JPG o PNG, max 5MB.",
+      "photoHint": "Consigliata - verrà mostrata alle aziende e al nostro team. JPG o PNG, max 5MB.",
       "photoChange": "Cambia foto",
       "photoAdd": "Aggiungi foto",
       "photoTypeError": "Puoi caricare solo immagini (JPG, PNG, ecc.)",
@@ -105,13 +105,13 @@
     },
     "success": {
       "registrationComplete": "Registrazione completata!",
-      "registrationCompleteDesc": "La tua registrazione è stata inviata. Ti avviseremo dopo la revisione di Career Pilot.",
+      "registrationCompleteDesc": "La tua registrazione è stata inviata. Ti avviseremo dopo la revisione di CareerBoost.",
       "loginSuccess": "Accesso riuscito",
       "loginSuccessDesc": "Benvenuto!"
     },
     "status": {
       "pending": "Account in revisione",
-      "pendingDesc": "Il tuo account è ancora in revisione da parte di Career Pilot",
+      "pendingDesc": "Il tuo account è ancora in revisione da parte di CareerBoost",
       "rejected": "Account rifiutato",
       "rejectedDesc": "La tua registrazione è stata rifiutata"
     }
@@ -173,7 +173,7 @@
     },
     "success": {
       "registrationComplete": "Registrazione completata!",
-      "registrationCompleteDesc": "La tua richiesta è in attesa di approvazione da parte di Career Pilot.",
+      "registrationCompleteDesc": "La tua richiesta è in attesa di approvazione da parte di CareerBoost.",
       "loginSuccess": "Accesso riuscito",
       "loginSuccessDesc": "Benvenuto nella Talent Pool"
     },
@@ -187,11 +187,11 @@
   "companyDashboard": {
     "partner": {
       "title": "Azienda Convenzionata",
-      "subtitle": "Accesso completo al pool di candidati selezionati e approvati da Career Pilot.",
+      "subtitle": "Accesso completo al pool di candidati selezionati e approvati da CareerBoost.",
       "active": "Attiva",
       "since": "Partner dal",
-      "verified": "Verificata da Career Pilot",
-      "visibilityNote": "Vedi solo i profili dei candidati ammessi dall'admin e resi visibili al pool.",
+      "verified": "Verificata da CareerBoost",
+      "visibilityNote": "Vedi solo i profili dei candidati ammessi da noi e resi visibili al pool.",
       "statsCandidates": "Candidati",
       "statsSelected": "Selezionati"
     },
@@ -208,12 +208,12 @@
     },
     "students": {
       "emptyTitle": "Nessun candidato disponibile al momento",
-      "emptyDesc": "Qui compariranno i profili dei candidati registrati al Talent Pool e approvati dall'admin con accesso attivo."
+      "emptyDesc": "Qui compariranno i profili dei candidati registrati al Talent Pool e approvati da noi con accesso attivo."
     }
   },
   "adminLogin": {
     "title": "Accesso Admin",
-    "subtitle": "Area riservata Career Pilot",
+    "subtitle": "Area riservata CareerBoost",
     "back": "Torna indietro",
     "email": "Email",
     "emailPlaceholder": "admin@careerpilot.com",
@@ -342,12 +342,12 @@
     },
     "success": {
       "uploaded": "Ricevuta caricata!",
-      "uploadedDesc": "La tua ricevuta è in attesa di verifica da parte di Career Pilot"
+      "uploadedDesc": "La tua ricevuta è in attesa di verifica da parte di CareerBoost"
     }
   },
   "studentTalentPool": {
     "header": {
-      "title": "Talent Pool - Career Pilot",
+      "title": "Talent Pool - CareerBoost",
       "logout": "Esci"
     },
     "profile": {
@@ -417,7 +417,7 @@
   },
   "studentTalentPool": {
     "header": {
-      "title": "Talent Pool - Career Pilot",
+      "title": "Talent Pool - CareerBoost",
       "logout": "Esci"
     },
     "profile": {

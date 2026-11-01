@@ -13,30 +13,30 @@ import { useToast } from "@/hooks/use-toast";
 import { Building, Lock, Mail, ArrowLeft, Linkedin, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { z } from "zod";
-import { TalentPoolLanguageProvider, useTalentPoolLanguage } from "@/contexts/TalentPoolLanguageContext";
+import { TalentPoolLanguageProvider, useTalentPoolLanguage, syncTalentPoolLanguageToAccount } from "@/contexts/TalentPoolLanguageContext";
 import { ForgotPasswordDialog } from "@/components/talent-pool/ForgotPasswordDialog";
 import { TALENT_POOL_COMPANY_SECTORS } from "@/data/talentPoolSectors";
 import { normalizeTalentPoolEmail, talentPoolPasswordHash } from "@/lib/talentPoolPassword";
 
-const companySchema = z.object({
-  companyName: z.string().trim().min(1, "Company name required").max(200),
-  sector: z.string().min(1, "Sector required"),
-  size: z.enum(["STARTUP", "BOUTIQUE", "MEDIUM_SIZE", "LARGE_COMPANY"]),
-  referenceEmail: z.string().trim().email("Invalid email").max(255),
-  password: z.string().min(8, "Minimum 8 characters")
-    .regex(/[A-Z]/, "At least one uppercase letter required")
-    .regex(/[0-9]/, "At least one number required"),
+const getCompanySchema = (tx: (en: string, it: string) => string) => z.object({
+  companyName: z.string().trim().min(1, tx("Company name required", "Nome azienda obbligatorio")).max(200),
+  sector: z.string().min(1, tx("Sector required", "Settore obbligatorio")),
+  size: z.enum(["STARTUP", "BOUTIQUE", "MEDIUM_SIZE", "LARGE_COMPANY"], { errorMap: () => ({ message: tx("Size required", "Dimensione obbligatoria") }) }),
+  referenceEmail: z.string().trim().email(tx("Invalid email", "Email non valida")).max(255),
+  password: z.string().min(8, tx("Minimum 8 characters", "Minimo 8 caratteri"))
+    .regex(/[A-Z]/, tx("At least one uppercase letter required", "Serve almeno una lettera maiuscola"))
+    .regex(/[0-9]/, tx("At least one number required", "Serve almeno un numero")),
   confirmPassword: z.string(),
   linkedin: z.string().url().optional().or(z.literal("")),
-  termsAccepted: z.boolean().refine(val => val === true, "You must accept the terms")
+  termsAccepted: z.boolean().refine(val => val === true, tx("You must accept the terms", "Devi accettare i termini"))
 }).refine(data => data.password === data.confirmPassword, {
-  message: "Passwords do not match",
+  message: tx("Passwords do not match", "Le password non coincidono"),
   path: ["confirmPassword"]
 });
 
 const CompanyAuthContent = () => {
   const { toast } = useToast();
-  const { t } = useTalentPoolLanguage();
+  const { t, tx, language } = useTalentPoolLanguage();
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const [legalDialog, setLegalDialog] = useState<'terms' | 'privacy' | null>(null);
@@ -62,7 +62,7 @@ const CompanyAuthContent = () => {
 
   const validateForm = () => {
     try {
-      companySchema.parse(formData);
+      getCompanySchema(tx).parse(formData);
       setErrors({});
       return true;
     } catch (error) {
@@ -125,7 +125,7 @@ const CompanyAuthContent = () => {
         const isDuplicate = !!(regError && (regError.code === '23505' || regError.message?.toLowerCase().includes('duplicate') || regError.message?.toLowerCase().includes('unique')));
         toast({
           title: isDuplicate ? t('companyAuth.errors.emailExists') : t('companyAuth.errors.registrationError'),
-          description: isDuplicate ? t('companyAuth.errors.emailExistsDesc') : (regError?.message || t('companyAuth.errors.registrationErrorDesc')),
+          description: isDuplicate ? t('companyAuth.errors.emailExistsDesc') : tx(regError?.message || t('companyAuth.errors.registrationErrorDesc'), t('companyAuth.errors.registrationErrorDesc')),
           variant: "destructive"
         });
         setIsLoading(false);
@@ -133,6 +133,14 @@ const CompanyAuthContent = () => {
       }
 
       const userId = newUserId as string;
+
+      // Save the chosen language on the new account (best-effort; never blocks registration).
+      try {
+        const { error: langError } = await supabase.rpc('talent_pool_set_language' as any, { p_user_id: userId, p_language: language });
+        if (langError) console.error('Saving language preference failed (non-fatal):', langError);
+      } catch (langErr) {
+        console.error('Saving language preference failed (non-fatal):', langErr);
+      }
 
       // Create company profile via secure RPC to bypass RLS
       const { error: profileError } = await supabase.rpc('talent_pool_create_company_profile', {
@@ -170,7 +178,8 @@ const CompanyAuthContent = () => {
             sector: formData.sector,
             size: formData.size,
             referenceEmail: formData.referenceEmail,
-            linkedin: formData.linkedin
+            linkedin: formData.linkedin,
+            language
           }
         });
       } catch (emailError) {
@@ -224,13 +233,13 @@ const CompanyAuthContent = () => {
 
       if (error) {
         if (error.code === '28000' || error.message?.includes('INVALID_CREDENTIALS')) {
-          throw new Error("Invalid credentials");
+          throw new Error(tx("Invalid credentials", "Credenziali non valide"));
         }
         throw error;
       }
 
       if (!data) {
-        throw new Error("Error during login");
+        throw new Error(tx("Error during login", "Errore durante l'accesso"));
       }
 
       // Parse the JSONB response
@@ -259,6 +268,7 @@ const CompanyAuthContent = () => {
       // Store session
       localStorage.setItem('talentPoolRole', 'COMPANY');
       localStorage.setItem('talentPoolUser', JSON.stringify(userData));
+      syncTalentPoolLanguageToAccount(language);
 
       toast({
         title: t('companyAuth.success.loginSuccess'),
@@ -346,7 +356,7 @@ const CompanyAuthContent = () => {
                     className="text-sm text-muted-foreground hover:text-primary"
                     onClick={() => setShowForgotPassword(true)}
                   >
-                    Forgot your password?
+                    {tx("Forgot your password?", "Hai dimenticato la password?")}
                   </Button>
                 </div>
               </form>
@@ -402,8 +412,8 @@ const CompanyAuthContent = () => {
                       <SelectContent>
                         <SelectItem value="STARTUP">Startup</SelectItem>
                         <SelectItem value="BOUTIQUE">Boutique</SelectItem>
-                        <SelectItem value="MEDIUM_SIZE">Medium size</SelectItem>
-                        <SelectItem value="LARGE_COMPANY">Large company</SelectItem>
+                        <SelectItem value="MEDIUM_SIZE">{tx("Medium size", "Media impresa")}</SelectItem>
+                        <SelectItem value="LARGE_COMPANY">{tx("Large company", "Grande azienda")}</SelectItem>
                       </SelectContent>
                     </Select>
                     {errors.size && <p className="text-red-500 text-sm">{errors.size}</p>}
@@ -490,10 +500,10 @@ const CompanyAuthContent = () => {
                 
                 <div className="bg-amber-50 border border-amber-200 p-4 rounded-lg">
                   <p className="text-sm font-semibold text-amber-900 mb-2">
-                    ⚠️ Important Platform Policy
+                    ⚠️ {tx("Important Platform Policy", "Regola importante della piattaforma")}
                   </p>
                   <p className="text-sm text-amber-800">
-                    It is strictly prohibited to communicate with students you have selected outside of this platform. All communication must remain within the CareerPilot Talent Pool platform to ensure transparency and compliance with our policies.
+                    {tx("It is strictly prohibited to communicate with students you have selected outside of this platform. All communication must remain within the CareerBoost Talent Pool platform to ensure transparency and compliance with our policies.", "È severamente vietato comunicare al di fuori di questa piattaforma con gli studenti che hai selezionato. Tutte le comunicazioni devono avvenire all'interno della piattaforma CareerBoost Talent Pool, per garantire trasparenza e il rispetto delle nostre regole.")}
                   </p>
                 </div>
                 

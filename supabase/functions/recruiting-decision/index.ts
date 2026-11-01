@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { Resend } from "npm:resend@2.0.0";
+import { getTpUserLanguage, pick, resolveLang, type TpLang } from "../_shared/tpLanguage.ts";
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
 const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -22,7 +23,15 @@ function json(status: number, body: unknown) {
 
 // Resolve display names + notification emails for both parties (same shape the
 // meeting flow uses, so behaviour stays consistent across recruiting actions).
-async function resolveParties(supabase: any, companyId: string, studentId: string) {
+// requester: who performed the action — their body.language is the fallback when
+// their preferred_language can't be read from the DB.
+async function resolveParties(
+  supabase: any,
+  companyId: string,
+  studentId: string,
+  requester?: "company" | "student",
+  bodyLang?: unknown
+) {
   const { data: comp } = await supabase
     .from("company_profiles").select("company_name, reference_email").eq("user_id", companyId).maybeSingle();
   const { data: compUser } = await supabase
@@ -31,11 +40,25 @@ async function resolveParties(supabase: any, companyId: string, studentId: strin
     .from("student_profiles").select("first_name, last_name").eq("user_id", studentId).maybeSingle();
   const { data: stuUser } = await supabase
     .from("talent_pool_users").select("email").eq("id", studentId).maybeSingle();
+  const companyLang: TpLang = resolveLang(
+    await getTpUserLanguage(supabase, { userId: companyId }),
+    requester === "company" ? bodyLang : undefined
+  );
+  const studentLang: TpLang = resolveLang(
+    await getTpUserLanguage(supabase, { userId: studentId }),
+    requester === "student" ? bodyLang : undefined
+  );
+  const rawStudentName = `${stu?.first_name ?? ""} ${stu?.last_name ?? ""}`.trim();
   return {
     companyName: comp?.company_name || "The company",
     companyEmail: comp?.reference_email || compUser?.email || "",
-    studentName: `${stu?.first_name ?? ""} ${stu?.last_name ?? ""}`.trim() || "the candidate",
+    studentName: rawStudentName || "the candidate",
     studentEmail: stuUser?.email || "",
+    // Italian fallbacks for the generic names.
+    companyNameIt: comp?.company_name || "L'azienda",
+    studentNameIt: rawStudentName || "il candidato",
+    companyLang,
+    studentLang,
   };
 }
 
@@ -74,21 +97,38 @@ async function handleOffer(supabase: any, body: any) {
   const updated = await setStage(supabase, companyId, studentId, "OFFER");
   if (!updated) return json(404, { error: "Selection not found for this company/candidate" });
 
-  const p = await resolveParties(supabase, companyId, studentId);
+  const p = await resolveParties(supabase, companyId, studentId, "company", body.language);
   const rolePart = jobTitle ? ` for <strong>${jobTitle}</strong>` : "";
+  const rolePartIt = jobTitle ? ` per il ruolo di <strong>${jobTitle}</strong>` : "";
   const subjRole = jobTitle ? `: ${jobTitle}` : "";
   const msg = message ? `<p>${message}</p>` : "";
 
   await sendAll([
     {
       to: p.studentEmail,
-      subject: `🎉 You received an offer from ${p.companyName}${subjRole}`,
-      html: `<p>Great news — <strong>${p.companyName}</strong> would like to make you an offer${rolePart}.</p>${msg}<p>They'll be in touch with the details. You can see this in your Talent Pool dashboard under the company that selected you.</p>`,
+      subject: pick(
+        p.studentLang,
+        `🎉 You received an offer from ${p.companyName}${subjRole}`,
+        `🎉 Hai ricevuto un'offerta da ${p.companyNameIt}${subjRole}`
+      ),
+      html: pick(
+        p.studentLang,
+        `<p>Great news — <strong>${p.companyName}</strong> would like to make you an offer${rolePart}.</p>${msg}<p>They'll be in touch with the details. You can see this in your Talent Pool dashboard under the company that selected you.</p>`,
+        `<p>Ottime notizie — <strong>${p.companyNameIt}</strong> vorrebbe farti un'offerta${rolePartIt}.</p>${msg}<p>L'azienda ti contatterà con i dettagli. Puoi vederlo nella tua dashboard del Talent Pool, sotto l'azienda che ti ha selezionato.</p>`
+      ),
     },
     {
       to: p.companyEmail,
-      subject: `Offer sent to ${p.studentName}${subjRole}`,
-      html: `<p>You sent an offer to <strong>${p.studentName}</strong>${rolePart}.</p>${msg}<p>The candidate and Career Pilot have been notified.</p>`,
+      subject: pick(
+        p.companyLang,
+        `Offer sent to ${p.studentName}${subjRole}`,
+        `Offerta inviata a ${p.studentNameIt}${subjRole}`
+      ),
+      html: pick(
+        p.companyLang,
+        `<p>You sent an offer to <strong>${p.studentName}</strong>${rolePart}.</p>${msg}<p>The candidate and Career Pilot have been notified.</p>`,
+        `<p>Hai inviato un'offerta a <strong>${p.studentNameIt}</strong>${rolePartIt}.</p>${msg}<p>Il candidato e Career Pilot sono stati informati.</p>`
+      ),
     },
     {
       to: ADMIN_EMAIL,
@@ -109,19 +149,32 @@ async function handleReject(supabase: any, body: any) {
   const updated = await setStage(supabase, companyId, studentId, "REJECTED");
   if (!updated) return json(404, { error: "Selection not found for this company/candidate" });
 
-  const p = await resolveParties(supabase, companyId, studentId);
+  const p = await resolveParties(supabase, companyId, studentId, "company", body.language);
   const reasonPart = reason ? `<p>Note from the company: ${reason}</p>` : "";
+  const reasonPartIt = reason ? `<p>Nota dell'azienda: ${reason}</p>` : "";
 
   await sendAll([
     {
       to: p.studentEmail,
-      subject: `Update on your application with ${p.companyName}`,
-      html: `<p>Thank you for your interest. <strong>${p.companyName}</strong> has decided not to move forward at this time.</p>${reasonPart}<p>Keep your profile active — other companies in the Talent Pool can still reach you.</p>`,
+      subject: pick(
+        p.studentLang,
+        `Update on your application with ${p.companyName}`,
+        `Aggiornamento sulla tua candidatura con ${p.companyNameIt}`
+      ),
+      html: pick(
+        p.studentLang,
+        `<p>Thank you for your interest. <strong>${p.companyName}</strong> has decided not to move forward at this time.</p>${reasonPart}<p>Keep your profile active — other companies in the Talent Pool can still reach you.</p>`,
+        `<p>Grazie per il tuo interesse. <strong>${p.companyNameIt}</strong> ha deciso di non procedere per il momento.</p>${reasonPartIt}<p>Mantieni attivo il tuo profilo — le altre aziende del Talent Pool possono comunque contattarti.</p>`
+      ),
     },
     {
       to: p.companyEmail,
-      subject: `You declined ${p.studentName}`,
-      html: `<p>You marked <strong>${p.studentName}</strong> as not selected.</p>${reasonPart}<p>The candidate and Career Pilot have been notified.</p>`,
+      subject: pick(p.companyLang, `You declined ${p.studentName}`, `Hai scartato ${p.studentNameIt}`),
+      html: pick(
+        p.companyLang,
+        `<p>You marked <strong>${p.studentName}</strong> as not selected.</p>${reasonPart}<p>The candidate and Career Pilot have been notified.</p>`,
+        `<p>Hai segnato <strong>${p.studentNameIt}</strong> come non selezionato.</p>${reasonPartIt}<p>Il candidato e Career Pilot sono stati informati.</p>`
+      ),
     },
     {
       to: ADMIN_EMAIL,

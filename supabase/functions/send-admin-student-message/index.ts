@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { Resend } from "npm:resend@2.0.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { getTpUserLanguage, pick, resolveLang } from "../_shared/tpLanguage.ts";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
@@ -81,11 +82,16 @@ serve(async (req: Request) => {
     // Send email based on sender role
     if (senderRole === 'ADMIN') {
       // Admin sent message to student
+      // Recipient = the student (the requester is the admin, so no body.language fallback).
+      const lang = resolveLang(await getTpUserLanguage(supabase, { userId: studentId }));
+      const localTimestamp = lang === 'it'
+        ? new Date().toLocaleString('it-IT', { timeZone: 'Europe/Rome', dateStyle: 'medium', timeStyle: 'short' })
+        : timestamp;
       const emailHtml = `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
           <div style="background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%); padding: 30px; text-align: center;">
             <h1 style="color: white; margin: 0;">CareerPilot</h1>
-            <p style="color: #e0e7ff; margin-top: 10px;">New Message from the Admin</p>
+            <p style="color: #e0e7ff; margin-top: 10px;">${pick(lang, "New Message from the Admin", "Nuovo messaggio dall'Admin")}</p>
           </div>
           
           <div style="background: white; padding: 30px; border: 1px solid #e5e7eb;">
@@ -96,16 +102,16 @@ serve(async (req: Request) => {
             </div>
             
             <p style="color: #6b7280; font-size: 14px;">
-              <strong>Sent:</strong> ${timestamp}
+              <strong>${pick(lang, "Sent:", "Inviato:")}</strong> ${localTimestamp}
             </p>
 
             <p style="color: #4b5563; line-height: 1.6; margin-top: 20px;">
-              You can reply to this message from your dashboard.
+              ${pick(lang, "You can reply to this message from your dashboard.", "Puoi rispondere a questo messaggio dalla tua dashboard.")}
             </p>
 
             <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb; text-align: center;">
               <p style="color: #6b7280; font-size: 14px; margin: 0;">
-                CareerPilot - Building Careers Together
+                ${pick(lang, "CareerPilot - Building Careers Together", "CareerPilot - Costruiamo carriere insieme")}
               </p>
             </div>
           </div>
@@ -115,7 +121,7 @@ serve(async (req: Request) => {
       const { error: emailError } = await resend.emails.send({
         from: "CareerPilot <noreply@careerpilot.it>",
         to: [studentEmail],
-        subject: "New message from CareerPilot Admin",
+        subject: pick(lang, "New message from CareerPilot Admin", "Nuovo messaggio dall'Admin di CareerPilot"),
         html: emailHtml,
       });
 

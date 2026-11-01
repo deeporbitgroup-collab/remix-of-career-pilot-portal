@@ -1,7 +1,7 @@
 {
   "landing": {
     "nav": {
-      "title": "Talent Pool By Career Pilot",
+      "title": "Talent Pool By CareerBoost",
       "subtitle": "EXCLUSIVE NETWORK",
       "back": "Back"
     },
@@ -44,7 +44,7 @@
     "footer": {
       "terms": "Terms",
       "privacy": "Privacy",
-      "copyright": "© 2025 Career Pilot"
+      "copyright": "© 2025 CareerBoost"
     }
   },
   "studentAuth": {
@@ -74,7 +74,7 @@
       "coverLetter": "Cover Letter (PDF, max 10MB)",
       "coverLetterOptional": "(optional — highly recommended)",
       "photo": "Profile Photo",
-      "photoHint": "Recommended - shown to companies and admins. JPG or PNG, max 5MB.",
+      "photoHint": "Recommended - shown to companies and our team. JPG or PNG, max 5MB.",
       "photoChange": "Change photo",
       "photoAdd": "Add photo",
       "photoTypeError": "You can only upload images (JPG, PNG, etc.)",
@@ -105,13 +105,13 @@
     },
     "success": {
       "registrationComplete": "Registration complete!",
-      "registrationCompleteDesc": "Your registration has been submitted. We'll notify you after Career Pilot's review.",
+      "registrationCompleteDesc": "Your registration has been submitted. We'll notify you after CareerBoost's review.",
       "loginSuccess": "Login successful",
       "loginSuccessDesc": "Welcome!"
     },
     "status": {
       "pending": "Account under review",
-      "pendingDesc": "Your account is still under Career Pilot's review",
+      "pendingDesc": "Your account is still under CareerBoost's review",
       "rejected": "Account rejected",
       "rejectedDesc": "Your registration has been rejected"
     }
@@ -173,7 +173,7 @@
     },
     "success": {
       "registrationComplete": "Registration complete!",
-      "registrationCompleteDesc": "Your request is awaiting approval from Career Pilot.",
+      "registrationCompleteDesc": "Your request is awaiting approval from CareerBoost.",
       "loginSuccess": "Login successful",
       "loginSuccessDesc": "Welcome to the Talent Pool"
     },
@@ -187,11 +187,11 @@
   "companyDashboard": {
     "partner": {
       "title": "Partner Company",
-      "subtitle": "Full access to Career Pilot's curated, admin-approved candidate pool.",
+      "subtitle": "Full access to CareerBoost's curated candidate pool, approved by us.",
       "active": "Active",
       "since": "Partner since",
-      "verified": "Verified by Career Pilot",
-      "visibilityNote": "You only see candidates admitted by admin and made visible to the pool.",
+      "verified": "Verified by CareerBoost",
+      "visibilityNote": "You only see candidates admitted by us and made visible to the pool.",
       "statsCandidates": "Candidates",
       "statsSelected": "Selected"
     },
@@ -208,12 +208,12 @@
     },
     "students": {
       "emptyTitle": "No candidates available right now",
-      "emptyDesc": "Profiles of registered Talent Pool candidates will appear here once admin approves them and grants pool access."
+      "emptyDesc": "Profiles of registered Talent Pool candidates will appear here once we approve them and grant pool access."
     }
   },
   "adminLogin": {
     "title": "Admin Access",
-    "subtitle": "Career Pilot reserved area",
+    "subtitle": "CareerBoost reserved area",
     "back": "Go back",
     "email": "Email",
     "emailPlaceholder": "admin@careerpilot.com",
@@ -342,12 +342,12 @@
     },
     "success": {
       "uploaded": "Receipt uploaded!",
-      "uploadedDesc": "Your receipt is awaiting verification from Career Pilot"
+      "uploadedDesc": "Your receipt is awaiting verification from CareerBoost"
     }
   },
   "studentTalentPool": {
     "header": {
-      "title": "Talent Pool - Career Pilot",
+      "title": "Talent Pool - CareerBoost",
       "logout": "Logout"
     },
     "profile": {
@@ -417,7 +417,7 @@
   },
   "studentTalentPool": {
     "header": {
-      "title": "Talent Pool - Career Pilot",
+      "title": "Talent Pool - CareerBoost",
       "logout": "Logout"
     },
     "profile": {

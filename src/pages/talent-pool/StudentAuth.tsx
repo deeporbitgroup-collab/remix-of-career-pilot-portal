@@ -13,35 +13,35 @@ import { Users, Lock, Mail, Phone, User, ArrowLeft, Upload, Linkedin, FileText, 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { supabase } from "@/integrations/supabase/client";
 import { z } from "zod";
-import { TalentPoolLanguageProvider, useTalentPoolLanguage } from "@/contexts/TalentPoolLanguageContext";
+import { TalentPoolLanguageProvider, useTalentPoolLanguage, syncTalentPoolLanguageToAccount } from "@/contexts/TalentPoolLanguageContext";
 import { ForgotPasswordDialog } from "@/components/talent-pool/ForgotPasswordDialog";
 import { normalizeTalentPoolEmail, talentPoolPasswordHash } from "@/lib/talentPoolPassword";
 
-const studentSchema = z.object({
-  firstName: z.string().trim().min(1, "Name required").max(100),
-  lastName: z.string().trim().min(1, "Surname required").max(100),
-  email: z.string().trim().email("Invalid email").max(255),
-  phone: z.string().trim().min(10, "Invalid phone number"),
-  password: z.string().min(8, "Minimum 8 characters")
-    .regex(/[A-Z]/, "At least one uppercase letter required")
-    .regex(/[0-9]/, "At least one number required"),
+const getStudentSchema = (tx: (en: string, it: string) => string) => z.object({
+  firstName: z.string().trim().min(1, tx("Name required", "Nome obbligatorio")).max(100),
+  lastName: z.string().trim().min(1, tx("Surname required", "Cognome obbligatorio")).max(100),
+  email: z.string().trim().email(tx("Invalid email", "Email non valida")).max(255),
+  phone: z.string().trim().min(10, tx("Invalid phone number", "Numero di telefono non valido")),
+  password: z.string().min(8, tx("Minimum 8 characters", "Minimo 8 caratteri"))
+    .regex(/[A-Z]/, tx("At least one uppercase letter required", "Serve almeno una lettera maiuscola"))
+    .regex(/[0-9]/, tx("At least one number required", "Serve almeno un numero")),
   confirmPassword: z.string(),
   linkedin: z.string()
     .optional()
     .refine(
       (val) => !val || val === "" || val.startsWith("https://www.linkedin.com/") || val.startsWith("https://linkedin.com/"),
-      "Enter a valid LinkedIn URL (https://www.linkedin.com/...)"
+      tx("Enter a valid LinkedIn URL (https://www.linkedin.com/...)", "Inserisci un URL LinkedIn valido (https://www.linkedin.com/...)")
     ),
-  termsAccepted: z.boolean().refine(val => val === true, "You must accept the terms")
+  termsAccepted: z.boolean().refine(val => val === true, tx("You must accept the terms", "Devi accettare i termini"))
 }).refine(data => data.password === data.confirmPassword, {
-  message: "Passwords do not match",
+  message: tx("Passwords do not match", "Le password non coincidono"),
   path: ["confirmPassword"]
 });
 
 const StudentAuthContent = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { t } = useTalentPoolLanguage();
+  const { t, tx, language } = useTalentPoolLanguage();
   const [isLoading, setIsLoading] = useState(false);
   const [step, setStep] = useState(1);
   const [cvFile, setCvFile] = useState<File | null>(null);
@@ -71,7 +71,7 @@ const StudentAuthContent = () => {
 
   const validateForm = () => {
     try {
-      studentSchema.parse(formData);
+      getStudentSchema(tx).parse(formData);
       setErrors({});
       return true;
     } catch (error) {
@@ -253,6 +253,14 @@ const StudentAuthContent = () => {
         return;
       }
 
+      // Save the chosen language on the new account (best-effort; never blocks registration).
+      try {
+        const { error: langError } = await supabase.rpc('talent_pool_set_language' as any, { p_user_id: newUserId, p_language: language });
+        if (langError) console.error('Saving language preference failed (non-fatal):', langError);
+      } catch (langErr) {
+        console.error('Saving language preference failed (non-fatal):', langErr);
+      }
+
       // Update profile with the already-uploaded document URLs (avoids RLS)
       const { error: updateError } = await supabase.rpc('talent_pool_update_student_documents', {
         _user_id: newUserId,
@@ -274,7 +282,7 @@ const StudentAuthContent = () => {
         }
       }
 
-      // Send email notification to Career Pilot admin
+      // Send email notification to CareerBoost admin
       try {
         await supabase.functions.invoke('send-student-registration', {
           body: {
@@ -284,7 +292,8 @@ const StudentAuthContent = () => {
             phone: formData.phone,
             linkedin: formData.linkedin,
             cvUrl: cvPublicUrl,
-            coverLetterUrl: coverPublicUrl
+            coverLetterUrl: coverPublicUrl,
+            language
           }
         });
       } catch (emailError) {
@@ -294,7 +303,7 @@ const StudentAuthContent = () => {
 
       toast({
         title: t('studentAuth.success.registrationComplete'),
-        description: "Registration complete! Welcome to the Talent Pool.",
+        description: tx("Registration complete! Welcome to the Talent Pool.", "Registrazione completata! Benvenuto nella Talent Pool."),
       });
 
       // Auto-login the newly registered student
@@ -308,6 +317,7 @@ const StudentAuthContent = () => {
           const userData = typeof loginData === 'string' ? JSON.parse(loginData) : loginData;
           localStorage.setItem('talentPoolRole', 'STUDENT');
           localStorage.setItem('talentPoolUser', JSON.stringify(userData));
+          syncTalentPoolLanguageToAccount(language);
           navigate("/talent-pool/student/dashboard");
           return;
         }
@@ -345,13 +355,13 @@ const StudentAuthContent = () => {
 
       if (error) {
         if (error.code === '28000' || error.message?.includes('INVALID_CREDENTIALS')) {
-          throw new Error("Invalid credentials");
+          throw new Error(tx("Invalid credentials", "Credenziali non valide"));
         }
         throw error;
       }
 
       if (!data) {
-        throw new Error("Error during login");
+        throw new Error(tx("Error during login", "Errore durante l'accesso"));
       }
 
       // Parse the JSONB response
@@ -362,8 +372,8 @@ const StudentAuthContent = () => {
 
       if (userStatus === 'rejected') {
         toast({
-          title: "Access Denied",
-          description: "Your account has been deactivated.",
+          title: tx("Access Denied", "Accesso negato"),
+          description: tx("Your account has been deactivated.", "Il tuo account è stato disattivato."),
           variant: "destructive"
         });
         return;
@@ -373,6 +383,7 @@ const StudentAuthContent = () => {
       // Store session
       localStorage.setItem('talentPoolRole', 'STUDENT');
       localStorage.setItem('talentPoolUser', JSON.stringify(userData));
+      syncTalentPoolLanguageToAccount(language);
 
       // Redirect to dashboard - it will handle payment logic
       toast({
@@ -406,11 +417,11 @@ const StudentAuthContent = () => {
             {t('studentAuth.back')}
           </Button>
           <div className="flex items-center justify-center mb-4">
-            <div className="w-16 h-16 bg-sky-blue/20 rounded-full flex items-center justify-center">
-              <Users className="h-8 w-8 text-sky" />
+            <div className="w-16 h-16 bg-cbsky-500/20 rounded-full flex items-center justify-center">
+              <Users className="h-8 w-8 text-cbsky-600" />
             </div>
           </div>
-          <CardTitle className="text-2xl text-center text-sky">
+          <CardTitle className="text-2xl text-center text-cbsky-600">
             {t('studentAuth.title')}
           </CardTitle>
         </CardHeader>
@@ -458,7 +469,7 @@ const StudentAuthContent = () => {
                     className="text-sm text-muted-foreground hover:text-primary"
                     onClick={() => setShowForgotPassword(true)}
                   >
-                    Forgot your password?
+                    {tx("Forgot your password?", "Hai dimenticato la password?")}
                   </Button>
                 </div>
               </form>
@@ -472,22 +483,22 @@ const StudentAuthContent = () => {
             
             <TabsContent value="register">
               <form onSubmit={handleRegister} className="space-y-4">
-                <div className="flex flex-col items-center gap-3 rounded-lg border border-sky-blue/30 bg-sky-blue/5 p-4">
+                <div className="flex flex-col items-center gap-3 rounded-lg border border-cbsky-500/30 bg-cbsky-500/5 p-4">
                   <Label className="self-start flex items-center gap-2 text-sm">
                     <Camera className="h-4 w-4" />
                     {t('studentAuth.register.photo')}
                   </Label>
                   <div className="flex flex-col sm:flex-row items-center gap-4 w-full">
-                    <Avatar className="h-24 w-24 border-2 border-sky-blue/40">
-                      <AvatarImage src={photoPreview || undefined} alt="Profile preview" className="object-cover" />
-                      <AvatarFallback className="bg-sky-blue/10">
-                        <User className="h-10 w-10 text-sky" />
+                    <Avatar className="h-24 w-24 border-2 border-cbsky-500/40">
+                      <AvatarImage src={photoPreview || undefined} alt={tx("Profile preview", "Anteprima foto profilo")} className="object-cover" />
+                      <AvatarFallback className="bg-cbsky-500/10">
+                        <User className="h-10 w-10 text-cbsky-600" />
                       </AvatarFallback>
                     </Avatar>
                     <div className="flex-1 w-full space-y-2 text-center sm:text-left">
                       <Label
                         htmlFor="register-photo"
-                        className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-md border border-sky-blue/40 bg-white px-4 py-2 text-sm font-medium text-sky hover:bg-sky-blue/10 transition-colors"
+                        className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-md border border-cbsky-500/40 bg-white px-4 py-2 text-sm font-medium text-cbsky-600 hover:bg-cbsky-500/10 transition-colors"
                       >
                         <Upload className="h-4 w-4" />
                         {photoFile ? t('studentAuth.register.photoChange') : t('studentAuth.register.photoAdd')}
@@ -550,7 +561,7 @@ const StudentAuthContent = () => {
                     <Label className="flex items-center gap-2">
                       <FileText className="h-4 w-4" />
                       {t('studentAuth.register.coverLetter')}{' '}
-                      <span className="text-xs font-normal text-sky">{t('studentAuth.register.coverLetterOptional')}</span>
+                      <span className="text-xs font-normal text-cbsky-600">{t('studentAuth.register.coverLetterOptional')}</span>
                     </Label>
                     <Input
                       type="file"
@@ -565,19 +576,19 @@ const StudentAuthContent = () => {
                   {/* No CV / cover letter yet? Offer the professional rewriting
                       service (Altitude single products). Direct redirect — the
                       target product is highlighted on arrival. */}
-                  <div className="rounded-lg border border-sky-blue/30 bg-sky-blue/5 p-4 space-y-2">
-                    <p className="text-sm font-semibold text-sky">Don't have a CV or cover letter yet?</p>
+                  <div className="rounded-lg border border-cbsky-500/30 bg-cbsky-500/5 p-4 space-y-2">
+                    <p className="text-sm font-semibold text-cbsky-600">{tx("Don't have a CV or cover letter yet?", "Non hai ancora un CV o una lettera di presentazione?")}</p>
                     <p className="text-xs text-steel-gray">
-                      Have it written from scratch by a professional who works in your target sector.
+                      {tx("Have it written from scratch by a professional who works in your target sector.", "Fattelo scrivere da zero da un professionista che lavora nel tuo settore di riferimento.")}
                     </p>
                     <Button
                       type="button"
                       variant="outline"
-                      className="w-full border-sky-blue/40 text-sky hover:bg-sky-blue/10"
+                      className="w-full border-cbsky-600 text-cbsky-700 hover:bg-cbsky-600 hover:text-white transition-colors"
                       onClick={() => navigate(`/client-portal/services?category=Altitude&service=${encodeURIComponent('CV / Cover Letter Rewrite')}`)}
                     >
                       <FileText className="mr-2 h-4 w-4" />
-                      Get my CV / cover letter written by a pro →
+                      {tx("Get my CV / cover letter written by a pro →", "Fai scrivere CV / lettera da un professionista →")}
                     </Button>
                   </div>
                 </div>
@@ -611,13 +622,13 @@ const StudentAuthContent = () => {
                   <Input
                     id="linkedin"
                     type="text"
-                    placeholder="https://www.linkedin.com/in/your-profile"
+                    placeholder={tx("https://www.linkedin.com/in/your-profile", "https://www.linkedin.com/in/il-tuo-profilo")}
                     value={formData.linkedin}
                     onChange={(e) => setFormData({...formData, linkedin: e.target.value})}
                     className={errors.linkedin ? "border-red-500" : ""}
                   />
                   {errors.linkedin && <p className="text-red-500 text-sm">{errors.linkedin}</p>}
-                  <p className="text-xs text-steel-gray">Optional - Enter your full LinkedIn profile</p>
+                  <p className="text-xs text-steel-gray">{tx("Optional - Enter your full LinkedIn profile", "Facoltativo - Inserisci il link completo al tuo profilo LinkedIn")}</p>
                 </div>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -659,7 +670,7 @@ const StudentAuthContent = () => {
                     <button
                       type="button"
                       onClick={() => setLegalDialog('terms')}
-                      className="text-sky hover:underline"
+                      className="text-cbsky-600 hover:underline"
                     >
                       {t('studentAuth.register.termsLink')}
                     </button>
@@ -667,7 +678,7 @@ const StudentAuthContent = () => {
                     <button
                       type="button"
                       onClick={() => setLegalDialog('privacy')}
-                      className="text-sky hover:underline"
+                      className="text-cbsky-600 hover:underline"
                     >
                       {t('studentAuth.register.privacyLink')}
                     </button>
@@ -677,16 +688,10 @@ const StudentAuthContent = () => {
                 
                 <div className="bg-amber-50 border border-amber-200 p-4 rounded-lg">
                   <p className="text-sm font-semibold text-amber-900 mb-2">
-                    ⚠️ Important Platform Policy
+                    ⚠️ {tx("Important Platform Policy", "Regola importante della piattaforma")}
                   </p>
                   <p className="text-sm text-amber-800">
-                    It is strictly prohibited to communicate with companies that have selected you outside of this platform. All communication must remain within the CareerPilot Talent Pool platform to ensure transparency and compliance with our policies.
-                  </p>
-                </div>
-                
-                <div className="bg-sky-blue/10 p-4 rounded-lg border border-sky-blue/20">
-                  <p className="text-sm text-steel-gray">
-                    {t('studentAuth.register.studentPlan')}
+                    {tx("It is strictly prohibited to communicate with companies that have selected you outside of this platform. All communication must remain within the CareerBoost Talent Pool platform to ensure transparency and compliance with our policies.", "È severamente vietato comunicare al di fuori di questa piattaforma con le aziende che ti hanno selezionato. Tutte le comunicazioni devono avvenire all'interno della piattaforma CareerBoost Talent Pool, per garantire trasparenza e il rispetto delle nostre regole.")}
                   </p>
                 </div>
                 

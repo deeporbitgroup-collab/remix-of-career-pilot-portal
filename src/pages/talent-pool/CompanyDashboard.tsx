@@ -35,26 +35,59 @@ import {
   Users,
   CheckCircle2,
   Eye,
-  Play
+  Play,
+  Briefcase,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { TalentPoolLanguageProvider, useTalentPoolLanguage } from "@/contexts/TalentPoolLanguageContext";
 import { cn } from "@/lib/utils";
 import { formatSlot } from "@/lib/meeting-format";
+import { format as formatDate, parseISO, isValid } from "date-fns";
+import { it as itLocale } from "date-fns/locale";
 
 import { TALENT_POOL_COMPANY_SECTORS } from "@/data/talentPoolSectors";
 
-const SIZES = [
+const getSizes = (tx: (en: string, it: string) => string) => [
   { value: "STARTUP", label: "Startup" },
   { value: "BOUTIQUE", label: "Boutique" },
-  { value: "MEDIUM_SIZE", label: "Medium size" },
-  { value: "LARGE_COMPANY", label: "Large company" }
+  { value: "MEDIUM_SIZE", label: tx("Medium size", "Media impresa") },
+  { value: "LARGE_COMPANY", label: tx("Large company", "Grande azienda") }
 ];
 
 const CompanyDashboardContent = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { t, language } = useTalentPoolLanguage();
+  const { t, tx, language } = useTalentPoolLanguage();
+  const SIZES = getSizes(tx);
+  const dateLocale = language === 'it' ? 'it-IT' : 'en-GB';
+  const fmtDate = (d: string) => new Date(d).toLocaleDateString(dateLocale);
+  // Same output as formatSlot, with Italian day/month names when the UI is in Italian.
+  const fmtSlot = (datetime?: string | null, timezone?: string | null): string => {
+    if (language !== 'it') return formatSlot(datetime, timezone);
+    if (!datetime) return "";
+    let label = datetime;
+    try {
+      const d = parseISO(datetime);
+      if (isValid(d)) label = formatDate(d, "EEE d MMM yyyy · HH:mm", { locale: itLocale });
+    } catch {
+      /* keep the raw string */
+    }
+    return timezone ? `${label} (${timezone})` : label;
+  };
+  const meetingStatusLabel = (status: string) => ({
+    PROPOSED: tx('PROPOSED', 'PROPOSTO'),
+    CONFIRMED: tx('CONFIRMED', 'CONFERMATO'),
+    DECLINED: tx('DECLINED', 'RIFIUTATO'),
+    CANCELLED: tx('CANCELLED', 'ANNULLATO'),
+    COMPLETED: tx('COMPLETED', 'COMPLETATO'),
+  } as Record<string, string>)[status] || status;
+  const testStatusLabel = (status: string) => ({
+    SENT: tx('SENT', 'INVIATO'),
+    SUBMITTED: tx('SUBMITTED', 'CONSEGNATO'),
+    PASSED: tx('PASSED', 'SUPERATO'),
+    FAILED: tx('FAILED', 'NON SUPERATO'),
+    CANCELLED: tx('CANCELLED', 'ANNULLATO'),
+  } as Record<string, string>)[status] || status;
   const [loading, setLoading] = useState(true);
   const [company, setCompany] = useState<any>(null);
   const [students, setStudents] = useState<any[]>([]);
@@ -143,8 +176,8 @@ const CompanyDashboardContent = () => {
       
       if (userData.registration_status !== 'APPROVED') {
         toast({
-          title: "Access Denied",
-          description: "Your company account must be approved to access this area",
+          title: tx("Access Denied", "Accesso negato"),
+          description: tx("Your company account must be approved to access this area", "Il tuo account aziendale deve essere approvato per accedere a quest'area"),
           variant: "destructive"
         });
         navigate('/talent-pool/company');
@@ -224,7 +257,8 @@ const CompanyDashboardContent = () => {
           presentation_video_url,
           payment_status,
           access_status,
-          profile_visible_to_companies
+          profile_visible_to_companies,
+          full_employment_available
         `)
         .eq('profile_visible_to_companies', true)
         .eq('access_status', 'UNLOCKED')
@@ -271,11 +305,11 @@ const CompanyDashboardContent = () => {
         body: { companyId: company.id, studentId }
       });
       if (error) throw error;
-      toast({ title: "Student deselected", description: `${studentName} removed from your selections. Their recruiting history is kept.` });
+      toast({ title: tx("Student deselected", "Selezione rimossa"), description: tx(`${studentName} removed from your selections. Their recruiting history is kept.`, `${studentName} è stato rimosso dalle tue selezioni. Lo storico del processo di selezione viene conservato.`) });
       await loadSelectedStudents(company.id);
     } catch (e: any) {
       console.error('Deselect error:', e);
-      toast({ title: "Error", description: e.message || "Failed to deselect", variant: "destructive" });
+      toast({ title: tx("Error", "Errore"), description: e.message || tx("Failed to deselect", "Impossibile rimuovere la selezione"), variant: "destructive" });
     } finally {
       setDeselecting(null);
     }
@@ -299,11 +333,11 @@ const CompanyDashboardContent = () => {
   const handleProposeMeeting = async () => {
     if (!meetingDialogFor || !company?.id) return;
     if (!meetingForm.slot1 || !meetingForm.slot2) {
-      toast({ title: "Two slots required", description: "Please propose two date + time options.", variant: "destructive" });
+      toast({ title: tx("Two slots required", "Servono due opzioni"), description: tx("Please propose two date + time options.", "Proponi due opzioni di data e ora."), variant: "destructive" });
       return;
     }
     if (!meetingForm.timezone.trim()) {
-      toast({ title: "Timezone required", description: "Add the timezone label shown next to the times.", variant: "destructive" });
+      toast({ title: tx("Timezone required", "Fuso orario obbligatorio"), description: tx("Add the timezone label shown next to the times.", "Aggiungi l'indicazione del fuso orario da mostrare accanto agli orari."), variant: "destructive" });
       return;
     }
     setSubmittingMeeting(true);
@@ -320,12 +354,12 @@ const CompanyDashboardContent = () => {
         }
       });
       if (error) throw error;
-      toast({ title: "Meeting proposed", description: "The candidate and Career Pilot have been notified." });
+      toast({ title: tx("Meeting proposed", "Incontro proposto"), description: tx("The candidate and CareerBoost have been notified.", "Il candidato e CareerBoost sono stati informati.") });
       setMeetingDialogFor(null);
       await loadMeetings(company.id);
     } catch (e: any) {
       console.error('Propose meeting error:', e);
-      toast({ title: "Error", description: e.message || "Failed to propose meeting", variant: "destructive" });
+      toast({ title: tx("Error", "Errore"), description: e.message || tx("Failed to propose meeting", "Impossibile proporre l'incontro"), variant: "destructive" });
     } finally {
       setSubmittingMeeting(false);
     }
@@ -350,7 +384,7 @@ const CompanyDashboardContent = () => {
   const handleSendTest = async () => {
     if (!testDialogFor || !company?.id) return;
     if (!testForm.link.trim()) {
-      toast({ title: "Test link required", description: "Paste the link the candidate should use for the test.", variant: "destructive" });
+      toast({ title: tx("Test link required", "Link al test obbligatorio"), description: tx("Paste the link the candidate should use for the test.", "Incolla il link che il candidato dovrà usare per svolgere il test."), variant: "destructive" });
       return;
     }
     setSubmittingTest(true);
@@ -368,12 +402,12 @@ const CompanyDashboardContent = () => {
         }
       });
       if (error) throw error;
-      toast({ title: "Test sent", description: "The candidate and Career Pilot have been notified." });
+      toast({ title: tx("Test sent", "Test inviato"), description: tx("The candidate and CareerBoost have been notified.", "Il candidato e CareerBoost sono stati informati.") });
       setTestDialogFor(null);
       await loadTests(company.id);
     } catch (e: any) {
       console.error('Send test error:', e);
-      toast({ title: "Error", description: e.message || "Failed to send the test", variant: "destructive" });
+      toast({ title: tx("Error", "Errore"), description: e.message || tx("Failed to send the test", "Impossibile inviare il test"), variant: "destructive" });
     } finally {
       setSubmittingTest(false);
     }
@@ -387,11 +421,11 @@ const CompanyDashboardContent = () => {
         body: { action: 'mark', testId: test.id, result }
       });
       if (error) throw error;
-      toast({ title: result === 'PASSED' ? "Marked as passed" : "Marked as failed", description: "The candidate and Career Pilot have been notified." });
+      toast({ title: result === 'PASSED' ? tx("Marked as passed", "Segnato come superato") : tx("Marked as failed", "Segnato come non superato"), description: tx("The candidate and CareerBoost have been notified.", "Il candidato e CareerBoost sono stati informati.") });
       await loadTests(company.id);
     } catch (e: any) {
       console.error('Mark test error:', e);
-      toast({ title: "Error", description: e.message || "Failed to update the test", variant: "destructive" });
+      toast({ title: tx("Error", "Errore"), description: e.message || tx("Failed to update the test", "Impossibile aggiornare il test"), variant: "destructive" });
     } finally {
       setTestActionId(null);
     }
@@ -405,11 +439,11 @@ const CompanyDashboardContent = () => {
         body: { action: 'cancel', testId: test.id }
       });
       if (error) throw error;
-      toast({ title: "Test cancelled" });
+      toast({ title: tx("Test cancelled", "Test annullato") });
       await loadTests(company.id);
     } catch (e: any) {
       console.error('Cancel test error:', e);
-      toast({ title: "Error", description: e.message || "Failed to cancel the test", variant: "destructive" });
+      toast({ title: tx("Error", "Errore"), description: e.message || tx("Failed to cancel the test", "Impossibile annullare il test"), variant: "destructive" });
     } finally {
       setTestActionId(null);
     }
@@ -423,7 +457,7 @@ const CompanyDashboardContent = () => {
   const handleSetLink = async () => {
     if (!linkDialogFor || !company?.id) return;
     if (!linkForm.meetLink.trim()) {
-      toast({ title: "Link required", description: "Paste the interview link (e.g. a Google Meet / Zoom URL).", variant: "destructive" });
+      toast({ title: tx("Link required", "Link obbligatorio"), description: tx("Paste the interview link (e.g. a Google Meet / Zoom URL).", "Incolla il link del colloquio (ad es. un URL Google Meet / Zoom)."), variant: "destructive" });
       return;
     }
     setSubmittingLink(true);
@@ -438,12 +472,12 @@ const CompanyDashboardContent = () => {
         }
       });
       if (error) throw error;
-      toast({ title: "Interview link saved", description: "The candidate and Career Pilot have been notified." });
+      toast({ title: tx("Interview link saved", "Link del colloquio salvato"), description: tx("The candidate and CareerBoost have been notified.", "Il candidato e CareerBoost sono stati informati.") });
       setLinkDialogFor(null);
       await loadMeetings(company.id);
     } catch (e: any) {
       console.error('Set link error:', e);
-      toast({ title: "Error", description: e.message || "Failed to save the link", variant: "destructive" });
+      toast({ title: tx("Error", "Errore"), description: e.message || tx("Failed to save the link", "Impossibile salvare il link"), variant: "destructive" });
     } finally {
       setSubmittingLink(false);
     }
@@ -469,12 +503,12 @@ const CompanyDashboardContent = () => {
         }
       });
       if (error) throw error;
-      toast({ title: "Offer sent", description: "The candidate and Career Pilot have been notified." });
+      toast({ title: tx("Offer sent", "Offerta inviata"), description: tx("The candidate and CareerBoost have been notified.", "Il candidato e CareerBoost sono stati informati.") });
       setOfferDialogFor(null);
       await loadSelectedStudents(company.id);
     } catch (e: any) {
       console.error('Offer error:', e);
-      toast({ title: "Error", description: e.message || "Failed to send offer", variant: "destructive" });
+      toast({ title: tx("Error", "Errore"), description: e.message || tx("Failed to send offer", "Impossibile inviare l'offerta"), variant: "destructive" });
     } finally {
       setSubmittingDecision(false);
     }
@@ -498,12 +532,12 @@ const CompanyDashboardContent = () => {
         }
       });
       if (error) throw error;
-      toast({ title: "Candidate rejected", description: "The candidate and Career Pilot have been notified." });
+      toast({ title: tx("Candidate rejected", "Candidato non selezionato"), description: tx("The candidate and CareerBoost have been notified.", "Il candidato e CareerBoost sono stati informati.") });
       setRejectDialogFor(null);
       await loadSelectedStudents(company.id);
     } catch (e: any) {
       console.error('Reject error:', e);
-      toast({ title: "Error", description: e.message || "Failed to reject", variant: "destructive" });
+      toast({ title: tx("Error", "Errore"), description: e.message || tx("Failed to reject", "Impossibile registrare il rifiuto"), variant: "destructive" });
     } finally {
       setSubmittingDecision(false);
     }
@@ -515,8 +549,8 @@ const CompanyDashboardContent = () => {
 
     if (file.size > 5 * 1024 * 1024) {
       toast({
-        title: "File too large",
-        description: "Please select an image under 5MB",
+        title: tx("File too large", "File troppo grande"),
+        description: tx("Please select an image under 5MB", "Seleziona un'immagine inferiore a 5MB"),
         variant: "destructive"
       });
       return;
@@ -534,8 +568,8 @@ const CompanyDashboardContent = () => {
 
       if (!editData.company_name || !editData.sector || !editData.size || !editData.reference_email) {
         toast({
-          title: "Missing required fields",
-          description: "Company name, sector, size, and reference email are required.",
+          title: tx("Missing required fields", "Campi obbligatori mancanti"),
+          description: tx("Company name, sector, size, and reference email are required.", "Nome azienda, settore, dimensione ed email di riferimento sono obbligatori."),
           variant: "destructive"
         });
         return;
@@ -566,8 +600,8 @@ const CompanyDashboardContent = () => {
           // Non-blocking: keep the existing logo and warn, but still save the rest.
           console.error('Logo upload failed (non-fatal):', uploadError);
           toast({
-            title: "Logo not updated",
-            description: "The other fields will be saved; the logo upload failed. Try again later.",
+            title: tx("Logo not updated", "Logo non aggiornato"),
+            description: tx("The other fields will be saved; the logo upload failed. Try again later.", "Gli altri campi verranno salvati, ma il caricamento del logo non è riuscito. Riprova più tardi."),
             variant: "destructive"
           });
         } else {
@@ -590,8 +624,8 @@ const CompanyDashboardContent = () => {
       if (error) throw error;
 
       toast({
-        title: "Success",
-        description: "Company information updated successfully"
+        title: tx("Success", "Operazione completata"),
+        description: tx("Company information updated successfully", "Informazioni aziendali aggiornate correttamente")
       });
 
       setEditMode(false);
@@ -600,8 +634,8 @@ const CompanyDashboardContent = () => {
     } catch (error: any) {
       console.error('Save error:', error);
       toast({
-        title: "Error",
-        description: error.message || "Failed to save company information",
+        title: tx("Error", "Errore"),
+        description: error.message || tx("Failed to save company information", "Impossibile salvare le informazioni aziendali"),
         variant: "destructive"
       });
     } finally {
@@ -612,8 +646,8 @@ const CompanyDashboardContent = () => {
   const handleSelectStudent = async (student: any) => {
     if (!company?.id || !student.user_id) {
       toast({
-        title: "Error",
-        description: "Missing required information. Please refresh and try again.",
+        title: tx("Error", "Errore"),
+        description: tx("Missing required information. Please refresh and try again.", "Mancano alcune informazioni necessarie. Aggiorna la pagina e riprova."),
         variant: "destructive"
       });
       return;
@@ -636,8 +670,8 @@ const CompanyDashboardContent = () => {
       if (error) throw error;
 
       toast({
-        title: "✓ Student Selected Successfully",
-        description: `You have selected ${student.first_name} ${student.last_name}. We will contact you soon.`,
+        title: tx("✓ Student Selected Successfully", "✓ Candidato selezionato con successo"),
+        description: tx(`You have selected ${student.first_name} ${student.last_name}. We will contact you soon.`, `Hai selezionato ${student.first_name} ${student.last_name}. Ti contatteremo a breve.`),
         duration: 4000
       });
 
@@ -648,14 +682,14 @@ const CompanyDashboardContent = () => {
       const ids = await loadSelectedStudents(company.id);
       if (ids.includes(student.user_id)) {
         toast({
-          title: "Already Selected",
-          description: `${student.first_name} ${student.last_name} was already selected by your company.`,
+          title: tx("Already Selected", "Già selezionato"),
+          description: tx(`${student.first_name} ${student.last_name} was already selected by your company.`, `${student.first_name} ${student.last_name} è già stato selezionato dalla tua azienda.`),
           duration: 4000
         });
       } else {
         toast({
-          title: "Selection Error",
-          description: error.message || "Something went wrong. Please try again.",
+          title: tx("Selection Error", "Errore di selezione"),
+          description: error.message || tx("Something went wrong. Please try again.", "Si è verificato un errore. Riprova."),
           variant: "destructive",
           duration: 5000
         });
@@ -676,15 +710,16 @@ const CompanyDashboardContent = () => {
           userId: company.id,
           name: companyName,
           email: company.email,
-          role: 'COMPANY'
+          role: 'COMPANY',
+          language
         }
       });
 
       if (error) throw error;
 
       toast({
-        title: "Left Talent Pool",
-        description: "You have successfully left the Talent Pool. You can no longer access this area."
+        title: tx("Left Talent Pool", "Hai lasciato il Talent Pool"),
+        description: tx("You have successfully left the Talent Pool. You can no longer access this area.", "Hai lasciato il Talent Pool. Non puoi più accedere a quest'area.")
       });
 
       localStorage.removeItem('talentPoolRole');
@@ -693,8 +728,8 @@ const CompanyDashboardContent = () => {
     } catch (error: any) {
       console.error('Leave error:', error);
       toast({
-        title: "Error",
-        description: error.message || "Failed to leave Talent Pool",
+        title: tx("Error", "Errore"),
+        description: error.message || tx("Failed to leave Talent Pool", "Impossibile lasciare il Talent Pool"),
         variant: "destructive"
       });
     }
@@ -717,27 +752,27 @@ const CompanyDashboardContent = () => {
       else throw new Error('No passport found');
     } catch (e: any) {
       console.error('View passport error:', e);
-      toast({ title: "Error", description: e.message || "Could not open the passport", variant: "destructive" });
+      toast({ title: tx("Error", "Errore"), description: e.message || tx("Could not open the passport", "Impossibile aprire il passaporto"), variant: "destructive" });
     } finally {
       setViewingPassport(null);
     }
   };
 
   const ukVisaLabel = (v?: string) =>
-    v === 'YES' ? 'Can work in the UK' : v === 'NO' ? 'No UK work right' : v === 'APPLYING' ? 'UK visa: applying' : null;
+    v === 'YES' ? tx('Can work in the UK', 'Può lavorare nel Regno Unito') : v === 'NO' ? tx('No UK work right', 'Senza diritto di lavoro nel Regno Unito') : v === 'APPLYING' ? tx('UK visa: applying', 'Visto UK: richiesta in corso') : null;
 
   const downloadFile = async (url: string, filename: string, bucketHint?: "talent-pool-cv" | "talent-pool-covers") => {
     try {
       await downloadTalentPoolDocument(url, filename, bucketHint);
       toast({
-        title: "Success",
-        description: `${filename} downloaded successfully`
+        title: tx("Success", "Operazione completata"),
+        description: tx(`${filename} downloaded successfully`, `${filename} scaricato correttamente`)
       });
     } catch (error) {
       console.error('Download error:', error);
       toast({
-        title: "Download Error",
-        description: "Unable to download file",
+        title: tx("Download Error", "Errore di download"),
+        description: tx("Unable to download file", "Impossibile scaricare il file"),
         variant: "destructive"
       });
     }
@@ -762,9 +797,9 @@ const CompanyDashboardContent = () => {
             <Building2 className="h-8 w-8 text-green-600" />
             <div>
               <h1 className="text-3xl font-bold text-green-600">
-                {company?.company_profiles?.[0]?.company_name || 'Company Dashboard'}
+                {company?.company_profiles?.[0]?.company_name || tx('Company Dashboard', 'Dashboard Azienda')}
               </h1>
-              <p className="text-steel-gray">Talent Pool - Company Area</p>
+              <p className="text-steel-gray">{tx("Talent Pool - Company Area", "Talent Pool - Area Aziende")}</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -774,7 +809,7 @@ const CompanyDashboardContent = () => {
               className="flex items-center gap-2"
             >
               <User className="h-4 w-4" />
-              Selected Students ({selectedList.length})
+              {tx("Selected Students", "Candidati selezionati")} ({selectedList.length})
             </Button>
             <AlertDialog>
               <AlertDialogTrigger asChild>
@@ -783,22 +818,23 @@ const CompanyDashboardContent = () => {
                   className="flex items-center gap-2"
                 >
                   <DoorOpen className="h-4 w-4" />
-                  Leave Talent Pool
+                  {tx("Leave Talent Pool", "Lascia il Talent Pool")}
                 </Button>
               </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>
-                  <AlertDialogTitle>Are you sure you want to leave the Talent Pool?</AlertDialogTitle>
+                  <AlertDialogTitle>{tx("Are you sure you want to leave the Talent Pool?", "Vuoi davvero lasciare il Talent Pool?")}</AlertDialogTitle>
                   <AlertDialogDescription>
-                    This action will permanently remove your company from the Talent Pool. 
-                    You will no longer have access to student profiles and all your selections will be lost.
-                    This action cannot be undone.
+                    {tx(
+                      "This action will permanently remove your company from the Talent Pool. You will no longer have access to student profiles and all your selections will be lost. This action cannot be undone.",
+                      "Questa azione rimuoverà definitivamente la tua azienda dal Talent Pool. Non avrai più accesso ai profili dei candidati e tutte le tue selezioni andranno perse. L'azione è irreversibile."
+                    )}
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogCancel>{tx("Cancel", "Annulla")}</AlertDialogCancel>
                   <AlertDialogAction onClick={handleLeaveTalentPool} className="bg-destructive text-destructive-foreground">
-                    Yes, Leave Talent Pool
+                    {tx("Yes, Leave Talent Pool", "Sì, lascia il Talent Pool")}
                   </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
@@ -809,13 +845,13 @@ const CompanyDashboardContent = () => {
               className="flex items-center gap-2"
             >
               <LogOut className="h-4 w-4" />
-              Logout
+              {tx("Logout", "Esci")}
             </Button>
           </div>
         </div>
 
         {/* Partner status — premium "azienda convenzionata" banner */}
-        <div className="relative mb-8 overflow-hidden rounded-2xl border border-emerald-500/25 bg-gradient-to-br from-emerald-700 via-green-600 to-teal-600 p-6 shadow-[0_20px_60px_-15px_rgba(16,185,129,0.45)] md:p-8">
+        <div className="relative mb-8 overflow-hidden rounded-2xl border border-cbind-500/25 bg-gradient-to-br from-cbind-700 via-green-600 to-teal-600 p-6 shadow-[0_20px_60px_-15px_rgba(16,185,129,0.45)] md:p-8">
           <div className="pointer-events-none absolute -right-20 -top-20 h-56 w-56 rounded-full bg-white/10 blur-3xl" />
           <div className="pointer-events-none absolute -bottom-16 -left-16 h-48 w-48 rounded-full bg-amber-300/15 blur-3xl" />
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_80%_20%,rgba(255,255,255,0.12),transparent_50%)]" />
@@ -823,7 +859,7 @@ const CompanyDashboardContent = () => {
           <div className="relative flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
             <div className="flex items-start gap-4 md:gap-5">
               <div className="relative shrink-0">
-                <div className="absolute -inset-1 rounded-2xl bg-gradient-to-br from-amber-300/60 to-emerald-200/40 blur-sm" />
+                <div className="absolute -inset-1 rounded-2xl bg-gradient-to-br from-amber-300/60 to-cbind-200/40 blur-sm" />
                 <div className="relative flex h-16 w-16 items-center justify-center overflow-hidden rounded-2xl border-2 border-white/30 bg-white/15 shadow-lg backdrop-blur-sm md:h-20 md:w-20">
                   {company?.company_profiles?.[0]?.logo_url ? (
                     <img
@@ -835,21 +871,21 @@ const CompanyDashboardContent = () => {
                     <Building2 className="h-8 w-8 text-white md:h-9 md:w-9" />
                   )}
                 </div>
-                <span className="absolute -bottom-1 -right-1 flex h-7 w-7 items-center justify-center rounded-full border-2 border-emerald-600 bg-amber-400 shadow-md">
-                  <BadgeCheck className="h-4 w-4 text-emerald-900" />
+                <span className="absolute -bottom-1 -right-1 flex h-7 w-7 items-center justify-center rounded-full border-2 border-cbind-600 bg-amber-400 shadow-md">
+                  <BadgeCheck className="h-4 w-4 text-cbind-700" />
                 </span>
               </div>
 
               <div className="min-w-0 text-white">
                 <div className="mb-2 flex flex-wrap items-center gap-2">
-                  <span className="inline-flex items-center gap-1.5 rounded-full border border-white/25 bg-white/10 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.18em] text-emerald-50 backdrop-blur-sm">
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-white/25 bg-white/10 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.18em] text-cbind-50 backdrop-blur-sm">
                     <Sparkles className="h-3 w-3 text-amber-300" />
-                    Career Pilot Partner
+                    CareerBoost Partner
                   </span>
-                  <span className="inline-flex items-center gap-1 rounded-full bg-emerald-950/30 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-100">
+                  <span className="inline-flex items-center gap-1 rounded-full bg-cbind-950/30 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-cbind-100">
                     <span className="relative flex h-2 w-2">
-                      <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-300 opacity-75" />
-                      <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-200" />
+                      <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-cbind-300 opacity-75" />
+                      <span className="relative inline-flex h-2 w-2 rounded-full bg-cbind-200" />
                     </span>
                     {t('companyDashboard.partner.active')}
                   </span>
@@ -857,11 +893,11 @@ const CompanyDashboardContent = () => {
                 <h2 className="text-2xl font-bold tracking-tight md:text-3xl">
                   {t('companyDashboard.partner.title')}
                 </h2>
-                <p className="mt-1 max-w-xl text-sm text-emerald-50/90 md:text-base">
+                <p className="mt-1 max-w-xl text-sm text-cbind-50/90 md:text-base">
                   {t('companyDashboard.partner.subtitle')}
                 </p>
                 {company?.approved_at && (
-                  <p className="mt-2 flex items-center gap-1.5 text-xs text-emerald-100/80">
+                  <p className="mt-2 flex items-center gap-1.5 text-xs text-cbind-100/80">
                     <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
                     {t('companyDashboard.partner.since')}{' '}
                     {new Date(company.approved_at).toLocaleDateString(
@@ -875,7 +911,7 @@ const CompanyDashboardContent = () => {
 
             <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:shrink-0">
               <div className="rounded-xl border border-white/20 bg-white/10 px-4 py-3 text-center backdrop-blur-md">
-                <div className="flex items-center justify-center gap-1.5 text-emerald-100/80">
+                <div className="flex items-center justify-center gap-1.5 text-cbind-100/80">
                   <Users className="h-4 w-4" />
                   <span className="text-[10px] font-semibold uppercase tracking-wide">
                     {t('companyDashboard.partner.statsCandidates')}
@@ -884,7 +920,7 @@ const CompanyDashboardContent = () => {
                 <p className="mt-1 text-3xl font-bold tabular-nums text-white">{students.length}</p>
               </div>
               <div className="rounded-xl border border-white/20 bg-white/10 px-4 py-3 text-center backdrop-blur-md">
-                <div className="flex items-center justify-center gap-1.5 text-emerald-100/80">
+                <div className="flex items-center justify-center gap-1.5 text-cbind-100/80">
                   <Handshake className="h-4 w-4" />
                   <span className="text-[10px] font-semibold uppercase tracking-wide">
                     {t('companyDashboard.partner.statsSelected')}
@@ -900,7 +936,7 @@ const CompanyDashboardContent = () => {
               <ShieldCheck className="h-4 w-4 text-amber-300" />
               {t('companyDashboard.partner.verified')}
             </span>
-            <span className="text-xs text-emerald-50/75">
+            <span className="text-xs text-cbind-50/75">
               {t('companyDashboard.partner.visibilityNote')}
             </span>
           </div>
@@ -908,9 +944,9 @@ const CompanyDashboardContent = () => {
 
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'students' | 'selected' | 'profile')} className="space-y-6">
           <TabsList className="max-md:grid max-md:w-full max-md:grid-cols-3 max-md:h-auto max-md:gap-1">
-            <TabsTrigger value="students" className="max-md:h-auto max-md:whitespace-normal max-md:px-1 max-md:py-2 max-md:text-[11px] max-md:leading-tight">Available Students</TabsTrigger>
-            <TabsTrigger value="selected" className="max-md:h-auto max-md:whitespace-normal max-md:px-1 max-md:py-2 max-md:text-[11px] max-md:leading-tight">Selected Students ({selectedList.length})</TabsTrigger>
-            <TabsTrigger value="profile" className="max-md:h-auto max-md:whitespace-normal max-md:px-1 max-md:py-2 max-md:text-[11px] max-md:leading-tight">Company Profile</TabsTrigger>
+            <TabsTrigger value="students" className="max-md:h-auto max-md:whitespace-normal max-md:px-1 max-md:py-2 max-md:text-[11px] max-md:leading-tight data-[state=active]:bg-cbind-600 data-[state=active]:text-white data-[state=active]:shadow-sm">{tx("Available Students", "Candidati disponibili")}</TabsTrigger>
+            <TabsTrigger value="selected" className="max-md:h-auto max-md:whitespace-normal max-md:px-1 max-md:py-2 max-md:text-[11px] max-md:leading-tight data-[state=active]:bg-cbind-600 data-[state=active]:text-white data-[state=active]:shadow-sm">{tx("Selected Students", "Candidati selezionati")} ({selectedList.length})</TabsTrigger>
+            <TabsTrigger value="profile" className="max-md:h-auto max-md:whitespace-normal max-md:px-1 max-md:py-2 max-md:text-[11px] max-md:leading-tight data-[state=active]:bg-cbind-600 data-[state=active]:text-white data-[state=active]:shadow-sm">{tx("Company Profile", "Profilo aziendale")}</TabsTrigger>
           </TabsList>
 
           <TabsContent value="profile">
@@ -918,22 +954,22 @@ const CompanyDashboardContent = () => {
               <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle className="flex items-center gap-2">
                   <Building2 className="h-5 w-5" />
-                  Company Information
+                  {tx("Company Information", "Informazioni aziendali")}
                 </CardTitle>
                 <Dialog open={editMode} onOpenChange={setEditMode}>
                   <DialogTrigger asChild>
                     <Button size="sm" variant="outline" className="flex items-center gap-2">
                       <Edit className="h-4 w-4" />
-                      Edit
+                      {tx("Edit", "Modifica")}
                     </Button>
                   </DialogTrigger>
                   <DialogContent className="max-w-2xl">
                     <DialogHeader>
-                      <DialogTitle>Edit Company Information</DialogTitle>
+                      <DialogTitle>{tx("Edit Company Information", "Modifica informazioni aziendali")}</DialogTitle>
                     </DialogHeader>
                     <div className="space-y-4 mt-4">
                       <div className="space-y-2">
-                        <Label htmlFor="company_name">Company Name *</Label>
+                        <Label htmlFor="company_name">{tx("Company Name", "Nome azienda")} *</Label>
                         <Input
                           id="company_name"
                           value={editData.company_name}
@@ -943,13 +979,13 @@ const CompanyDashboardContent = () => {
                       
                       <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
-                          <Label htmlFor="sector">Sector *</Label>
+                          <Label htmlFor="sector">{tx("Sector", "Settore")} *</Label>
                           <Select
                             value={editData.sector}
                             onValueChange={(value) => setEditData({...editData, sector: value})}
                           >
                             <SelectTrigger>
-                              <SelectValue placeholder="Select sector" />
+                              <SelectValue placeholder={tx("Select sector", "Seleziona settore")} />
                             </SelectTrigger>
                             <SelectContent>
                               {TALENT_POOL_COMPANY_SECTORS.map(sector => (
@@ -960,13 +996,13 @@ const CompanyDashboardContent = () => {
                         </div>
                         
                         <div className="space-y-2">
-                          <Label htmlFor="size">Size *</Label>
+                          <Label htmlFor="size">{tx("Size", "Dimensione")} *</Label>
                           <Select
                             value={editData.size}
                             onValueChange={(value) => setEditData({...editData, size: value})}
                           >
                             <SelectTrigger>
-                              <SelectValue placeholder="Select size" />
+                              <SelectValue placeholder={tx("Select size", "Seleziona dimensione")} />
                             </SelectTrigger>
                             <SelectContent>
                               {SIZES.map(size => (
@@ -978,7 +1014,7 @@ const CompanyDashboardContent = () => {
                       </div>
                       
                       <div className="space-y-2">
-                        <Label htmlFor="reference_email">Reference Email *</Label>
+                        <Label htmlFor="reference_email">{tx("Reference Email", "Email di riferimento")} *</Label>
                         <Input
                           id="reference_email"
                           type="email"
@@ -988,7 +1024,7 @@ const CompanyDashboardContent = () => {
                       </div>
                       
                       <div className="space-y-2">
-                        <Label htmlFor="linkedin_url">LinkedIn (optional)</Label>
+                        <Label htmlFor="linkedin_url">{tx("LinkedIn (optional)", "LinkedIn (facoltativo)")}</Label>
                         <Input
                           id="linkedin_url"
                           type="url"
@@ -999,7 +1035,7 @@ const CompanyDashboardContent = () => {
                       </div>
 
                       <div className="space-y-2">
-                        <Label htmlFor="website">Website (optional)</Label>
+                        <Label htmlFor="website">{tx("Website (optional)", "Sito web (facoltativo)")}</Label>
                         <Input
                           id="website"
                           type="url"
@@ -1010,7 +1046,7 @@ const CompanyDashboardContent = () => {
                       </div>
 
                       <div className="space-y-2">
-                        <Label htmlFor="description">Description (optional)</Label>
+                        <Label htmlFor="description">{tx("Description (optional)", "Descrizione (facoltativa)")}</Label>
                         <Textarea
                           id="description"
                           rows={3}
@@ -1020,13 +1056,13 @@ const CompanyDashboardContent = () => {
                       </div>
 
                       <div className="space-y-2">
-                        <Label htmlFor="company_logo">Company Logo (optional)</Label>
+                        <Label htmlFor="company_logo">{tx("Company Logo (optional)", "Logo aziendale (facoltativo)")}</Label>
                         <div className="space-y-2">
                           {(logoFile || company?.company_profiles?.[0]?.logo_url) && (
                             <div className="flex items-center gap-4">
                               <img 
                                 src={logoFile ? URL.createObjectURL(logoFile) : company?.company_profiles?.[0]?.logo_url} 
-                                alt="Company logo preview" 
+                                alt={tx("Company logo preview", "Anteprima logo aziendale")} 
                                 className="h-20 w-20 object-cover rounded border"
                               />
                               {logoFile && (
@@ -1035,7 +1071,7 @@ const CompanyDashboardContent = () => {
                                   variant="outline"
                                   onClick={() => setLogoFile(null)}
                                 >
-                                  Remove
+                                  {tx("Remove", "Rimuovi")}
                                 </Button>
                               )}
                             </div>
@@ -1047,14 +1083,14 @@ const CompanyDashboardContent = () => {
                             onChange={handleLogoChange}
                           />
                           <p className="text-xs text-steel-gray">
-                            PNG, JPG, or WebP. Max 5MB.
+                            {tx("PNG, JPG, or WebP. Max 5MB.", "PNG, JPG o WebP. Max 5MB.")}
                           </p>
                         </div>
                       </div>
 
                       <div className="flex justify-end gap-2 pt-4">
                         <Button variant="outline" onClick={() => { setEditMode(false); setLogoFile(null); }}>
-                          Cancel
+                          {tx("Cancel", "Annulla")}
                         </Button>
                         <Button 
                           onClick={handleSaveCompanyInfo} 
@@ -1064,12 +1100,12 @@ const CompanyDashboardContent = () => {
                           {uploading ? (
                             <>
                               <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                              Saving...
+                              {tx("Saving...", "Salvataggio...")}
                             </>
                           ) : (
                             <>
                               <Save className="h-4 w-4" />
-                              Save Changes
+                              {tx("Save Changes", "Salva modifiche")}
                             </>
                           )}
                         </Button>
@@ -1080,23 +1116,23 @@ const CompanyDashboardContent = () => {
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
-                  <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-4 md:col-span-2 lg:col-span-3">
+                  <div className="rounded-xl border border-cbind-500/20 bg-cbind-500/5 p-4 md:col-span-2 lg:col-span-3">
                     <div className="flex flex-wrap items-center gap-3">
-                      <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-600 text-white shadow-md">
+                      <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-cbind-600 text-white shadow-md">
                         <ShieldCheck className="h-5 w-5" />
                       </div>
                       <div>
-                        <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">
+                        <p className="text-xs font-semibold uppercase tracking-wide text-cbind-700">
                           {t('companyDashboard.profile.partnershipStatus')}
                         </p>
-                        <p className="font-semibold text-emerald-900">
+                        <p className="font-semibold text-cbind-700">
                           {t('companyDashboard.partner.title')}
                         </p>
                         <p className="text-sm text-steel-gray">
                           {t('companyDashboard.profile.partnershipDesc')}
                         </p>
                       </div>
-                      <Badge className="ml-auto bg-emerald-600 text-white hover:bg-emerald-600">
+                      <Badge className="ml-auto bg-cbind-600 text-white hover:bg-cbind-600">
                         <CheckCircle2 className="mr-1 h-3 w-3" />
                         {t('companyDashboard.profile.approved')}
                       </Badge>
@@ -1106,10 +1142,10 @@ const CompanyDashboardContent = () => {
                   {company?.company_profiles?.[0]?.logo_url && (
                     <div className="flex justify-center md:col-span-2 lg:col-span-3">
                       <div className="relative">
-                        <div className="absolute -inset-1 rounded-2xl bg-gradient-to-br from-emerald-400/40 to-green-600/20 blur-sm" />
+                        <div className="absolute -inset-1 rounded-2xl bg-gradient-to-br from-cbind-400/40 to-green-600/20 blur-sm" />
                         <img
                           src={company.company_profiles[0].logo_url}
-                          alt="Company logo"
+                          alt={tx("Company logo", "Logo aziendale")}
                           className="relative h-28 w-28 rounded-2xl border-2 border-white object-cover shadow-lg"
                         />
                       </div>
@@ -1120,20 +1156,20 @@ const CompanyDashboardContent = () => {
                     <p className="text-xs font-medium uppercase tracking-wide text-steel-gray">
                       {t('companyDashboard.profile.companyName')}
                     </p>
-                    <p className="mt-1 font-semibold">{company?.company_profiles?.[0]?.company_name || 'N/A'}</p>
+                    <p className="mt-1 font-semibold">{company?.company_profiles?.[0]?.company_name || tx('N/A', 'N/D')}</p>
                   </div>
                   <div className="rounded-lg border bg-muted/30 p-4">
                     <p className="text-xs font-medium uppercase tracking-wide text-steel-gray">
                       {t('companyDashboard.profile.sector')}
                     </p>
-                    <p className="mt-1 font-semibold">{company?.company_profiles?.[0]?.sector || 'N/A'}</p>
+                    <p className="mt-1 font-semibold">{company?.company_profiles?.[0]?.sector || tx('N/A', 'N/D')}</p>
                   </div>
                   <div className="rounded-lg border bg-muted/30 p-4">
                     <p className="text-xs font-medium uppercase tracking-wide text-steel-gray">
                       {t('companyDashboard.profile.size')}
                     </p>
                     <p className="mt-1 font-semibold">
-                      {SIZES.find(s => s.value === company?.company_profiles?.[0]?.size)?.label || 'N/A'}
+                      {SIZES.find(s => s.value === company?.company_profiles?.[0]?.size)?.label || tx('N/A', 'N/D')}
                     </p>
                   </div>
                   <div className="rounded-lg border bg-muted/30 p-4">
@@ -1141,7 +1177,7 @@ const CompanyDashboardContent = () => {
                       {t('companyDashboard.profile.email')}
                     </p>
                     <p className="mt-1 font-semibold break-all">
-                      {company?.company_profiles?.[0]?.reference_email || 'N/A'}
+                      {company?.company_profiles?.[0]?.reference_email || tx('N/A', 'N/D')}
                     </p>
                   </div>
                   {company?.company_profiles?.[0]?.linkedin_url && (
@@ -1160,14 +1196,14 @@ const CompanyDashboardContent = () => {
                   )}
                   {company?.company_profiles?.[0]?.website && (
                     <div className="rounded-lg border bg-muted/30 p-4">
-                      <p className="text-xs font-medium uppercase tracking-wide text-steel-gray">Website</p>
+                      <p className="text-xs font-medium uppercase tracking-wide text-steel-gray">{tx("Website", "Sito web")}</p>
                       <a
                         href={company.company_profiles[0].website}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="mt-1 inline-flex items-center gap-1 font-semibold text-primary hover:underline"
                       >
-                        Visit site
+                        {tx("Visit site", "Visita il sito")}
                         <LinkIcon className="h-3.5 w-3.5" />
                       </a>
                     </div>
@@ -1193,14 +1229,14 @@ const CompanyDashboardContent = () => {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <User className="h-5 w-5" />
-                  Available Students ({students.length})
+                  {tx("Available Students", "Candidati disponibili")} ({students.length})
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 {students.length === 0 ? (
                   <div className="text-center py-12">
-                    <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-500/10">
-                      <Users className="h-8 w-8 text-emerald-600 opacity-80" />
+                    <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-cbind-500/10">
+                      <Users className="h-8 w-8 text-cbind-600 opacity-80" />
                     </div>
                     <p className="font-medium text-foreground">{t('companyDashboard.students.emptyTitle')}</p>
                     <p className="text-sm text-steel-gray mt-2 max-w-md mx-auto">
@@ -1217,7 +1253,7 @@ const CompanyDashboardContent = () => {
                             onClick={() => setVideoFor({ url: student.presentation_video_url, name: `${student.first_name} ${student.last_name}` })}
                             className="absolute right-2 top-2 z-10 gap-1 bg-primary text-primary-foreground shadow-md hover:bg-primary/90"
                           >
-                            <Play className="h-4 w-4" /> Play video
+                            <Play className="h-4 w-4" /> {tx("Play video", "Guarda video")}
                           </Button>
                         )}
                         <div className="space-y-3">
@@ -1236,13 +1272,19 @@ const CompanyDashboardContent = () => {
                             <h3 className="text-lg font-semibold">
                               {student.first_name} {student.last_name}
                             </h3>
+                            {student.full_employment_available && (
+                              <Badge className="mt-2 gap-1 bg-primary/10 text-primary hover:bg-primary/10">
+                                <Briefcase className="h-3 w-3" />
+                                {tx("Looking for a full-time job", "Cerca un lavoro full-time")}
+                              </Badge>
+                            )}
                             {/* Showcase profiles (seeded, no documents yet) carry a
                                 small "coming soon" badge so companies understand the
                                 CV / cover letter are on the way. */}
                             {!student.cv_url && !student.cover_letter_url && (
                               <Badge variant="secondary" className="mt-2 gap-1 border-amber-200 bg-amber-50 text-amber-700">
                                 <CalendarClock className="h-3 w-3" />
-                                CV & cover letter coming soon
+                                {tx("CV & cover letter coming soon", "CV e lettera di presentazione in arrivo")}
                               </Badge>
                             )}
                           </div>
@@ -1267,7 +1309,7 @@ const CompanyDashboardContent = () => {
                             ) : (
                               <Button size="sm" variant="outline" disabled className="w-full flex items-center justify-center gap-2 opacity-50">
                                 <FileText className="h-4 w-4" />
-                                CV not available
+                                {tx("CV not available", "CV non disponibile")}
                               </Button>
                             )}
                             {student.cover_letter_url ? (
@@ -1282,13 +1324,13 @@ const CompanyDashboardContent = () => {
                                 className="w-full flex items-center justify-center gap-2"
                               >
                                 <FileText className="h-4 w-4" />
-                                Cover Letter
+                                {tx("Cover Letter", "Lettera di presentazione")}
                                 <Download className="h-3 w-3" />
                               </Button>
                             ) : (
                               <Button size="sm" variant="outline" disabled className="w-full flex items-center justify-center gap-2 opacity-50">
                                 <FileText className="h-4 w-4" />
-                                Cover letter not available
+                                {tx("Cover letter not available", "Lettera di presentazione non disponibile")}
                               </Button>
                             )}
                             </>)}
@@ -1303,7 +1345,7 @@ const CompanyDashboardContent = () => {
                                 className="w-full flex items-center justify-center gap-2"
                               >
                                 <FileText className="h-4 w-4" />
-                                Presentation Video
+                                {tx("Presentation Video", "Video di presentazione")}
                                 <Download className="h-3 w-3" />
                               </Button>
                             )}
@@ -1317,7 +1359,7 @@ const CompanyDashboardContent = () => {
                                 disabled
                                 className="w-full"
                               >
-                                Unavailable
+                                {tx("Unavailable", "Non disponibile")}
                               </Button>
                             ) : selectedStudents.has(student.user_id) ? (
                               <Button
@@ -1326,7 +1368,7 @@ const CompanyDashboardContent = () => {
                                 disabled
                                 className="w-full bg-muted text-muted-foreground cursor-not-allowed"
                               >
-                                Selected
+                                {tx("Selected", "Selezionato")}
                               </Button>
                             ) : (
                               <Button
@@ -1338,10 +1380,10 @@ const CompanyDashboardContent = () => {
                                 {selecting === student.id ? (
                                   <>
                                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                                    <span className="ml-2">Selecting...</span>
+                                    <span className="ml-2">{tx("Selecting...", "Selezione in corso...")}</span>
                                   </>
                                 ) : (
-                                  'Select Student'
+                                  tx('Select Student', 'Seleziona candidato')
                                 )}
                               </Button>
                             )}
@@ -1361,16 +1403,16 @@ const CompanyDashboardContent = () => {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <User className="h-5 w-5" />
-                  Selected Students ({selectedList.length})
+                  {tx("Selected Students", "Candidati selezionati")} ({selectedList.length})
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 {selectedList.length === 0 ? (
                   <div className="text-center py-12">
                     <User className="h-12 w-12 text-steel-gray mx-auto mb-4 opacity-50" />
-                    <p className="text-steel-gray">No students selected yet</p>
+                    <p className="text-steel-gray">{tx("No students selected yet", "Nessun candidato selezionato al momento")}</p>
                     <p className="text-sm text-steel-gray mt-2">
-                      Select candidates from "Available Students" to start a recruiting process.
+                      {tx('Select candidates from "Available Students" to start a recruiting process.', 'Seleziona i candidati da "Candidati disponibili" per avviare un processo di selezione.')}
                     </p>
                   </div>
                 ) : (
@@ -1380,10 +1422,10 @@ const CompanyDashboardContent = () => {
                       if (!student) return null;
                       const stage = selection.stage || 'IN_PROGRESS';
                       const stageMeta: Record<string, { label: string; cls: string }> = {
-                        IN_PROGRESS: { label: 'In progress', cls: 'bg-amber-100 text-amber-800' },
-                        OFFER: { label: 'Offer', cls: 'bg-blue-100 text-blue-800' },
-                        REJECTED: { label: 'Rejected', cls: 'bg-red-100 text-red-800' },
-                        HIRED: { label: 'Hired', cls: 'bg-green-100 text-green-800' },
+                        IN_PROGRESS: { label: tx('In progress', 'In corso'), cls: 'bg-amber-100 text-amber-800' },
+                        OFFER: { label: tx('Offer', 'Offerta'), cls: 'bg-blue-100 text-blue-800' },
+                        REJECTED: { label: tx('Rejected', 'Non selezionato'), cls: 'bg-red-100 text-red-800' },
+                        HIRED: { label: tx('Hired', 'Assunto'), cls: 'bg-green-100 text-green-800' },
                       };
                       const sm = stageMeta[stage] || stageMeta.IN_PROGRESS;
                       const myMeetings = companyMeetings.filter((m: any) => m.student_id === selection.student_id);
@@ -1401,8 +1443,14 @@ const CompanyDashboardContent = () => {
                               )}
                               <div className="flex-1">
                                 <h3 className="text-lg font-semibold">{student.first_name} {student.last_name}</h3>
+                                {student.full_employment_available && (
+                                  <Badge className="mt-1 gap-1 bg-primary/10 text-primary hover:bg-primary/10">
+                                    <Briefcase className="h-3 w-3" />
+                                    {tx("Looking for a full-time job", "Cerca un lavoro full-time")}
+                                  </Badge>
+                                )}
                                 <p className="text-xs text-steel-gray">
-                                  Selected: {new Date(selection.selected_at).toLocaleDateString()}
+                                  {tx("Selected:", "Selezionato il")} {fmtDate(selection.selected_at)}
                                 </p>
                               </div>
                               <Badge className={sm.cls}>{sm.label}</Badge>
@@ -1416,16 +1464,16 @@ const CompanyDashboardContent = () => {
                                 </Button>
                               ) : (
                                 <Button size="sm" variant="outline" disabled className="opacity-50">
-                                  <FileText className="h-4 w-4 mr-1" /> CV not available
+                                  <FileText className="h-4 w-4 mr-1" /> {tx("CV not available", "CV non disponibile")}
                                 </Button>
                               )}
                               {student.cover_letter_url ? (
                                 <Button size="sm" variant="outline" onClick={() => downloadFile(student.cover_letter_url, `${student.first_name}_${student.last_name}_CoverLetter.pdf`, 'talent-pool-covers')}>
-                                  <FileText className="h-4 w-4 mr-1" /> Cover <Download className="h-3 w-3 ml-1" />
+                                  <FileText className="h-4 w-4 mr-1" /> {tx("Cover", "Lettera")} <Download className="h-3 w-3 ml-1" />
                                 </Button>
                               ) : (
                                 <Button size="sm" variant="outline" disabled className="opacity-50">
-                                  <FileText className="h-4 w-4 mr-1" /> Cover not available
+                                  <FileText className="h-4 w-4 mr-1" /> {tx("Cover not available", "Lettera non disponibile")}
                                 </Button>
                               )}
                             </div>
@@ -1433,12 +1481,18 @@ const CompanyDashboardContent = () => {
                             {/* Work eligibility (bureaucracy: passport, visa, dates, residence) */}
                             {(student.passport_url || student.uk_work_visa || student.citizenship || student.home_address || student.city || student.country || student.internship_start_date || student.internship_end_date) && (
                               <div className="rounded-md border bg-muted/30 p-2 space-y-1 text-xs">
-                                <p className="font-medium">Work eligibility</p>
+                                <p className="font-medium">{tx("Work eligibility", "Idoneità al lavoro")}</p>
                                 {student.uk_work_visa && <p>{ukVisaLabel(student.uk_work_visa)}</p>}
-                                {student.citizenship && <p>Citizenship: <strong>{student.citizenship}</strong></p>}
+                                {student.uk_work_visa === 'YES' && (student.uk_visa_type || student.uk_visa_expiry) && (
+                                  <p>
+                                    {tx("Visa", "Visto")}: {student.uk_visa_type || '—'}
+                                    {student.uk_visa_expiry && <> · {tx("expires", "scade il")} {fmtDate(student.uk_visa_expiry)}</>}
+                                  </p>
+                                )}
+                                {student.citizenship && <p>{tx("Citizenship", "Cittadinanza")}: <strong>{student.citizenship}</strong></p>}
                                 {(student.internship_start_date || student.internship_end_date) && (
                                   <p>
-                                    Availability: {student.internship_start_date ? new Date(student.internship_start_date).toLocaleDateString() : '—'} → {student.internship_end_date ? new Date(student.internship_end_date).toLocaleDateString() : '—'}
+                                    {tx("Availability", "Disponibilità")}: {student.internship_start_date ? fmtDate(student.internship_start_date) : '—'} → {student.internship_end_date ? fmtDate(student.internship_end_date) : '—'}
                                   </p>
                                 )}
                                 {(student.home_address || student.city || student.country) && (
@@ -1453,7 +1507,7 @@ const CompanyDashboardContent = () => {
                                     disabled={viewingPassport === selection.student_id}
                                   >
                                     <Eye className="h-3.5 w-3.5 mr-1" />
-                                    {viewingPassport === selection.student_id ? 'Opening...' : 'View passport'}
+                                    {viewingPassport === selection.student_id ? tx('Opening...', 'Apertura...') : tx('View passport', 'Vedi passaporto')}
                                   </Button>
                                 )}
                               </div>
@@ -1461,52 +1515,52 @@ const CompanyDashboardContent = () => {
 
                             {/* Next step — Schedule meeting is live (C2); the rest arrive in C3/C4 */}
                             <div className="border-t pt-3">
-                              <p className="text-xs font-medium text-muted-foreground mb-2">Next step</p>
+                              <p className="text-xs font-medium text-muted-foreground mb-2">{tx("Next step", "Prossimo passo")}</p>
                               <div className="grid grid-cols-2 gap-2">
-                                <Button size="sm" variant="outline" onClick={() => openMeetingDialog(selection)}><CalendarClock className="h-4 w-4 mr-1" /> Schedule meeting</Button>
-                                <Button size="sm" variant="outline" onClick={() => openTestDialog(selection)}><ClipboardCheck className="h-4 w-4 mr-1" /> Test</Button>
-                                <Button size="sm" variant="outline" onClick={() => openOfferDialog(selection)}><Handshake className="h-4 w-4 mr-1" /> Offer</Button>
-                                <Button size="sm" variant="outline" className="text-destructive hover:text-destructive" onClick={() => openRejectDialog(selection)}><XCircle className="h-4 w-4 mr-1" /> Reject</Button>
+                                <Button size="sm" variant="outline" onClick={() => openMeetingDialog(selection)}><CalendarClock className="h-4 w-4 mr-1" /> {tx("Schedule meeting", "Fissa un incontro")}</Button>
+                                <Button size="sm" variant="outline" onClick={() => openTestDialog(selection)}><ClipboardCheck className="h-4 w-4 mr-1" /> {tx("Test", "Test")}</Button>
+                                <Button size="sm" variant="outline" onClick={() => openOfferDialog(selection)}><Handshake className="h-4 w-4 mr-1" /> {tx("Offer", "Offerta")}</Button>
+                                <Button size="sm" variant="outline" className="text-destructive hover:text-destructive" onClick={() => openRejectDialog(selection)}><XCircle className="h-4 w-4 mr-1" /> {tx("Reject", "Rifiuta")}</Button>
                               </div>
                             </div>
 
                             {/* Meetings timeline (Tests list arrives in C3) */}
                             <div className="grid grid-cols-1 gap-3">
                               <div className="rounded-md border p-2 space-y-2">
-                                <p className="text-xs font-medium">Meetings ({myMeetings.length})</p>
+                                <p className="text-xs font-medium">{tx("Meetings", "Incontri")} ({myMeetings.length})</p>
                                 {myMeetings.length === 0 ? (
-                                  <p className="text-xs text-muted-foreground">No meetings yet</p>
+                                  <p className="text-xs text-muted-foreground">{tx("No meetings yet", "Nessun incontro al momento")}</p>
                                 ) : (
                                   myMeetings.map((m: any) => (
                                     <div key={m.id} className="rounded border bg-muted/30 p-2 text-xs space-y-1">
                                       <div className="flex items-center justify-between gap-2">
-                                        <span className="font-medium">{m.title || 'Meeting'}</span>
-                                        <Badge variant="outline" className="text-[10px]">{m.status}</Badge>
+                                        <span className="font-medium">{m.title || tx('Meeting', 'Incontro')}</span>
+                                        <Badge variant="outline" className="text-[10px]">{meetingStatusLabel(m.status)}</Badge>
                                       </div>
                                       {m.status === 'CONFIRMED' && m.confirmed_slot ? (
                                         <div className="space-y-1.5">
-                                          <p>Confirmed: <strong>{formatSlot(m.confirmed_slot.datetime, m.timezone)}</strong></p>
+                                          <p>{tx("Confirmed", "Confermato")}: <strong>{fmtSlot(m.confirmed_slot.datetime, m.timezone)}</strong></p>
                                           {m.meet_link ? (
                                             <a href={m.meet_link} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 font-medium text-primary hover:underline">
-                                              <Video className="h-3.5 w-3.5" /> Interview link
+                                              <Video className="h-3.5 w-3.5" /> {tx("Interview link", "Link del colloquio")}
                                             </a>
                                           ) : (
-                                            <p className="text-muted-foreground">No interview link yet.</p>
+                                            <p className="text-muted-foreground">{tx("No interview link yet.", "Nessun link del colloquio al momento.")}</p>
                                           )}
                                           {m.description && <p className="text-muted-foreground">{m.description}</p>}
                                           <Button size="sm" variant="outline" className="h-7 text-[11px]" onClick={() => openLinkDialog(m)}>
                                             <LinkIcon className="h-3.5 w-3.5 mr-1" />
-                                            {m.meet_link ? 'Edit interview link' : 'Add interview link'}
+                                            {m.meet_link ? tx('Edit interview link', 'Modifica link del colloquio') : tx('Add interview link', 'Aggiungi link del colloquio')}
                                           </Button>
                                         </div>
                                       ) : (
                                         <div>
                                           <p className="text-muted-foreground">
-                                            {m.proposed_by === 'STUDENT' ? 'Candidate proposed:' : 'You proposed:'}
+                                            {m.proposed_by === 'STUDENT' ? tx('Candidate proposed:', 'Il candidato ha proposto:') : tx('You proposed:', 'Hai proposto:')}
                                           </p>
                                           <ul className="list-disc list-inside">
                                             {(m.proposed_slots || []).map((s: any, i: number) => (
-                                              <li key={i}>{formatSlot(s.datetime, m.timezone)}</li>
+                                              <li key={i}>{fmtSlot(s.datetime, m.timezone)}</li>
                                             ))}
                                           </ul>
                                         </div>
@@ -1516,33 +1570,33 @@ const CompanyDashboardContent = () => {
                                 )}
                               </div>
                               <div className="rounded-md border p-2 space-y-2">
-                                <p className="text-xs font-medium">Tests ({myTests.length})</p>
+                                <p className="text-xs font-medium">{tx("Tests", "Test")} ({myTests.length})</p>
                                 {myTests.length === 0 ? (
-                                  <p className="text-xs text-muted-foreground">No tests yet</p>
+                                  <p className="text-xs text-muted-foreground">{tx("No tests yet", "Nessun test al momento")}</p>
                                 ) : (
                                   myTests.map((tst: any) => (
                                     <div key={tst.id} className="rounded border bg-muted/30 p-2 text-xs space-y-1">
                                       <div className="flex items-center justify-between gap-2">
-                                        <span className="font-medium">{tst.title || 'Test'}</span>
-                                        <Badge variant="outline" className="text-[10px]">{tst.status}</Badge>
+                                        <span className="font-medium">{tst.title || tx('Test', 'Test')}</span>
+                                        <Badge variant="outline" className="text-[10px]">{testStatusLabel(tst.status)}</Badge>
                                       </div>
-                                      {tst.due_at && <p>Deadline: <strong>{new Date(tst.due_at).toLocaleDateString()}</strong>{tst.timezone ? ` (${tst.timezone})` : ''}</p>}
+                                      {tst.due_at && <p>{tx("Deadline", "Scadenza")}: <strong>{fmtDate(tst.due_at)}</strong>{tst.timezone ? ` (${tst.timezone})` : ''}</p>}
                                       {tst.link && (
                                         <a href={tst.link} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 font-medium text-primary hover:underline">
-                                          <LinkIcon className="h-3.5 w-3.5" /> Test link
+                                          <LinkIcon className="h-3.5 w-3.5" /> {tx("Test link", "Link al test")}
                                         </a>
                                       )}
                                       {tst.outcome && <p className="text-muted-foreground">{tst.outcome}</p>}
                                       {tst.status === 'SUBMITTED' && (
                                         <div className="flex flex-wrap gap-2 pt-1">
-                                          <Button size="sm" className="h-7 text-[11px] bg-green-600 hover:bg-green-700" disabled={testActionId === tst.id} onClick={() => handleMarkTest(tst, 'PASSED')}>Mark passed</Button>
-                                          <Button size="sm" variant="outline" className="h-7 text-[11px] text-destructive hover:text-destructive" disabled={testActionId === tst.id} onClick={() => handleMarkTest(tst, 'FAILED')}>Mark failed</Button>
+                                          <Button size="sm" className="h-7 text-[11px] bg-green-600 hover:bg-green-700" disabled={testActionId === tst.id} onClick={() => handleMarkTest(tst, 'PASSED')}>{tx("Mark passed", "Segna come superato")}</Button>
+                                          <Button size="sm" variant="outline" className="h-7 text-[11px] text-destructive hover:text-destructive" disabled={testActionId === tst.id} onClick={() => handleMarkTest(tst, 'FAILED')}>{tx("Mark failed", "Segna come non superato")}</Button>
                                         </div>
                                       )}
                                       {tst.status === 'SENT' && (
                                         <div className="flex items-center justify-between gap-2 pt-0.5">
-                                          <span className="text-muted-foreground">Waiting for the candidate</span>
-                                          <Button size="sm" variant="ghost" className="h-6 px-1 text-[11px] text-destructive hover:text-destructive" disabled={testActionId === tst.id} onClick={() => handleCancelTest(tst)}>Cancel</Button>
+                                          <span className="text-muted-foreground">{tx("Waiting for the candidate", "In attesa del candidato")}</span>
+                                          <Button size="sm" variant="ghost" className="h-6 px-1 text-[11px] text-destructive hover:text-destructive" disabled={testActionId === tst.id} onClick={() => handleCancelTest(tst)}>{tx("Cancel", "Annulla")}</Button>
                                         </div>
                                       )}
                                     </div>
@@ -1555,23 +1609,26 @@ const CompanyDashboardContent = () => {
                             <AlertDialog>
                               <AlertDialogTrigger asChild>
                                 <Button size="sm" variant="destructive" disabled={deselecting === selection.student_id} className="w-full">
-                                  {deselecting === selection.student_id ? 'Removing...' : (<><X className="h-4 w-4 mr-1" /> Deselect</>)}
+                                  {deselecting === selection.student_id ? tx('Removing...', 'Rimozione in corso...') : (<><X className="h-4 w-4 mr-1" /> {tx("Deselect", "Rimuovi selezione")}</>)}
                                 </Button>
                               </AlertDialogTrigger>
                               <AlertDialogContent>
                                 <AlertDialogHeader>
-                                  <AlertDialogTitle>Remove this selection?</AlertDialogTitle>
+                                  <AlertDialogTitle>{tx("Remove this selection?", "Rimuovere questa selezione?")}</AlertDialogTitle>
                                   <AlertDialogDescription>
-                                    Deselect {student.first_name} {student.last_name}? Their recruiting history (meetings/tests) is kept.
+                                    {tx(
+                                      `Deselect ${student.first_name} ${student.last_name}? Their recruiting history (meetings/tests) is kept.`,
+                                      `Rimuovere la selezione di ${student.first_name} ${student.last_name}? Lo storico del processo di selezione (incontri/test) viene conservato.`
+                                    )}
                                   </AlertDialogDescription>
                                 </AlertDialogHeader>
                                 <AlertDialogFooter>
-                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                  <AlertDialogCancel>{tx("Cancel", "Annulla")}</AlertDialogCancel>
                                   <AlertDialogAction
                                     onClick={() => handleDeselect(selection.student_id, `${student.first_name} ${student.last_name}`)}
                                     className="bg-destructive text-destructive-foreground"
                                   >
-                                    Yes, remove
+                                    {tx("Yes, remove", "Sì, rimuovi")}
                                   </AlertDialogAction>
                                 </AlertDialogFooter>
                               </AlertDialogContent>
@@ -1591,20 +1648,20 @@ const CompanyDashboardContent = () => {
         <Dialog open={!!meetingDialogFor} onOpenChange={(o) => { if (!o) setMeetingDialogFor(null); }}>
           <DialogContent className="max-w-md">
             <DialogHeader>
-              <DialogTitle>Schedule meeting</DialogTitle>
+              <DialogTitle>{tx("Schedule meeting", "Fissa un incontro")}</DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label>Title</Label>
+                <Label>{tx("Title", "Titolo")}</Label>
                 <Input
-                  placeholder="e.g. First interview"
+                  placeholder={tx("e.g. First interview", "es. Primo colloquio")}
                   value={meetingForm.title}
                   onChange={(e) => setMeetingForm({ ...meetingForm, title: e.target.value })}
                 />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-2">
-                  <Label>Option 1 (date &amp; time)</Label>
+                  <Label>{tx("Option 1 (date & time)", "Opzione 1 (data e ora)")}</Label>
                   <Input
                     type="datetime-local"
                     value={meetingForm.slot1}
@@ -1612,7 +1669,7 @@ const CompanyDashboardContent = () => {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>Option 2 (date &amp; time)</Label>
+                  <Label>{tx("Option 2 (date & time)", "Opzione 2 (data e ora)")}</Label>
                   <Input
                     type="datetime-local"
                     value={meetingForm.slot2}
@@ -1621,19 +1678,19 @@ const CompanyDashboardContent = () => {
                 </div>
               </div>
               <div className="space-y-2">
-                <Label>Timezone</Label>
+                <Label>{tx("Timezone", "Fuso orario")}</Label>
                 <Input
-                  placeholder="e.g. CET, GMT, EST"
+                  placeholder={tx("e.g. CET, GMT, EST", "es. CET, GMT, EST")}
                   value={meetingForm.timezone}
                   onChange={(e) => setMeetingForm({ ...meetingForm, timezone: e.target.value })}
                 />
-                <p className="text-xs text-muted-foreground">Shown next to the times as a label — no automatic conversion.</p>
+                <p className="text-xs text-muted-foreground">{tx("Shown next to the times as a label — no automatic conversion.", "Mostrato come etichetta accanto agli orari, senza conversione automatica.")}</p>
               </div>
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={() => setMeetingDialogFor(null)} disabled={submittingMeeting}>Cancel</Button>
+              <Button variant="outline" onClick={() => setMeetingDialogFor(null)} disabled={submittingMeeting}>{tx("Cancel", "Annulla")}</Button>
               <Button onClick={handleProposeMeeting} disabled={submittingMeeting}>
-                {submittingMeeting ? 'Sending...' : 'Propose meeting'}
+                {submittingMeeting ? tx('Sending...', 'Invio in corso...') : tx('Propose meeting', 'Proponi incontro')}
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -1643,28 +1700,28 @@ const CompanyDashboardContent = () => {
         <Dialog open={!!testDialogFor} onOpenChange={(o) => { if (!o) setTestDialogFor(null); }}>
           <DialogContent className="max-w-md">
             <DialogHeader>
-              <DialogTitle>Assign a test</DialogTitle>
+              <DialogTitle>{tx("Assign a test", "Assegna un test")}</DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label>Title (optional)</Label>
+                <Label>{tx("Title (optional)", "Titolo (facoltativo)")}</Label>
                 <Input
-                  placeholder="e.g. Online assessment"
+                  placeholder={tx("e.g. Online assessment", "es. Valutazione online")}
                   value={testForm.title}
                   onChange={(e) => setTestForm({ ...testForm, title: e.target.value })}
                 />
               </div>
               <div className="space-y-2">
-                <Label>Test link</Label>
+                <Label>{tx("Test link", "Link al test")}</Label>
                 <Input
-                  placeholder="https://... (the link the candidate uses)"
+                  placeholder={tx("https://... (the link the candidate uses)", "https://... (il link che userà il candidato)")}
                   value={testForm.link}
                   onChange={(e) => setTestForm({ ...testForm, link: e.target.value })}
                 />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-2">
-                  <Label>Deadline</Label>
+                  <Label>{tx("Deadline", "Scadenza")}</Label>
                   <Input
                     type="date"
                     value={testForm.dueDate}
@@ -1672,27 +1729,27 @@ const CompanyDashboardContent = () => {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>Timezone (optional)</Label>
+                  <Label>{tx("Timezone (optional)", "Fuso orario (facoltativo)")}</Label>
                   <Input
-                    placeholder="e.g. CET"
+                    placeholder={tx("e.g. CET", "es. CET")}
                     value={testForm.timezone}
                     onChange={(e) => setTestForm({ ...testForm, timezone: e.target.value })}
                   />
                 </div>
               </div>
               <div className="space-y-2">
-                <Label>Message (optional)</Label>
+                <Label>{tx("Message (optional)", "Messaggio (facoltativo)")}</Label>
                 <Textarea
-                  placeholder="Instructions for the candidate..."
+                  placeholder={tx("Instructions for the candidate...", "Istruzioni per il candidato...")}
                   value={testForm.instructions}
                   onChange={(e) => setTestForm({ ...testForm, instructions: e.target.value })}
                 />
               </div>
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={() => setTestDialogFor(null)} disabled={submittingTest}>Cancel</Button>
+              <Button variant="outline" onClick={() => setTestDialogFor(null)} disabled={submittingTest}>{tx("Cancel", "Annulla")}</Button>
               <Button onClick={handleSendTest} disabled={submittingTest}>
-                {submittingTest ? 'Sending...' : 'Send test'}
+                {submittingTest ? tx('Sending...', 'Invio in corso...') : tx('Send test', 'Invia test')}
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -1702,31 +1759,31 @@ const CompanyDashboardContent = () => {
         <Dialog open={!!linkDialogFor} onOpenChange={(o) => { if (!o) setLinkDialogFor(null); }}>
           <DialogContent className="max-w-md">
             <DialogHeader>
-              <DialogTitle>{linkDialogFor?.meet_link ? 'Edit interview link' : 'Add interview link'}</DialogTitle>
+              <DialogTitle>{linkDialogFor?.meet_link ? tx('Edit interview link', 'Modifica link del colloquio') : tx('Add interview link', 'Aggiungi link del colloquio')}</DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label>Interview link</Label>
+                <Label>{tx("Interview link", "Link del colloquio")}</Label>
                 <Input
-                  placeholder="https://meet.google.com/... or Zoom URL"
+                  placeholder={tx("https://meet.google.com/... or Zoom URL", "https://meet.google.com/... o URL Zoom")}
                   value={linkForm.meetLink}
                   onChange={(e) => setLinkForm({ ...linkForm, meetLink: e.target.value })}
                 />
               </div>
               <div className="space-y-2">
-                <Label>Description (optional)</Label>
+                <Label>{tx("Description (optional)", "Descrizione (facoltativa)")}</Label>
                 <Textarea
-                  placeholder="e.g. Bring your portfolio. The call lasts ~30 minutes."
+                  placeholder={tx("e.g. Bring your portfolio. The call lasts ~30 minutes.", "es. Porta il tuo portfolio. La call dura circa 30 minuti.")}
                   value={linkForm.description}
                   onChange={(e) => setLinkForm({ ...linkForm, description: e.target.value })}
                 />
               </div>
-              <p className="text-xs text-muted-foreground">The candidate sees the link and description in their Scheduled events tab.</p>
+              <p className="text-xs text-muted-foreground">{tx("The candidate sees the link and description in their Scheduled events tab.", "Il candidato vedrà link e descrizione nella sezione Eventi programmati.")}</p>
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={() => setLinkDialogFor(null)} disabled={submittingLink}>Cancel</Button>
+              <Button variant="outline" onClick={() => setLinkDialogFor(null)} disabled={submittingLink}>{tx("Cancel", "Annulla")}</Button>
               <Button onClick={handleSetLink} disabled={submittingLink}>
-                {submittingLink ? 'Saving...' : 'Save link'}
+                {submittingLink ? tx('Saving...', 'Salvataggio...') : tx('Save link', 'Salva link')}
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -1736,31 +1793,31 @@ const CompanyDashboardContent = () => {
         <Dialog open={!!offerDialogFor} onOpenChange={(o) => { if (!o) setOfferDialogFor(null); }}>
           <DialogContent className="max-w-md">
             <DialogHeader>
-              <DialogTitle>Make an offer</DialogTitle>
+              <DialogTitle>{tx("Make an offer", "Fai un'offerta")}</DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label>Role / job title (optional)</Label>
+                <Label>{tx("Role / job title (optional)", "Ruolo / posizione (facoltativo)")}</Label>
                 <Input
-                  placeholder="e.g. Summer Analyst Internship"
+                  placeholder={tx("e.g. Summer Analyst Internship", "es. Summer Analyst Internship")}
                   value={offerForm.jobTitle}
                   onChange={(e) => setOfferForm({ ...offerForm, jobTitle: e.target.value })}
                 />
               </div>
               <div className="space-y-2">
-                <Label>Message (optional)</Label>
+                <Label>{tx("Message (optional)", "Messaggio (facoltativo)")}</Label>
                 <Textarea
-                  placeholder="A short message to the candidate about the offer and next steps."
+                  placeholder={tx("A short message to the candidate about the offer and next steps.", "Un breve messaggio al candidato sull'offerta e sui prossimi passi.")}
                   value={offerForm.message}
                   onChange={(e) => setOfferForm({ ...offerForm, message: e.target.value })}
                 />
               </div>
-              <p className="text-xs text-muted-foreground">The candidate and Career Pilot are notified. The candidate's stage becomes "Offer".</p>
+              <p className="text-xs text-muted-foreground">{tx(`The candidate and CareerBoost are notified. The candidate's stage becomes "Offer".`, `Il candidato e CareerBoost verranno informati. Lo stato del candidato diventerà "Offerta".`)}</p>
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={() => setOfferDialogFor(null)} disabled={submittingDecision}>Cancel</Button>
+              <Button variant="outline" onClick={() => setOfferDialogFor(null)} disabled={submittingDecision}>{tx("Cancel", "Annulla")}</Button>
               <Button onClick={handleOffer} disabled={submittingDecision}>
-                {submittingDecision ? 'Sending...' : 'Send offer'}
+                {submittingDecision ? tx('Sending...', 'Invio in corso...') : tx('Send offer', 'Invia offerta')}
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -1770,23 +1827,23 @@ const CompanyDashboardContent = () => {
         <Dialog open={!!rejectDialogFor} onOpenChange={(o) => { if (!o) setRejectDialogFor(null); }}>
           <DialogContent className="max-w-md">
             <DialogHeader>
-              <DialogTitle>Reject candidate</DialogTitle>
+              <DialogTitle>{tx("Reject candidate", "Rifiuta candidato")}</DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label>Reason (optional)</Label>
+                <Label>{tx("Reason (optional)", "Motivazione (facoltativa)")}</Label>
                 <Textarea
-                  placeholder="An optional note shared with the candidate."
+                  placeholder={tx("An optional note shared with the candidate.", "Una nota facoltativa condivisa con il candidato.")}
                   value={rejectReason}
                   onChange={(e) => setRejectReason(e.target.value)}
                 />
               </div>
-              <p className="text-xs text-muted-foreground">The candidate and Career Pilot are notified. The candidate's stage becomes "Rejected" (their recruiting history is kept).</p>
+              <p className="text-xs text-muted-foreground">{tx(`The candidate and CareerBoost are notified. The candidate's stage becomes "Rejected" (their recruiting history is kept).`, `Il candidato e CareerBoost verranno informati. Lo stato del candidato diventerà "Non selezionato" (lo storico del processo di selezione viene conservato).`)}</p>
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={() => setRejectDialogFor(null)} disabled={submittingDecision}>Cancel</Button>
+              <Button variant="outline" onClick={() => setRejectDialogFor(null)} disabled={submittingDecision}>{tx("Cancel", "Annulla")}</Button>
               <Button variant="destructive" onClick={handleReject} disabled={submittingDecision}>
-                {submittingDecision ? 'Submitting...' : 'Reject candidate'}
+                {submittingDecision ? tx('Submitting...', 'Invio in corso...') : tx('Reject candidate', 'Rifiuta candidato')}
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -1796,7 +1853,7 @@ const CompanyDashboardContent = () => {
         <Dialog open={!!videoFor} onOpenChange={(o) => { if (!o) setVideoFor(null); }}>
           <DialogContent className="max-w-2xl">
             <DialogHeader>
-              <DialogTitle>{videoFor?.name} — presentation video</DialogTitle>
+              <DialogTitle>{videoFor?.name} — {tx("presentation video", "video di presentazione")}</DialogTitle>
             </DialogHeader>
             {videoFor && (
               <video src={videoFor.url} controls autoPlay className="w-full rounded-md border bg-black" />

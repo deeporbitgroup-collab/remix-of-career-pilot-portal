@@ -7,6 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { normalizeTalentPoolEmail } from "@/lib/talentPoolPassword";
 import { Mail, Loader2 } from "lucide-react";
+import { useTalentPoolLanguage } from "@/contexts/TalentPoolLanguageContext";
 
 interface ForgotPasswordDialogProps {
   open: boolean;
@@ -16,6 +17,7 @@ interface ForgotPasswordDialogProps {
 
 export const ForgotPasswordDialog = ({ open, onOpenChange, role }: ForgotPasswordDialogProps) => {
   const { toast } = useToast();
+  const { language, tx } = useTalentPoolLanguage();
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -24,8 +26,8 @@ export const ForgotPasswordDialog = ({ open, onOpenChange, role }: ForgotPasswor
 
     if (!email || !email.includes('@')) {
       toast({
-        title: "Invalid Email",
-        description: "Please enter a valid email address.",
+        title: tx("Invalid Email", "Email non valida"),
+        description: tx("Please enter a valid email address.", "Inserisci un indirizzo email valido."),
         variant: "destructive"
       });
       return;
@@ -37,14 +39,14 @@ export const ForgotPasswordDialog = ({ open, onOpenChange, role }: ForgotPasswor
       const normalizedEmail = normalizeTalentPoolEmail(email);
 
       const { error } = await supabase.functions.invoke('send-password-reset', {
-        body: { email: normalizedEmail, role }
+        body: { email: normalizedEmail, role, language }
       });
 
       if (error) throw error;
 
       toast({
-        title: "Reset Email Sent",
-        description: "If an account exists with this email, you will receive password reset instructions shortly.",
+        title: tx("Reset Email Sent", "Email di reimpostazione inviata"),
+        description: tx("If an account exists with this email, you will receive password reset instructions shortly.", "Se esiste un account associato a questa email, riceverai a breve le istruzioni per reimpostare la password."),
       });
 
       setEmail("");
@@ -52,8 +54,8 @@ export const ForgotPasswordDialog = ({ open, onOpenChange, role }: ForgotPasswor
     } catch (error: any) {
       console.error("Password reset error:", error);
       toast({
-        title: "Error",
-        description: error.message || "Failed to send reset email. Please try again.",
+        title: tx("Error", "Errore"),
+        description: tx(error.message || "Failed to send reset email. Please try again.", "Impossibile inviare l'email di reimpostazione. Riprova."),
         variant: "destructive"
       });
     } finally {
@@ -65,9 +67,9 @@ export const ForgotPasswordDialog = ({ open, onOpenChange, role }: ForgotPasswor
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Forgot Password?</DialogTitle>
+          <DialogTitle>{tx("Forgot Password?", "Password dimenticata?")}</DialogTitle>
           <DialogDescription>
-            Enter your email address and we'll send you a link to reset your password.
+            {tx("Enter your email address and we'll send you a link to reset your password.", "Inserisci il tuo indirizzo email e ti invieremo un link per reimpostare la password.")}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -78,7 +80,7 @@ export const ForgotPasswordDialog = ({ open, onOpenChange, role }: ForgotPasswor
               <Input
                 id="reset-email"
                 type="email"
-                placeholder="your.email@example.com"
+                placeholder={tx("your.email@example.com", "tua.email@esempio.com")}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="pl-10"
@@ -94,7 +96,7 @@ export const ForgotPasswordDialog = ({ open, onOpenChange, role }: ForgotPasswor
               className="flex-1"
               disabled={loading}
             >
-              Cancel
+              {tx("Cancel", "Annulla")}
             </Button>
             <Button
               type="submit"
@@ -104,10 +106,10 @@ export const ForgotPasswordDialog = ({ open, onOpenChange, role }: ForgotPasswor
               {loading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Sending...
+                  {tx("Sending...", "Invio in corso...")}
                 </>
               ) : (
-                "Send Reset Link"
+                tx("Send Reset Link", "Invia link di reimpostazione")
               )}
             </Button>
           </div>

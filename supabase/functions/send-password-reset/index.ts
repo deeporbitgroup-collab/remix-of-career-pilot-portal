@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { Resend } from "npm:resend@2.0.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { getTpUserLanguage, pick, resolveLang } from "../_shared/tpLanguage.ts";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
@@ -14,6 +15,7 @@ const corsHeaders = {
 interface PasswordResetRequest {
   email: string;
   role: 'STUDENT' | 'COMPANY';
+  language?: string; // 'it' | 'en' — site language of the requester (fallback only)
 }
 
 serve(async (req: Request) => {
@@ -23,7 +25,7 @@ serve(async (req: Request) => {
 
   try {
     const supabase = createClient(supabaseUrl, supabaseKey);
-    const { email, role }: PasswordResetRequest = await req.json();
+    const { email, role, language }: PasswordResetRequest = await req.json();
 
     console.log("Processing password reset request:", { email, role });
 
@@ -57,9 +59,57 @@ serve(async (req: Request) => {
     const origin = req.headers.get('origin') || 'https://careerpilot.it';
     const resetUrl = `${origin}/talent-pool/reset-password?token=${token}&role=${resolvedRole.toLowerCase()}`;
 
-    const roleLabel = resolvedRole === 'STUDENT' ? 'Student' : 'Company';
+    // Talent Pool-only flow (talent_pool_request_password_reset). Recipient = requester:
+    // stored preference first, then the site language sent by the dialog, else Italian.
+    const lang = resolveLang(await getTpUserLanguage(supabase, { email }), language);
 
-    const emailHtml = `
+    const roleLabel = resolvedRole === 'STUDENT'
+      ? pick(lang, 'Student', 'studente')
+      : pick(lang, 'Company', 'azienda');
+
+    const emailHtml = lang === 'it' ? `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <div style="background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%); padding: 30px; text-align: center;">
+          <h1 style="color: white; margin: 0;">CareerPilot Talent Pool</h1>
+          <p style="color: #e0e7ff; margin-top: 10px;">Richiesta di reimpostazione password</p>
+        </div>
+        
+        <div style="background: white; padding: 30px; border: 1px solid #e5e7eb;">
+          <h2 style="color: #1e3a8a; margin-top: 0;">Reimposta la tua password</h2>
+          
+          <p style="color: #4b5563; line-height: 1.6;">
+            Abbiamo ricevuto una richiesta di reimpostazione della password per il tuo account ${roleLabel}.
+          </p>
+          
+          <p style="color: #4b5563; line-height: 1.6;">
+            Clicca sul pulsante qui sotto per reimpostare la password. Il link scadrà tra 1 ora.
+          </p>
+          
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="${resetUrl}" style="display: inline-block; background: #3b82f6; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; font-weight: bold;">
+              Reimposta password
+            </a>
+          </div>
+          
+          <p style="color: #6b7280; font-size: 14px; line-height: 1.6;">
+            Se non hai richiesto tu la reimpostazione, puoi ignorare questa email. La tua password resterà invariata.
+          </p>
+          
+          <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
+            <p style="color: #6b7280; font-size: 12px; margin: 0;">
+              Se il pulsante non funziona, copia e incolla questo link nel tuo browser:
+            </p>
+            <p style="color: #3b82f6; font-size: 12px; word-break: break-all; margin: 10px 0 0 0;">
+              ${resetUrl}
+            </p>
+          </div>
+        </div>
+        
+        <div style="text-align: center; padding: 20px; color: #6b7280; font-size: 12px;">
+          <p style="margin: 0;">CareerPilot - Il tuo percorso professionale inizia qui</p>
+        </div>
+      </div>
+    ` : `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <div style="background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%); padding: 30px; text-align: center;">
           <h1 style="color: white; margin: 0;">CareerPilot Talent Pool</h1>
@@ -106,7 +156,7 @@ serve(async (req: Request) => {
     const { error: emailError } = await resend.emails.send({
       from: "CareerPilot <noreply@careerpilot.it>",
       to: [email],
-      subject: "Reset Your CareerPilot Password",
+      subject: pick(lang, "Reset Your CareerPilot Password", "Reimposta la tua password CareerPilot"),
       html: emailHtml,
     });
 

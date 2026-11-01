@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { Resend } from "npm:resend@2.0.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { getTpUserLanguage, pick, resolveLang } from "../_shared/tpLanguage.ts";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
@@ -100,28 +101,34 @@ serve(async (req: Request) => {
         console.error("No email address found for company; skipping email send");
       }
 
+      // Recipient = the company (the requester is the admin, so no body.language fallback).
+      const lang = resolveLang(await getTpUserLanguage(supabase, { userId: companyId }));
+      const localTimestamp = lang === 'it'
+        ? new Date().toLocaleString('it-IT', { timeZone: 'Europe/Rome', dateStyle: 'medium', timeStyle: 'short' })
+        : timestamp;
+
       const emailHtml = `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
           <div style="background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%); padding: 30px; text-align: center;">
             <h1 style="color: white; margin: 0;">CareerPilot</h1>
-            <p style="color: #e0e7ff; margin-top: 10px;">New message from CareerPilot Admin</p>
+            <p style="color: #e0e7ff; margin-top: 10px;">${pick(lang, "New message from CareerPilot Admin", "Nuovo messaggio dall'Admin di CareerPilot")}</p>
           </div>
           
           <div style="background: white; padding: 30px; border: 1px solid #e5e7eb;">
             <div style="background: #f3f4f6; padding: 15px; border-radius: 8px; margin: 10px 0 20px 0;">
-              <p style="margin: 4px 0;"><strong>Subject:</strong> ${subject}</p>
-              <p style="margin: 4px 0;"><strong>Message:</strong></p>
+              <p style="margin: 4px 0;"><strong>${pick(lang, "Subject:", "Oggetto:")}</strong> ${subject}</p>
+              <p style="margin: 4px 0;"><strong>${pick(lang, "Message:", "Messaggio:")}</strong></p>
               <p style="color: #4b5563; line-height: 1.6; white-space: pre-wrap; margin-top: 8px;">${message}</p>
             </div>
             <p style="color: #6b7280; font-size: 14px; margin-top: 10px;">
-              <strong>Sent:</strong> ${timestamp}
+              <strong>${pick(lang, "Sent:", "Inviato:")}</strong> ${localTimestamp}
             </p>
             <p style="color: #4b5563; line-height: 1.6; margin-top: 20px;">
-              Log in to your CareerPilot dashboard to reply.
+              ${pick(lang, "Log in to your CareerPilot dashboard to reply.", "Accedi alla tua dashboard CareerPilot per rispondere.")}
             </p>
             <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb; text-align: center;">
               <p style="color: #6b7280; font-size: 14px; margin: 0;">
-                CareerPilot - Building Careers Together
+                ${pick(lang, "CareerPilot - Building Careers Together", "CareerPilot - Costruiamo carriere insieme")}
               </p>
             </div>
           </div>
@@ -131,7 +138,7 @@ serve(async (req: Request) => {
       const { data: emailData, error: emailError } = await resend.emails.send({
         from: "CareerPilot <noreply@careerpilot.it>",
         to: [resolvedRecipientEmail],
-        subject: "New message from CareerPilot Admin",
+        subject: pick(lang, "New message from CareerPilot Admin", "Nuovo messaggio dall'Admin di CareerPilot"),
         html: emailHtml,
       });
 

@@ -14,11 +14,12 @@ import {
   MessageCircle
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { TalentPoolLanguageProvider } from "@/contexts/TalentPoolLanguageContext";
+import { TalentPoolLanguageProvider, useTalentPoolLanguage } from "@/contexts/TalentPoolLanguageContext";
 
 const CompanySelectedStudentsContent = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { tx, language } = useTalentPoolLanguage();
   const [loading, setLoading] = useState(true);
   const [selectedStudents, setSelectedStudents] = useState<any[]>([]);
   const [deselecting, setDeselecting] = useState<string | null>(null);
@@ -70,8 +71,8 @@ const CompanySelectedStudentsContent = () => {
     } catch (error) {
       console.error('Error loading selected students (edge):', error);
       toast({
-        title: "Error",
-        description: "Failed to load selected students",
+        title: tx("Error", "Errore"),
+        description: tx("Failed to load selected students", "Impossibile caricare i candidati selezionati"),
         variant: "destructive"
       });
     }
@@ -92,8 +93,8 @@ const CompanySelectedStudentsContent = () => {
       if (error) throw error;
 
       toast({
-        title: "Student Deselected",
-        description: `You have removed ${studentName} from your selections.`,
+        title: tx("Student Deselected", "Selezione rimossa"),
+        description: tx(`You have removed ${studentName} from your selections.`, `Hai rimosso ${studentName} dalle tue selezioni.`),
         duration: 3000
       });
 
@@ -102,8 +103,8 @@ const CompanySelectedStudentsContent = () => {
     } catch (error: any) {
       console.error('Deselect error:', error);
       toast({
-        title: "Error",
-        description: error.message || "Failed to deselect student",
+        title: tx("Error", "Errore"),
+        description: error.message || tx("Failed to deselect student", "Impossibile rimuovere la selezione del candidato"),
         variant: "destructive"
       });
     } finally {
@@ -134,14 +135,14 @@ const CompanySelectedStudentsContent = () => {
       window.URL.revokeObjectURL(blobUrl);
       
       toast({
-        title: "Success",
-        description: `${filename} downloaded successfully`
+        title: tx("Success", "Operazione completata"),
+        description: tx(`${filename} downloaded successfully`, `${filename} scaricato correttamente`)
       });
     } catch (error) {
       console.error('Download error:', error);
       toast({
-        title: "Download Error",
-        description: "Unable to download file",
+        title: tx("Download Error", "Errore di download"),
+        description: tx("Unable to download file", "Impossibile scaricare il file"),
         variant: "destructive"
       });
     }
@@ -166,14 +167,14 @@ const CompanySelectedStudentsContent = () => {
             className="flex items-center gap-2"
           >
             <ArrowLeft className="h-4 w-4" />
-            Back to Dashboard
+            {tx("Back to Dashboard", "Torna alla Dashboard")}
           </Button>
           <div>
             <h1 className="text-3xl font-bold text-green-600">
-              Selected Students
+              {tx("Selected Students", "Candidati selezionati")}
             </h1>
             <p className="text-steel-gray">
-              Students you've expressed interest in
+              {tx("Students you've expressed interest in", "I candidati per cui hai manifestato interesse")}
             </p>
           </div>
         </div>
@@ -183,16 +184,16 @@ const CompanySelectedStudentsContent = () => {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <User className="h-5 w-5" />
-              Your Selections ({selectedStudents.length})
+              {tx("Your Selections", "Le tue selezioni")} ({selectedStudents.length})
             </CardTitle>
           </CardHeader>
           <CardContent>
             {selectedStudents.length === 0 ? (
               <div className="text-center py-12">
                 <User className="h-12 w-12 text-steel-gray mx-auto mb-4 opacity-50" />
-                <p className="text-steel-gray">No students selected yet</p>
+                <p className="text-steel-gray">{tx("No students selected yet", "Nessun candidato selezionato al momento")}</p>
                 <p className="text-sm text-steel-gray mt-2">
-                  Go back to the dashboard to select students
+                  {tx("Go back to the dashboard to select students", "Torna alla dashboard per selezionare i candidati")}
                 </p>
               </div>
             ) : (
@@ -221,7 +222,7 @@ const CompanySelectedStudentsContent = () => {
                             {student.first_name} {student.last_name}
                           </h3>
                           <p className="text-xs text-steel-gray">
-                            Selected: {new Date(selection.selected_at).toLocaleDateString()}
+                            {tx("Selected:", "Selezionato il")} {new Date(selection.selected_at).toLocaleDateString(language === 'it' ? 'it-IT' : 'en-GB')}
                           </p>
                         </div>
 
@@ -234,7 +235,7 @@ const CompanySelectedStudentsContent = () => {
                             className="w-full flex items-center justify-center gap-2"
                           >
                             <ExternalLink className="h-4 w-4" />
-                            LinkedIn Profile
+                            {tx("LinkedIn Profile", "Profilo LinkedIn")}
                           </Button>
                         )}
 
@@ -251,7 +252,7 @@ const CompanySelectedStudentsContent = () => {
                               className="w-full flex items-center justify-center gap-2"
                             >
                               <FileText className="h-4 w-4" />
-                              Download CV
+                              {tx("Download CV", "Scarica CV")}
                               <Download className="h-3 w-3" />
                             </Button>
                           )}
@@ -266,7 +267,7 @@ const CompanySelectedStudentsContent = () => {
                               className="w-full flex items-center justify-center gap-2"
                             >
                               <FileText className="h-4 w-4" />
-                              Download Cover Letter
+                              {tx("Download Cover Letter", "Scarica lettera di presentazione")}
                               <Download className="h-3 w-3" />
                             </Button>
                           )}
@@ -283,26 +284,28 @@ const CompanySelectedStudentsContent = () => {
                                 {deselecting === selection.student_id ? (
                                   <>
                                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                                    <span>Removing...</span>
+                                    <span>{tx("Removing...", "Rimozione in corso...")}</span>
                                   </>
                                 ) : (
                                   <>
                                     <X className="h-4 w-4" />
-                                    Deselect
+                                    {tx("Deselect", "Rimuovi selezione")}
                                   </>
                                 )}
                               </Button>
                             </AlertDialogTrigger>
                             <AlertDialogContent>
                               <AlertDialogHeader>
-                                <AlertDialogTitle>Remove this selection?</AlertDialogTitle>
+                                <AlertDialogTitle>{tx("Remove this selection?", "Rimuovere questa selezione?")}</AlertDialogTitle>
                                 <AlertDialogDescription>
-                                  Are you sure you want to deselect {student.first_name} {student.last_name}? 
-                                  This will remove them from your selected students list.
+                                  {tx(
+                                    `Are you sure you want to deselect ${student.first_name} ${student.last_name}? This will remove them from your selected students list.`,
+                                    `Vuoi davvero rimuovere la selezione di ${student.first_name} ${student.last_name}? Il candidato verrà eliminato dalla tua lista di candidati selezionati.`
+                                  )}
                                 </AlertDialogDescription>
                               </AlertDialogHeader>
                               <AlertDialogFooter>
-                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogCancel>{tx("Cancel", "Annulla")}</AlertDialogCancel>
                                 <AlertDialogAction 
                                   onClick={() => handleDeselectStudent(
                                     selection.student_id,
@@ -310,7 +313,7 @@ const CompanySelectedStudentsContent = () => {
                                   )}
                                   className="bg-destructive text-destructive-foreground"
                                 >
-                                  Yes, Remove
+                                  {tx("Yes, Remove", "Sì, rimuovi")}
                                 </AlertDialogAction>
                               </AlertDialogFooter>
                             </AlertDialogContent>

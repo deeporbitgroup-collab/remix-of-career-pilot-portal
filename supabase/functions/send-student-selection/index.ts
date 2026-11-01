@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { Resend } from "npm:resend@2.0.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { getTpUserLanguage, pick, resolveLang, type TpLang } from "../_shared/tpLanguage.ts";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
@@ -23,11 +24,16 @@ interface SelectionRequest {
   companyEmail: string;
   studentName: string;
   studentEmail: string;
+  language?: string; // 'it' | 'en' — site language of the selecting company (fallback for its own email)
 }
 
-const getEmailTemplate = (content: string, gradient: string = "linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%)") => `
+const getEmailTemplate = (
+  content: string,
+  gradient: string = "linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%)",
+  lang: TpLang = "en"
+) => `
 <!DOCTYPE html>
-<html lang="en">
+<html lang="${lang}">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -56,9 +62,9 @@ const getEmailTemplate = (content: string, gradient: string = "linear-gradient(1
         <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #f1f5f9; border-radius: 0 0 16px 16px; border: 1px solid #e2e8f0; border-top: none;">
           <tr>
             <td style="padding: 30px; text-align: center;">
-              <p style="margin: 0 0 10px 0; color: #64748b; font-size: 14px;">Have questions? Contact us:</p>
+              <p style="margin: 0 0 10px 0; color: #64748b; font-size: 14px;">${pick(lang, "Have questions? Contact us:", "Hai domande? Contattaci:")}</p>
               <p style="margin: 0; color: #1e3a8a; font-size: 14px; font-weight: 600;">careerpilot2025@gmail.com</p>
-              <p style="margin: 20px 0 0 0; color: #94a3b8; font-size: 12px;">© ${new Date().getFullYear()} Career Pilot. All rights reserved.</p>
+              <p style="margin: 20px 0 0 0; color: #94a3b8; font-size: 12px;">© ${new Date().getFullYear()} Career Pilot. ${pick(lang, "All rights reserved.", "Tutti i diritti riservati.")}</p>
             </td>
           </tr>
         </table>
@@ -76,7 +82,7 @@ serve(async (req: Request) => {
 
   try {
     const supabase = createClient(supabaseUrl, supabaseKey);
-    const { companyId, studentId, companyName, companyEmail, studentName, studentEmail }: SelectionRequest = await req.json();
+    const { companyId, studentId, companyName, companyEmail, studentName, studentEmail, language }: SelectionRequest = await req.json();
 
     // Resolve company and student details from DB
     const { data: companyProf } = await supabase
@@ -144,6 +150,62 @@ serve(async (req: Request) => {
       throw insertError;
     }
 
+    // Recipient languages: the student (not the requester → DB or Italian default) and
+    // the company (= the requester → DB, then body.language).
+    const studentLang: TpLang = resolveLang(await getTpUserLanguage(supabase, { userId: studentId }));
+    const companyLang: TpLang = resolveLang(await getTpUserLanguage(supabase, { userId: companyId }), language);
+    const timestampIt = new Date().toLocaleString('it-IT', {
+      timeZone: 'Europe/Rome',
+      dateStyle: 'medium',
+      timeStyle: 'short'
+    });
+
+    // CELEBRATORY Email to student (IT) 🎉
+    const studentContentIt = `
+      <div style="text-align: center; margin-bottom: 30px;">
+        <div style="display: inline-block; background-color: #fef3c7; border-radius: 50%; padding: 20px;">
+          <span style="font-size: 64px;">🎉</span>
+        </div>
+      </div>
+      
+      <h2 style="margin: 0 0 20px 0; color: #d97706; font-size: 28px; font-weight: 700; text-align: center;">Ottime notizie!</h2>
+      <h3 style="margin: 0 0 20px 0; color: #1e3a8a; font-size: 20px; font-weight: 600; text-align: center;">Un'azienda è interessata a te!</h3>
+      
+      <p style="margin: 0 0 20px 0; color: #334155; font-size: 16px; line-height: 1.6;">
+        Ciao <strong>${resolvedStudentName}</strong>,
+      </p>
+      
+      <p style="margin: 0 0 20px 0; color: #334155; font-size: 16px; line-height: 1.6;">
+        È un traguardo importante nel tuo percorso professionale! <strong>${resolvedCompanyName}</strong> ti ha selezionato dal Talent Pool, manifestando interesse per il tuo profilo.
+      </p>
+      
+      <div style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); padding: 25px; border-radius: 12px; margin: 25px 0; text-align: center;">
+        <p style="margin: 0; color: #92400e; font-size: 18px; font-weight: 600;">
+          🌟 Sei un passo più vicino all'opportunità dei tuoi sogni!
+        </p>
+      </div>
+      
+      <div style="background-color: #f0f9ff; border-left: 4px solid #3b82f6; padding: 20px; margin: 25px 0; border-radius: 0 12px 12px 0;">
+        <p style="margin: 0; color: #1e40af; font-size: 15px; font-weight: 500;">
+          📋 Cosa succede ora?
+        </p>
+        <p style="margin: 10px 0 0 0; color: #334155; font-size: 14px; line-height: 1.6;">
+          Il team di Career Pilot e l'azienda definiranno insieme i prossimi passi. Potrebbe trattarsi di un colloquio, di una prova di valutazione o persino di un'opportunità di assunzione diretta!
+        </p>
+      </div>
+      
+      <div style="text-align: center; margin: 30px 0;">
+        <a href="${STUDENT_DASHBOARD}" style="display: inline-block; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: #ffffff; text-decoration: none; padding: 16px 40px; border-radius: 10px; font-size: 16px; font-weight: 600; box-shadow: 0 4px 14px rgba(245, 158, 11, 0.4);">
+          Vedi il tuo stato nel Talent Pool
+        </a>
+      </div>
+      
+      <p style="margin: 30px 0 0 0; color: #334155; font-size: 16px; line-height: 1.6;">
+        Ancora congratulazioni!<br>
+        <strong style="color: #1e3a8a;">Il team di Career Pilot</strong>
+      </p>
+    `;
+
     // CELEBRATORY Email to student (EN) 🎉
     const studentContent = `
       <div style="text-align: center; margin-bottom: 30px;">
@@ -194,13 +256,44 @@ serve(async (req: Request) => {
       from: "Career Pilot Talent Pool <noreply@careerpilot.it>",
       to: [resolvedStudentEmail],
       bcc: [ADMIN_EMAIL], // admin monitors every selection message (private copy)
-      subject: `Good news! A company is interested in you 🎉`,
-      html: getEmailTemplate(studentContent, "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)"),
+      subject: pick(studentLang, `Good news! A company is interested in you 🎉`, `Ottime notizie! Un'azienda è interessata a te 🎉`),
+      html: studentLang === "it"
+        ? getEmailTemplate(studentContentIt, "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)", "it")
+        : getEmailTemplate(studentContent, "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)"),
     });
 
     if (studentEmailError) {
       console.error("Student email error:", studentEmailError);
     }
+
+    // Email to company (confirmation, IT)
+    const companyContentIt = `
+      <div style="text-align: center; margin-bottom: 30px;">
+        <div style="display: inline-block; background-color: #dcfce7; border-radius: 50%; padding: 20px;">
+          <span style="font-size: 48px;">✅</span>
+        </div>
+      </div>
+      
+      <h2 style="margin: 0 0 20px 0; color: #16a34a; font-size: 24px; font-weight: 600; text-align: center;">Selezione confermata!</h2>
+      
+      <p style="margin: 0 0 20px 0; color: #334155; font-size: 16px; line-height: 1.6;">
+        Hai manifestato con successo il tuo interesse per <strong>${resolvedStudentName}</strong>.
+      </p>
+      
+      <div style="background-color: #f3f4f6; padding: 20px; border-radius: 12px; margin: 20px 0;">
+        <p style="margin: 8px 0;"><strong>Studente selezionato:</strong> ${resolvedStudentName}</p>
+        <p style="margin: 8px 0;"><strong>Data della selezione:</strong> ${timestampIt}</p>
+      </div>
+      
+      <p style="margin: 0 0 20px 0; color: #334155; font-size: 16px; line-height: 1.6;">
+        Il nostro team ti contatterà a breve per definire i prossimi passi del processo di selezione.
+      </p>
+      
+      <p style="margin: 30px 0 0 0; color: #334155; font-size: 16px; line-height: 1.6;">
+        Cordiali saluti,<br>
+        <strong style="color: #16a34a;">Il team di Career Pilot</strong>
+      </p>
+    `;
 
     // Email to company (confirmation)
     const companyContent = `
@@ -235,8 +328,10 @@ serve(async (req: Request) => {
       from: "Career Pilot Talent Pool <noreply@careerpilot.it>",
       to: [resolvedCompanyEmail],
       bcc: [ADMIN_EMAIL], // admin monitors every selection message (private copy)
-      subject: `Selection confirmed: ${resolvedStudentName}`,
-      html: getEmailTemplate(companyContent, "linear-gradient(135deg, #16a34a 0%, #15803d 100%)"),
+      subject: pick(companyLang, `Selection confirmed: ${resolvedStudentName}`, `Selezione confermata: ${resolvedStudentName}`),
+      html: companyLang === "it"
+        ? getEmailTemplate(companyContentIt, "linear-gradient(135deg, #16a34a 0%, #15803d 100%)", "it")
+        : getEmailTemplate(companyContent, "linear-gradient(135deg, #16a34a 0%, #15803d 100%)"),
     });
 
     if (companyEmailError) {

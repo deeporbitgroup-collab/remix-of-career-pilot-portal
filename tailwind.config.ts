@@ -63,6 +63,49 @@ export default {
 				'cloud-white': 'hsl(var(--cloud-white))',
 				'steel-gray': 'hsl(var(--steel-gray))',
 				'runway-gray': 'hsl(var(--runway-gray))',
+				/* ===== CareerBoost Talent Pool palette (scoped to talent-pool pages) ===== */
+				/* Near-black navy — replaces slate */
+				cbslate: {
+					50: 'rgb(var(--cbslate-50) / <alpha-value>)',
+					100: 'rgb(var(--cbslate-100) / <alpha-value>)',
+					200: 'rgb(var(--cbslate-200) / <alpha-value>)',
+					300: 'rgb(var(--cbslate-300) / <alpha-value>)',
+					400: 'rgb(var(--cbslate-400) / <alpha-value>)',
+					500: 'rgb(var(--cbslate-500) / <alpha-value>)',
+					600: 'rgb(var(--cbslate-600) / <alpha-value>)',
+					700: 'rgb(var(--cbslate-700) / <alpha-value>)',
+					800: 'rgb(var(--cbslate-800) / <alpha-value>)',
+					900: 'rgb(var(--cbslate-900) / <alpha-value>)',
+					950: 'rgb(var(--cbslate-950) / <alpha-value>)',
+				},
+				/* Light readable blue on dark (#5B9BFF) — replaces sky (students) */
+				cbsky: {
+					50: 'rgb(var(--cbsky-50) / <alpha-value>)',
+					100: 'rgb(var(--cbsky-100) / <alpha-value>)',
+					200: 'rgb(var(--cbsky-200) / <alpha-value>)',
+					300: 'rgb(var(--cbsky-300) / <alpha-value>)',
+					400: 'rgb(var(--cbsky-400) / <alpha-value>)',
+					500: 'rgb(var(--cbsky-500) / <alpha-value>)',
+					600: 'rgb(var(--cbsky-600) / <alpha-value>)',
+					700: 'rgb(var(--cbsky-700) / <alpha-value>)',
+					800: 'rgb(var(--cbsky-800) / <alpha-value>)',
+					900: 'rgb(var(--cbsky-900) / <alpha-value>)',
+					950: 'rgb(var(--cbsky-950) / <alpha-value>)',
+				},
+				/* Brand indigo (#2430D4) — replaces emerald (companies) */
+				cbind: {
+					50: 'rgb(var(--cbind-50) / <alpha-value>)',
+					100: 'rgb(var(--cbind-100) / <alpha-value>)',
+					200: 'rgb(var(--cbind-200) / <alpha-value>)',
+					300: 'rgb(var(--cbind-300) / <alpha-value>)',
+					400: 'rgb(var(--cbind-400) / <alpha-value>)',
+					500: 'rgb(var(--cbind-500) / <alpha-value>)',
+					600: 'rgb(var(--cbind-600) / <alpha-value>)',
+					700: 'rgb(var(--cbind-700) / <alpha-value>)',
+					800: 'rgb(var(--cbind-800) / <alpha-value>)',
+					900: 'rgb(var(--cbind-900) / <alpha-value>)',
+					950: 'rgb(var(--cbind-950) / <alpha-value>)',
+				},
 				sidebar: {
 					DEFAULT: 'hsl(var(--sidebar-background))',
 					foreground: 'hsl(var(--sidebar-foreground))',
@@ -74,10 +117,16 @@ export default {
 					ring: 'hsl(var(--sidebar-ring))'
 				}
 			},
+			fontFamily: {
+				inter: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+			},
 			backgroundImage: {
 				'gradient-sky': 'var(--gradient-sky)',
 				'gradient-hero': 'var(--gradient-hero)',
 				'gradient-card': 'var(--gradient-card)',
+				/* CareerBoost silk: diagonal blue bands over near-black */
+				'cb-silk': 'linear-gradient(135deg, #05060D 0%, #0A0A1F 38%, #142C8A 72%, #2430D4 110%)',
+				'cb-aurora': 'radial-gradient(60% 55% at 78% 18%, rgba(91,155,255,0.18) 0%, transparent 60%), radial-gradient(55% 50% at 12% 88%, rgba(36,48,212,0.22) 0%, transparent 62%)',
 			},
 			boxShadow: {
 				'aviation': 'var(--shadow-aviation)',

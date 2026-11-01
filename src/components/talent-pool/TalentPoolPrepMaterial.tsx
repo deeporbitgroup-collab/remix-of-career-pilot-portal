@@ -10,6 +10,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { FileText, ExternalLink } from "lucide-react";
+import { useTalentPoolLanguage } from "@/contexts/TalentPoolLanguageContext";
 
 const TIER = "Internship Placement";
 
@@ -17,6 +18,7 @@ const TIER = "Internship Placement";
 // so the student sees them without navigating away. The actual purchase/checkout
 // still happens on the Knowledge Base page (unchanged).
 const TalentPoolPrepMaterial = () => {
+  const { tx } = useTalentPoolLanguage();
   const [items, setItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<any | null>(null);
@@ -47,17 +49,20 @@ const TalentPoolPrepMaterial = () => {
     <Card className="border-2 border-primary/30 bg-gradient-to-br from-primary/5 to-transparent">
       <CardHeader>
         <CardTitle className="text-lg font-bold flex items-center gap-2">
-          <FileText className="h-5 w-5 text-primary" /> Prep Material
+          <FileText className="h-5 w-5 text-primary" /> {tx("Prep Material", "Materiale di preparazione")}
         </CardTitle>
         <p className="text-sm text-steel-gray">
-          PDF guides, Excel models and ready-made packages for your selections — browse them right here and get what you need.
+          {tx(
+            "PDF guides, Excel models and ready-made packages for your selections — browse them right here and get what you need.",
+            "Guide PDF, modelli Excel e pacchetti pronti per le tue selezioni — sfogliali qui e prendi ciò che ti serve."
+          )}
         </p>
       </CardHeader>
       <CardContent className="space-y-3">
         {loading ? (
-          <p className="text-sm text-muted-foreground">Loading materials…</p>
+          <p className="text-sm text-muted-foreground">{tx("Loading materials…", "Caricamento materiali…")}</p>
         ) : items.length === 0 ? (
-          <p className="text-sm text-muted-foreground">No prep material available yet.</p>
+          <p className="text-sm text-muted-foreground">{tx("No prep material available yet.", "Nessun materiale di preparazione ancora disponibile.")}</p>
         ) : (
           <>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-md:flex max-md:snap-x max-md:snap-mandatory max-md:overflow-x-auto max-md:-mx-1 max-md:px-1 max-md:pb-1 max-md:[&>*]:w-[80vw] max-md:[&>*]:shrink-0 max-md:[&>*]:snap-center">
@@ -66,7 +71,7 @@ const TalentPoolPrepMaterial = () => {
                   <div className="flex items-start justify-between gap-2">
                     <p className="text-sm font-semibold leading-tight">{p.title}</p>
                     {p.is_bundle ? (
-                      <Badge className="shrink-0">Bundle</Badge>
+                      <Badge className="shrink-0">{tx("Bundle", "Pacchetto")}</Badge>
                     ) : (
                       <Badge variant="outline" className="shrink-0">{p.category}</Badge>
                     )}
@@ -76,17 +81,17 @@ const TalentPoolPrepMaterial = () => {
                     <span className="font-bold text-primary">€{Number(p.price).toFixed(0)}</span>
                     <div className="flex gap-1.5">
                       <Button size="sm" variant="ghost" className="h-8 px-2 text-xs" onClick={() => setSelected(p)}>
-                        Details
+                        {tx("Details", "Dettagli")}
                       </Button>
                       <Button size="sm" variant="outline" className="h-8" onClick={() => openPurchase(p.id)}>
-                        Get it <ExternalLink className="ml-1 h-3 w-3" />
+                        {tx("Get it", "Acquista")} <ExternalLink className="ml-1 h-3 w-3" />
                       </Button>
                     </div>
                   </div>
                 </div>
               ))}
             </div>
-            <p className="text-xs text-muted-foreground md:hidden">Swipe to see more · purchase opens in a new tab so you stay here.</p>
+            <p className="text-xs text-muted-foreground md:hidden">{tx("Swipe to see more · purchase opens in a new tab so you stay here.", "Scorri per vederne altri · l'acquisto si apre in una nuova scheda, così resti qui.")}</p>
           </>
         )}
       </CardContent>
@@ -100,7 +105,7 @@ const TalentPoolPrepMaterial = () => {
             <div className="space-y-3">
               <div className="flex flex-wrap gap-2">
                 {selected.is_bundle ? (
-                  <Badge>Bundle</Badge>
+                  <Badge>{tx("Bundle", "Pacchetto")}</Badge>
                 ) : (
                   <Badge variant="outline">{selected.category}</Badge>
                 )}
@@ -108,7 +113,7 @@ const TalentPoolPrepMaterial = () => {
               </div>
               <p className="text-sm text-muted-foreground whitespace-pre-wrap">{selected.description}</p>
               <Button className="w-full" onClick={() => openPurchase(selected.id)}>
-                Purchase on Knowledge Base <ExternalLink className="ml-2 h-4 w-4" />
+                {tx("Purchase on Knowledge Base", "Acquista sulla Knowledge Base")} <ExternalLink className="ml-2 h-4 w-4" />
               </Button>
             </div>
           )}

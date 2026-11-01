@@ -7,11 +7,13 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Lock, CheckCircle, XCircle } from "lucide-react";
+import { useTalentPoolLanguage } from "@/contexts/TalentPoolLanguageContext";
 
 const ResetPassword = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { tx } = useTalentPoolLanguage();
   const [loading, setLoading] = useState(false);
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -66,8 +68,8 @@ const ResetPassword = () => {
 
     if (!token) {
       toast({
-        title: "Invalid Link",
-        description: "The password reset link is invalid or expired.",
+        title: tx("Invalid Link", "Link non valido"),
+        description: tx("The password reset link is invalid or expired.", "Il link per reimpostare la password non è valido o è scaduto."),
         variant: "destructive"
       });
       return;
@@ -75,8 +77,8 @@ const ResetPassword = () => {
 
     if (newPassword.length < 8) {
       toast({
-        title: "Weak Password",
-        description: "Password must be at least 8 characters long.",
+        title: tx("Weak Password", "Password debole"),
+        description: tx("Password must be at least 8 characters long.", "La password deve contenere almeno 8 caratteri."),
         variant: "destructive"
       });
       return;
@@ -84,8 +86,8 @@ const ResetPassword = () => {
 
     if (!/[A-Z]/.test(newPassword) || !/[0-9]/.test(newPassword)) {
       toast({
-        title: "Weak Password",
-        description: "Use at least one uppercase letter and one number.",
+        title: tx("Weak Password", "Password debole"),
+        description: tx("Use at least one uppercase letter and one number.", "Usa almeno una lettera maiuscola e un numero."),
         variant: "destructive"
       });
       return;
@@ -93,8 +95,8 @@ const ResetPassword = () => {
 
     if (newPassword.trim() !== newPassword || confirmPassword.trim() !== confirmPassword) {
       toast({
-        title: "Invalid Password",
-        description: "Password cannot start or end with spaces.",
+        title: tx("Invalid Password", "Password non valida"),
+        description: tx("Password cannot start or end with spaces.", "La password non può iniziare o terminare con spazi."),
         variant: "destructive"
       });
       return;
@@ -102,8 +104,8 @@ const ResetPassword = () => {
 
     if (newPassword !== confirmPassword) {
       toast({
-        title: "Passwords Don't Match",
-        description: "Please make sure both passwords match.",
+        title: tx("Passwords Don't Match", "Le password non coincidono"),
+        description: tx("Please make sure both passwords match.", "Assicurati che le due password coincidano."),
         variant: "destructive"
       });
       return;
@@ -121,22 +123,22 @@ const ResetPassword = () => {
 
       if (data === true) {
         toast({
-          title: "Password Reset Successful",
-          description: "Your password has been reset. You can now log in with your new password."
+          title: tx("Password Reset Successful", "Password reimpostata con successo"),
+          description: tx("Your password has been reset. You can now log in with your new password.", "La tua password è stata reimpostata. Ora puoi accedere con la nuova password.")
         });
         setTimeout(() => navigate(loginPath), 2000);
       } else {
         toast({
-          title: "Reset Failed",
-          description: "The reset link is invalid or has expired. Please request a new one.",
+          title: tx("Reset Failed", "Reimpostazione non riuscita"),
+          description: tx("The reset link is invalid or has expired. Please request a new one.", "Il link di reimpostazione non è valido o è scaduto. Richiedine uno nuovo."),
           variant: "destructive"
         });
       }
     } catch (error: any) {
       console.error("Reset error:", error);
       toast({
-        title: "Error",
-        description: error.message || "Failed to reset password. Please try again.",
+        title: tx("Error", "Errore"),
+        description: tx(error.message || "Failed to reset password. Please try again.", "Impossibile reimpostare la password. Riprova."),
         variant: "destructive"
       });
     } finally {
@@ -149,7 +151,7 @@ const ResetPassword = () => {
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/5 via-background to-secondary/5 p-4">
         <Card className="w-full max-w-md">
           <CardHeader className="text-center">
-            <CardTitle>Validating reset link...</CardTitle>
+            <CardTitle>{tx("Validating reset link...", "Verifica del link in corso...")}</CardTitle>
           </CardHeader>
         </Card>
       </div>
@@ -164,9 +166,9 @@ const ResetPassword = () => {
             <div className="flex justify-center mb-4">
               <XCircle className="h-16 w-16 text-destructive" />
             </div>
-            <CardTitle>Invalid Reset Link</CardTitle>
+            <CardTitle>{tx("Invalid Reset Link", "Link di reimpostazione non valido")}</CardTitle>
             <CardDescription>
-              This password reset link is invalid or has expired.
+              {tx("This password reset link is invalid or has expired.", "Questo link per reimpostare la password non è valido o è scaduto.")}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -174,7 +176,7 @@ const ResetPassword = () => {
               className="w-full" 
               onClick={() => navigate(loginPath)}
             >
-              Back to Login
+              {tx("Back to Login", "Torna al login")}
             </Button>
           </CardContent>
         </Card>
@@ -191,35 +193,35 @@ const ResetPassword = () => {
               <Lock className="h-8 w-8 text-primary" />
             </div>
           </div>
-          <CardTitle>Reset Your Password</CardTitle>
+          <CardTitle>{tx("Reset Your Password", "Reimposta la tua password")}</CardTitle>
           <CardDescription>
-            Enter your new password below
+            {tx("Enter your new password below", "Inserisci qui sotto la nuova password")}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleResetPassword} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="new-password">New Password</Label>
+              <Label htmlFor="new-password">{tx("New Password", "Nuova password")}</Label>
               <Input
                 id="new-password"
                 type="password"
-                placeholder="Enter new password"
+                placeholder={tx("Enter new password", "Inserisci la nuova password")}
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
                 required
                 minLength={8}
               />
               <p className="text-xs text-muted-foreground">
-                Must be at least 8 characters long
+                {tx("Must be at least 8 characters long", "Deve contenere almeno 8 caratteri")}
               </p>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="confirm-password">Confirm Password</Label>
+              <Label htmlFor="confirm-password">{tx("Confirm Password", "Conferma password")}</Label>
               <Input
                 id="confirm-password"
                 type="password"
-                placeholder="Confirm new password"
+                placeholder={tx("Confirm new password", "Conferma la nuova password")}
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 required
@@ -228,7 +230,7 @@ const ResetPassword = () => {
             </div>
 
             <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "Resetting..." : "Reset Password"}
+              {loading ? tx("Resetting...", "Reimpostazione in corso...") : tx("Reset Password", "Reimposta password")}
             </Button>
 
             <Button
@@ -237,7 +239,7 @@ const ResetPassword = () => {
               className="w-full"
               onClick={() => navigate(loginPath)}
             >
-              Back to Login
+              {tx("Back to Login", "Torna al login")}
             </Button>
           </form>
         </CardContent>

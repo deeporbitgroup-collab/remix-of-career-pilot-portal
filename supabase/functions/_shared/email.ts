@@ -10,10 +10,13 @@ export const siteUrl = (): string =>
 
 export const orderRef = (orderId: string): string => `CP-${orderId.slice(0, 8).toUpperCase()}`;
 
-/** Full HTML document wrapper (navy header + light card + footer). */
-export const emailLayout = (content: string): string => `
+/**
+ * Full HTML document wrapper (navy header + light card + footer).
+ * `lang` is optional: callers that omit it get the exact same English output as before.
+ */
+export const emailLayout = (content: string, lang: "en" | "it" = "en"): string => `
 <!DOCTYPE html>
-<html lang="en">
+<html lang="${lang}">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -24,7 +27,7 @@ export const emailLayout = (content: string): string => `
       <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background: linear-gradient(135deg, #1a365d 0%, #2d4a7c 100%); border-radius: 16px 16px 0 0;">
         <tr><td style="padding: 40px 30px; text-align: center;">
           <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 700; letter-spacing: -0.5px;">Career Pilot</h1>
-          <p style="margin: 10px 0 0 0; color: #94a3b8; font-size: 14px;">Your Flight Plan to Success</p>
+          <p style="margin: 10px 0 0 0; color: #94a3b8; font-size: 14px;">${lang === "it" ? "Il tuo piano di volo verso il successo" : "Your Flight Plan to Success"}</p>
         </td></tr>
       </table>
       <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #ffffff; border-left: 1px solid #e2e8f0; border-right: 1px solid #e2e8f0;">
@@ -32,9 +35,9 @@ export const emailLayout = (content: string): string => `
       </table>
       <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #f1f5f9; border-radius: 0 0 16px 16px; border: 1px solid #e2e8f0; border-top: none;">
         <tr><td style="padding: 30px; text-align: center;">
-          <p style="margin: 0 0 10px 0; color: #64748b; font-size: 14px;">Have questions? Contact us:</p>
+          <p style="margin: 0 0 10px 0; color: #64748b; font-size: 14px;">${lang === "it" ? "Hai domande? Contattaci:" : "Have questions? Contact us:"}</p>
           <p style="margin: 0; color: #1a365d; font-size: 14px; font-weight: 600;">${ADMIN_EMAIL}</p>
-          <p style="margin: 20px 0 0 0; color: #94a3b8; font-size: 12px;">© ${new Date().getFullYear()} Career Pilot. All rights reserved.</p>
+          <p style="margin: 20px 0 0 0; color: #94a3b8; font-size: 12px;">© ${new Date().getFullYear()} Career Pilot. ${lang === "it" ? "Tutti i diritti riservati." : "All rights reserved."}</p>
         </td></tr>
       </table>
     </td></tr>

@@ -1,7 +1,11 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { Resend } from "npm:resend@2.0.0";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { getTpUserLanguage, normalizeLang, pick, resolveLang, type TpLang } from "../_shared/tpLanguage.ts";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
+const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -19,11 +23,12 @@ interface CompanyRegistrationData {
   size: string;
   referenceEmail: string;
   linkedin?: string;
+  language?: string; // 'it' | 'en' — the language the company chose on the site
 }
 
-const getEmailTemplate = (content: string) => `
+const getEmailTemplate = (content: string, lang: TpLang = "en") => `
 <!DOCTYPE html>
-<html lang="en">
+<html lang="${lang}">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -37,7 +42,7 @@ const getEmailTemplate = (content: string) => `
           <tr>
             <td style="padding: 40px 30px; text-align: center;">
               <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 700; letter-spacing: -0.5px;">Career Pilot</h1>
-              <p style="margin: 10px 0 0 0; color: #bbf7d0; font-size: 14px;">Talent Pool - Partner Companies</p>
+              <p style="margin: 10px 0 0 0; color: #bbf7d0; font-size: 14px;">${pick(lang, "Talent Pool - Partner Companies", "Talent Pool - Aziende partner")}</p>
             </td>
           </tr>
         </table>
@@ -55,9 +60,9 @@ const getEmailTemplate = (content: string) => `
         <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #f1f5f9; border-radius: 0 0 16px 16px; border: 1px solid #e2e8f0; border-top: none;">
           <tr>
             <td style="padding: 30px; text-align: center;">
-              <p style="margin: 0 0 10px 0; color: #64748b; font-size: 14px;">Have questions? Contact us:</p>
+              <p style="margin: 0 0 10px 0; color: #64748b; font-size: 14px;">${pick(lang, "Have questions? Contact us:", "Hai domande? Contattaci:")}</p>
               <p style="margin: 0; color: #16a34a; font-size: 14px; font-weight: 600;">careerpilot2025@gmail.com</p>
-              <p style="margin: 20px 0 0 0; color: #94a3b8; font-size: 12px;">© ${new Date().getFullYear()} Career Pilot. All rights reserved.</p>
+              <p style="margin: 20px 0 0 0; color: #94a3b8; font-size: 12px;">© ${new Date().getFullYear()} Career Pilot. ${pick(lang, "All rights reserved.", "Tutti i diritti riservati.")}</p>
             </td>
           </tr>
         </table>
@@ -81,8 +86,21 @@ const handler = async (req: Request): Promise<Response> => {
       timeStyle: 'short'
     });
 
+    // Recipient = the registering company (= the requester). The language just chosen
+    // on the site (body.language) wins, since the new row may still hold the column
+    // default; otherwise the stored preference, otherwise Italian.
+    let lang: TpLang;
+    if (data.language) {
+      lang = normalizeLang(data.language);
+    } else {
+      const supabase = createClient(supabaseUrl, supabaseKey);
+      lang = resolveLang(
+        await getTpUserLanguage(supabase, { email: data.email || data.referenceEmail })
+      );
+    }
+
     // Email to company (EN)
-    const companyContent = `
+    const companyContentEn = `
       <div style="text-align: center; margin-bottom: 30px;">
         <div style="display: inline-block; background-color: #dcfce7; border-radius: 50%; padding: 20px;">
           <span style="font-size: 48px;">🏢</span>
@@ -125,12 +143,60 @@ const handler = async (req: Request): Promise<Response> => {
       </p>
     `;
 
+    // Email to company (IT)
+    const companyContentIt = `
+      <div style="text-align: center; margin-bottom: 30px;">
+        <div style="display: inline-block; background-color: #dcfce7; border-radius: 50%; padding: 20px;">
+          <span style="font-size: 48px;">🏢</span>
+        </div>
+      </div>
+      
+      <h2 style="margin: 0 0 20px 0; color: #16a34a; font-size: 24px; font-weight: 600; text-align: center;">Grazie per esserti registrato!</h2>
+      
+      <p style="margin: 0 0 20px 0; color: #334155; font-size: 16px; line-height: 1.6;">
+        Gentile team di ${data.companyName},
+      </p>
+      
+      <p style="margin: 0 0 20px 0; color: #334155; font-size: 16px; line-height: 1.6;">
+        Grazie per aver registrato la tua azienda sul <strong>Career Pilot Talent Pool</strong>. Siamo felici di averti come potenziale partner!
+      </p>
+      
+      <div style="background-color: #f0fdf4; border-left: 4px solid #16a34a; padding: 20px; margin: 25px 0; border-radius: 0 12px 12px 0;">
+        <p style="margin: 0; color: #166534; font-size: 15px; font-weight: 500;">
+          📋 Stato della tua registrazione
+        </p>
+        <p style="margin: 10px 0 0 0; color: #334155; font-size: 14px; line-height: 1.6;">
+          <strong>Stato:</strong> In revisione<br>
+          Il profilo della tua azienda è in fase di revisione da parte del nostro team. Attiveremo presto il tuo accesso al Talent Pool!
+        </p>
+      </div>
+      
+      <p style="margin: 0 0 20px 0; color: #334155; font-size: 16px; line-height: 1.6;">
+        Una volta approvata, potrai esplorare i profili di studenti di talento e scoprire la prossima grande risorsa per il tuo team.
+      </p>
+      
+      <div style="text-align: center; margin: 30px 0;">
+        <a href="${TALENT_POOL_HOME}" style="display: inline-block; background-color: #16a34a; background-image: linear-gradient(135deg, #16a34a 0%, #15803d 100%); color: #ffffff !important; text-decoration: none; padding: 16px 40px; border-radius: 10px; font-size: 16px; font-weight: 600; box-shadow: 0 4px 14px rgba(22, 163, 74, 0.4); mso-padding-alt: 0;">
+          Visita il Talent Pool
+        </a>
+      </div>
+      
+      <p style="margin: 30px 0 0 0; color: #334155; font-size: 16px; line-height: 1.6;">
+        Cordiali saluti,<br>
+        <strong style="color: #16a34a;">Il team di Career Pilot</strong>
+      </p>
+    `;
+
     // Send email to company
     const { error: companyEmailError } = await resend.emails.send({
       from: "Career Pilot Talent Pool <noreply@careerpilot.it>",
       to: [data.referenceEmail],
-      subject: "Thanks for registering — we'll activate your Talent Pool access soon",
-      html: getEmailTemplate(companyContent),
+      subject: pick(
+        lang,
+        "Thanks for registering — we'll activate your Talent Pool access soon",
+        "Grazie per la registrazione — attiveremo presto il tuo accesso al Talent Pool"
+      ),
+      html: lang === "it" ? getEmailTemplate(companyContentIt, "it") : getEmailTemplate(companyContentEn),
     });
 
     if (companyEmailError) {
