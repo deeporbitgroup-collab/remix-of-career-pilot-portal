@@ -1,13 +1,24 @@
 import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Building, Users, Shield, FileText, Mail, Video } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Building, Users, Shield, FileText, Mail, Video, Send, CheckCircle2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { TalentPoolLanguageProvider, useTalentPoolLanguage } from "@/contexts/TalentPoolLanguageContext";
 import { useStaggeredAnimation } from "@/hooks/useScrollAnimation";
+import { supabase } from "@/integrations/supabase/client";
 import careerPilotLogo from "@/assets/career-pilot-logo.png";
 import careerBoostMark from "@/assets/careerboost-mark-white.png";
 import TrustedLogos from "@/components/talent-pool/TrustedLogos";
+
+type LandingService = "cv" | "cover" | "video";
 
 
 /**
@@ -68,9 +79,45 @@ const TalentPoolContent = () => {
   const [selectedRole, setSelectedRole] = useState<string | null>(null);
   const { containerRef, getItemProps } = useStaggeredAnimation(100);
 
+  // Expert-service requests triggered from the CV / Cover letter / Video chips.
+  const [serviceTarget, setServiceTarget] = useState<null | { service: LandingService; title: string; desc: string }>(null);
+  const [serviceForm, setServiceForm] = useState({ firstName: '', lastName: '', email: '', whatsapp: '' });
+  const [serviceState, setServiceState] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
+
   const handleRoleSelect = (role: 'student' | 'company') => {
     setSelectedRole(role);
     navigate(`/talent-pool/${role}`);
+  };
+
+  const openService = (service: LandingService, title: string, desc: string) => {
+    setServiceForm({ firstName: '', lastName: '', email: '', whatsapp: '' });
+    setServiceState('idle');
+    setServiceTarget({ service, title, desc });
+  };
+
+  const sendService = async () => {
+    if (!serviceTarget) return;
+    const { firstName, lastName, email, whatsapp } = serviceForm;
+    if (!firstName.trim() || !lastName.trim() || !email.trim() || !whatsapp.trim()) return;
+    setServiceState('sending');
+    const { error } = await supabase.functions.invoke('send-mentor-booking-email', {
+      body: {
+        firstName: firstName.trim(),
+        lastName: lastName.trim(),
+        email: email.trim(),
+        whatsapp: whatsapp.trim(),
+        language,
+        requestType: 'service',
+        service: serviceTarget.service,
+        source: 'Talent Pool — Landing',
+      },
+    });
+    if (error) {
+      console.error('Service request error:', error);
+      setServiceState('error');
+      return;
+    }
+    setServiceState('sent');
   };
 
   return (
@@ -154,24 +201,53 @@ const TalentPoolContent = () => {
                 {tx("companies choose you.", "sono le aziende a scegliere te.")}
               </span>
             </p>
-            {/* What companies see of you */}
+            {/* What companies see of you — each chip opens an expert-service request */}
             <div className="mt-2.5 md:mt-3 flex items-center justify-center gap-2 md:gap-2.5 flex-wrap">
-              {[
-                { icon: FileText, label: 'CV' },
-                { icon: Mail, label: tx('Cover letter', 'Cover letter') },
-                { icon: Video, label: 'Video' },
-              ].map(({ icon: Icon, label }) => (
-                <span
+              {([
+                {
+                  icon: FileText,
+                  label: 'CV',
+                  service: 'cv' as const,
+                  title: tx('Request an expert-written CV', 'Richiedi un CV scritto da un esperto'),
+                  desc: tx(
+                    'Leave your details: a CareerBoost expert will rewrite your CV with you. We will contact you shortly.',
+                    'Lascia i tuoi dati: un esperto CareerBoost riscriverà il tuo CV insieme a te. Ti ricontatteremo a breve.'
+                  ),
+                },
+                {
+                  icon: Mail,
+                  label: tx('Cover letter', 'Cover letter'),
+                  service: 'cover' as const,
+                  title: tx('Request an expert-written cover letter', 'Richiedi una cover letter scritta da un esperto'),
+                  desc: tx(
+                    'Leave your details: a CareerBoost expert will write your cover letter with you. We will contact you shortly.',
+                    'Lascia i tuoi dati: un esperto CareerBoost scriverà la tua cover letter insieme a te. Ti ricontatteremo a breve.'
+                  ),
+                },
+                {
+                  icon: Video,
+                  label: 'Video',
+                  service: 'video' as const,
+                  title: tx('Presentation video — get help', 'Video di presentazione — richiedi assistenza'),
+                  desc: tx(
+                    'Leave your details: the CareerBoost team will guide you on how to record your presentation video. We will contact you shortly.',
+                    'Lascia i tuoi dati: il team CareerBoost ti guiderà su come realizzare il tuo video di presentazione. Ti ricontatteremo a breve.'
+                  ),
+                },
+              ]).map(({ icon: Icon, label, service, title, desc }) => (
+                <button
                   key={label}
-                  className="inline-flex items-center gap-1.5 rounded-full border border-cbsky-500/30 bg-cbslate-900/60 px-2.5 py-1 md:px-3 md:py-1.5 text-[11px] md:text-xs font-semibold text-cbsky-100 backdrop-blur-sm shadow-sm"
+                  type="button"
+                  onClick={() => openService(service, title, desc)}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-cbsky-500/30 bg-cbslate-900/60 px-2.5 py-1 md:px-3 md:py-1.5 text-[11px] md:text-xs font-semibold text-cbsky-100 backdrop-blur-sm shadow-sm transition-colors hover:border-cbsky-400 hover:bg-cbsky-500/15 hover:text-white"
                 >
                   <Icon className="h-3.5 w-3.5 text-cbsky-400" />
                   {label}
-                </span>
+                </button>
               ))}
             </div>
             <p className="hidden sm:block mt-2 text-[10px] md:text-[11px] uppercase tracking-[0.18em] text-cbslate-400/80">
-              {tx('The profile companies choose from', 'Il profilo da cui le aziende ti scelgono')}
+              {tx('Tap to get it written by an expert', 'Tocca per farlo scrivere da un esperto')}
             </p>
           </div>
         </div>
@@ -255,6 +331,69 @@ const TalentPoolContent = () => {
 
         </div>
       </div>
+
+      {/* Expert-service request dialog (CV / Cover letter / Video) */}
+      <Dialog open={!!serviceTarget} onOpenChange={(o) => { if (!o) setServiceTarget(null); }}>
+        <DialogContent className="max-w-md tp-cb-portal">
+          {serviceState === 'sent' ? (
+            <div className="space-y-4 py-2 text-center">
+              <CheckCircle2 className="mx-auto h-10 w-10 text-primary" />
+              <DialogTitle>{tx('Request received', 'Richiesta ricevuta')}</DialogTitle>
+              <p className="text-sm text-muted-foreground">
+                {tx(
+                  'Thank you! The CareerBoost team will contact you shortly using the details you provided. We have also sent you a confirmation email.',
+                  'Grazie! Il team di CareerBoost ti ricontatterà a breve ai dati che ci hai inviato. Ti abbiamo anche inviato un\'email di conferma.'
+                )}
+              </p>
+              <Button className="w-full rounded-full" onClick={() => setServiceTarget(null)}>
+                {tx('Close', 'Chiudi')}
+              </Button>
+            </div>
+          ) : (
+            <>
+              <DialogHeader>
+                <DialogTitle>{serviceTarget?.title}</DialogTitle>
+                <DialogDescription>{serviceTarget?.desc}</DialogDescription>
+              </DialogHeader>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium">{tx('First name', 'Nome')}</label>
+                  <Input value={serviceForm.firstName} onChange={(e) => setServiceForm({ ...serviceForm, firstName: e.target.value })} />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium">{tx('Last name', 'Cognome')}</label>
+                  <Input value={serviceForm.lastName} onChange={(e) => setServiceForm({ ...serviceForm, lastName: e.target.value })} />
+                </div>
+                <div className="col-span-2 space-y-1.5">
+                  <label className="text-xs font-medium">Email</label>
+                  <Input type="email" value={serviceForm.email} onChange={(e) => setServiceForm({ ...serviceForm, email: e.target.value })} />
+                </div>
+                <div className="col-span-2 space-y-1.5">
+                  <label className="text-xs font-medium">{tx('WhatsApp number', 'Numero WhatsApp')}</label>
+                  <Input type="tel" placeholder="+39 333 123 4567" value={serviceForm.whatsapp} onChange={(e) => setServiceForm({ ...serviceForm, whatsapp: e.target.value })} />
+                </div>
+              </div>
+              {serviceState === 'error' && (
+                <p className="text-xs text-destructive">
+                  {tx('Something went wrong. Please try again or write to info@careerboost.it.', 'Qualcosa è andato storto. Riprova o scrivi a info@careerboost.it.')}
+                </p>
+              )}
+              <Button
+                className="w-full rounded-full"
+                onClick={sendService}
+                disabled={
+                  serviceState === 'sending' ||
+                  !serviceForm.firstName.trim() || !serviceForm.lastName.trim() ||
+                  !serviceForm.email.trim() || !serviceForm.whatsapp.trim()
+                }
+              >
+                <Send className="mr-2 h-4 w-4" />
+                {serviceState === 'sending' ? tx('Sending…', 'Invio in corso…') : tx('Send request', 'Invia richiesta')}
+              </Button>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* Footer - Elegant */}
       <footer className="relative z-20 border-t border-cbsky-500/20 bg-cbslate-950/80 backdrop-blur-md">

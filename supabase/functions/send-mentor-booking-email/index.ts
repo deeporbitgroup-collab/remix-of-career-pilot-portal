@@ -89,7 +89,7 @@ interface MentorBookingRequest {
   requestType?: "booking" | "interest" | "service";
   source?: string;
   // requestType "service": which CareerBoost service the student asked about
-  service?: "cv" | "cover" | "cvcover" | "outreach";
+  service?: "cv" | "cover" | "cvcover" | "outreach" | "video";
 }
 
 const escapeHtml = (value: unknown) =>
@@ -220,14 +220,20 @@ const SERVICE_COPY = {
     it: { name: "Outreach Power Pack", what: "maggiori informazioni sull'Outreach Power Pack", steps: ["Il team CareerBoost ti contatterà a breve via email o WhatsApp.", "Ti spiegheremo come funziona: database di contatti su misura e invio automatico.", "Capiremo insieme settori e città su cui puntare."] },
     en: { name: "Outreach Power Pack", what: "more information about the Outreach Power Pack", steps: ["The CareerBoost team will contact you shortly by email or WhatsApp.", "We'll walk you through how it works: a tailored contact database and automatic sending.", "Together we'll choose the sectors and cities to target."] },
   },
+  video: {
+    it: { name: "Video di presentazione", what: "assistenza per realizzare il tuo video di presentazione", steps: ["Il team CareerBoost ti contatterà a breve via email o WhatsApp.", "Ti spiegheremo come girare un video di presentazione efficace: cosa dire, come e in quanto tempo.", "Ti seguiremo passo passo finché il video non è pronto per il tuo profilo."] },
+    en: { name: "Presentation video", what: "help creating your presentation video", steps: ["The CareerBoost team will contact you shortly by email or WhatsApp.", "We'll show you how to record an effective presentation video: what to say, how, and how long.", "We'll guide you step by step until your video is ready for your profile."] },
+  },
 } as const;
 
 async function handleServiceRequest(o: {
   firstName: string; lastName: string; email: string; whatsapp: string;
-  service: "cv" | "cover" | "cvcover" | "outreach"; it: boolean; source?: string;
+  service: "cv" | "cover" | "cvcover" | "outreach" | "video"; it: boolean; source?: string;
 }): Promise<Response> {
   const { it } = o;
-  const { CB_TEAM_EMAILS, CB_FROM, steps, cbLayout, p, signature, detailRows } = makeCb(it);
+  const { CB_FROM, steps, cbLayout, p, signature, detailRows } = makeCb(it);
+  // The two CareerBoost admins that receive service requests (CV / cover letter / video).
+  const TEAM_EMAILS = ["info@careerboost.it", "fassio.leone@gmail.com"];
   const copy = SERVICE_COPY[o.service][it ? "it" : "en"];
   const clientName = `${o.firstName} ${o.lastName}`.trim();
   const safeName = escapeHtml(clientName);
@@ -273,7 +279,7 @@ async function handleServiceRequest(o: {
   );
 
   const [teamRes, studentRes] = await Promise.all([
-    resend.emails.send({ from: CB_FROM, to: CB_TEAM_EMAILS, reply_to: o.email,
+    resend.emails.send({ from: CB_FROM, to: TEAM_EMAILS, reply_to: o.email,
       subject: it ? `Richiesta ${copy.name}: ${clientName}` : `${copy.name} request: ${clientName}`, html: teamHtml }),
     resend.emails.send({ from: CB_FROM, to: [o.email], reply_to: "info@careerboost.it",
       subject: it ? `Grazie! Abbiamo ricevuto la tua richiesta — ${copy.name}` : `Thank you! We've received your request — ${copy.name}`, html: studentHtml }),
@@ -312,7 +318,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     // ── Service request (CV rewrite / cover letter / Outreach Power Pack) ──
     if (requestType === "service") {
-      if (!firstName || !lastName || !email || !whatsapp || !service || !["cv", "cover", "cvcover", "outreach"].includes(service)) {
+      if (!firstName || !lastName || !email || !whatsapp || !service || !["cv", "cover", "cvcover", "outreach", "video"].includes(service)) {
         return json(400, { error: "Missing required service request fields" });
       }
       if (!isValidEmail(email)) return json(400, { error: "Invalid client email" });
