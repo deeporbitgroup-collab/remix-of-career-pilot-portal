@@ -8,7 +8,7 @@
     "hero": {
       "badge": "SECURE AND VERIFIED INTERMEDIATION",
       "title": "Connect Talent & Opportunity",
-      "subtitle": "The platform where companies choose you.",
+      "subtitle": "You don't apply — companies choose you.",
       "limited": "⭐ Limited access to only 20 selected students"
     },
     "values": {
@@ -343,76 +343,6 @@
     "success": {
       "uploaded": "Receipt uploaded!",
       "uploadedDesc": "Your receipt is awaiting verification from CareerBoost"
-    }
-  },
-  "studentTalentPool": {
-    "header": {
-      "title": "Talent Pool - CareerBoost",
-      "logout": "Logout"
-    },
-    "profile": {
-      "title": "Your Profile",
-      "uploadPhoto": "Upload profile photo",
-      "uploadPhotoButton": "Upload profile photo",
-      "documents": "Documents",
-      "cv": "CV",
-      "coverLetter": "Cover Letter",
-      "upload": "Upload",
-      "download": "Download",
-      "preferences": "Internship Preferences",
-      "companyTypes": "Company Type",
-      "sectors": "Preferred Sectors",
-      "locations": "Preferred Locations",
-      "period": "Internship Period",
-      "startDate": "Start Date",
-      "endDate": "End Date",
-      "compensation": "Compensation",
-      "saveButton": "Save Preferences"
-    },
-    "companies": {
-      "title": "Partner Companies",
-      "search": "Search companies...",
-      "filters": "Filters",
-      "companyTypes": "Company Type",
-      "sectors": "Sectors",
-      "clearFilters": "Clear Filters",
-      "sector": "Sector",
-      "email": "Email",
-      "linkedin": "LinkedIn",
-      "visit": "Visit",
-      "noCompanies": "No companies found",
-      "noCompaniesDesc": "Try modifying search filters"
-    },
-    "compensation": {
-      "paid": "Paid only",
-      "unpaid": "Unpaid only",
-      "both": "Both"
-    },
-    "errors": {
-      "loadError": "Error",
-      "loadErrorDesc": "Unable to load data",
-      "photoError": "Error",
-      "photoTypeError": "You can only upload images (JPG, PNG, etc.)",
-      "photoSizeError": "Photo cannot exceed 5MB",
-      "photoUploadError": "Unable to upload photo. Please try again.",
-      "documentError": "Error",
-      "documentTypeError": "You can only upload PDF, DOC or DOCX files",
-      "documentSizeError": "File cannot exceed 10MB",
-      "documentUploadError": "Unable to upload document. Please try again.",
-      "downloadError": "Error",
-      "downloadErrorDesc": "Unable to download file",
-      "preferencesError": "Error",
-      "preferencesErrorDesc": "Unable to save preferences",
-      "userIdError": "User ID not found"
-    },
-    "success": {
-      "photoUploaded": "Success",
-      "photoUploadedDesc": "Profile photo updated successfully",
-      "documentUploaded": "Success",
-      "cvUploaded": "CV updated successfully",
-      "coverUploaded": "Cover letter updated successfully",
-      "preferencesSaved": "Success",
-      "preferencesSavedDesc": "Preferences saved successfully"
     }
   },
   "studentTalentPool": {

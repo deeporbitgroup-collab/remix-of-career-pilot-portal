@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Building, Users, Shield } from "lucide-react";
+import { Building, Users, Shield, FileText, Mail, Video } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { TalentPoolLanguageProvider, useTalentPoolLanguage } from "@/contexts/TalentPoolLanguageContext";
 import { useStaggeredAnimation } from "@/hooks/useScrollAnimation";
@@ -143,44 +143,36 @@ const TalentPoolContent = () => {
               highlight={tx('opportunity', 'opportunità')}
             />
           </h1>
-          <div {...getItemProps(2)} className="w-24 h-0.5 bg-gradient-to-r from-transparent via-cbsky-500 to-transparent mx-auto mb-2"></div>
-          <p {...getItemProps(3)} className="hidden sm:block text-sm text-cbslate-200 max-w-2xl mx-auto font-light leading-relaxed drop-shadow-md">
-            {t('landing.hero.subtitle')}
-          </p>
-        </div>
-        
-        {/* Value Proposition - Elite Style (desktop only; mobile keeps the screen to the access cards) */}
-        <div className="hidden md:grid md:grid-cols-2 gap-4 max-w-4xl mx-auto mb-4">
-          <div {...getItemProps(5)} className="bg-cbslate-900/50 border border-cbind-500/30 rounded-lg p-5 backdrop-blur-md hover:border-cbind-500/50 transition-all shadow-lg">
-            <div className="flex items-center gap-4">
-              <div className="h-12 w-12 rounded bg-gradient-to-br from-cbind-500/20 to-cbind-600/10 border border-cbind-500/30 flex items-center justify-center flex-shrink-0">
-                <Building className="h-6 w-6 text-cbind-400" />
-              </div>
-              <div className="flex-1">
-                <h3 className="font-bold text-cbsky-50 text-base mb-1 tracking-tight">
-                  {t('landing.values.companies.title')}
-                </h3>
-                <p className="text-xs text-cbslate-400 leading-relaxed">
-                  {t('landing.values.companies.description')}
-                </p>
-              </div>
+          <div {...getItemProps(2)} className="w-24 h-0.5 bg-gradient-to-r from-transparent via-cbsky-500 to-transparent mx-auto mb-2.5 md:mb-3"></div>
+
+          {/* Reverse-model explainer: you don't apply — partner companies see your full
+              profile (CV, cover letter, video) and choose you. Shown on mobile too. */}
+          <div {...getItemProps(3)} className="max-w-2xl mx-auto">
+            <p className="text-sm md:text-lg text-cbslate-100 leading-snug font-light px-2 drop-shadow-md">
+              {tx("You don't apply — ", "Non ti candidi tu: ")}
+              <span className="font-semibold text-white">
+                {tx("companies choose you.", "sono le aziende a scegliere te.")}
+              </span>
+            </p>
+            {/* What companies see of you */}
+            <div className="mt-2.5 md:mt-3 flex items-center justify-center gap-2 md:gap-2.5 flex-wrap">
+              {[
+                { icon: FileText, label: 'CV' },
+                { icon: Mail, label: tx('Cover letter', 'Cover letter') },
+                { icon: Video, label: 'Video' },
+              ].map(({ icon: Icon, label }) => (
+                <span
+                  key={label}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-cbsky-500/30 bg-cbslate-900/60 px-2.5 py-1 md:px-3 md:py-1.5 text-[11px] md:text-xs font-semibold text-cbsky-100 backdrop-blur-sm shadow-sm"
+                >
+                  <Icon className="h-3.5 w-3.5 text-cbsky-400" />
+                  {label}
+                </span>
+              ))}
             </div>
-          </div>
-          
-          <div {...getItemProps(6)} className="bg-cbslate-900/50 border border-cbsky-500/30 rounded-lg p-5 backdrop-blur-md hover:border-cbsky-500/50 transition-all shadow-lg">
-            <div className="flex items-center gap-4">
-              <div className="h-12 w-12 rounded bg-gradient-to-br from-cbsky-500/20 to-cbsky-600/10 border border-cbsky-500/30 flex items-center justify-center flex-shrink-0">
-                <Users className="h-6 w-6 text-cbsky-400" />
-              </div>
-              <div className="flex-1">
-                <h3 className="font-bold text-cbsky-50 text-base mb-1 tracking-tight">
-                  {t('landing.values.students.title')}
-                </h3>
-                <p className="text-xs text-cbslate-400 leading-relaxed">
-                  {t('landing.values.students.description')}
-                </p>
-              </div>
-            </div>
+            <p className="hidden sm:block mt-2 text-[10px] md:text-[11px] uppercase tracking-[0.18em] text-cbslate-400/80">
+              {tx('The profile companies choose from', 'Il profilo da cui le aziende ti scelgono')}
+            </p>
           </div>
         </div>
 

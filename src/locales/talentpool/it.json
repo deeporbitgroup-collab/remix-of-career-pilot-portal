@@ -8,7 +8,7 @@
     "hero": {
       "badge": "INTERMEDIAZIONE SICURA E VERIFICATA",
       "title": "Connetti Talento ed Opportunità",
-      "subtitle": "La piattaforma dove sono le aziende a scegliere te.",
+      "subtitle": "Non ti candidi tu: sono le aziende a scegliere te.",
       "limited": "⭐ Accesso limitato a soli 20 studenti selezionati"
     },
     "values": {
@@ -343,76 +343,6 @@
     "success": {
       "uploaded": "Ricevuta caricata!",
       "uploadedDesc": "La tua ricevuta è in attesa di verifica da parte di CareerBoost"
-    }
-  },
-  "studentTalentPool": {
-    "header": {
-      "title": "Talent Pool - CareerBoost",
-      "logout": "Esci"
-    },
-    "profile": {
-      "title": "Il Tuo Profilo",
-      "uploadPhoto": "Carica foto profilo",
-      "uploadPhotoButton": "Carica foto profilo",
-      "documents": "Documenti",
-      "cv": "CV",
-      "coverLetter": "Lettera",
-      "upload": "Carica",
-      "download": "Scarica",
-      "preferences": "Preferenze Stage",
-      "companyTypes": "Tipo Azienda",
-      "sectors": "Settori Preferiti",
-      "locations": "Località Preferite",
-      "period": "Periodo Stage",
-      "startDate": "Data Inizio",
-      "endDate": "Data Fine",
-      "compensation": "Retribuzione",
-      "saveButton": "Salva Preferenze"
-    },
-    "companies": {
-      "title": "Aziende Partner",
-      "search": "Cerca aziende...",
-      "filters": "Filtri",
-      "companyTypes": "Tipo Azienda",
-      "sectors": "Settori",
-      "clearFilters": "Cancella Filtri",
-      "sector": "Settore",
-      "email": "Email",
-      "linkedin": "LinkedIn",
-      "visit": "Visita",
-      "noCompanies": "Nessuna azienda trovata",
-      "noCompaniesDesc": "Prova a modificare i filtri di ricerca"
-    },
-    "compensation": {
-      "paid": "Solo retribuiti",
-      "unpaid": "Solo non retribuiti",
-      "both": "Entrambi"
-    },
-    "errors": {
-      "loadError": "Errore",
-      "loadErrorDesc": "Impossibile caricare i dati",
-      "photoError": "Errore",
-      "photoTypeError": "Puoi caricare solo immagini (JPG, PNG, etc.)",
-      "photoSizeError": "La foto non può superare 5MB",
-      "photoUploadError": "Impossibile caricare la foto. Riprova.",
-      "documentError": "Errore",
-      "documentTypeError": "Puoi caricare solo file PDF, DOC o DOCX",
-      "documentSizeError": "Il file non può superare 10MB",
-      "documentUploadError": "Impossibile caricare il documento. Riprova.",
-      "downloadError": "Errore",
-      "downloadErrorDesc": "Impossibile scaricare il file",
-      "preferencesError": "Errore",
-      "preferencesErrorDesc": "Impossibile salvare le preferenze",
-      "userIdError": "User ID non trovato"
-    },
-    "success": {
-      "photoUploaded": "Successo",
-      "photoUploadedDesc": "Foto profilo aggiornata con successo",
-      "documentUploaded": "Successo",
-      "cvUploaded": "CV aggiornato con successo",
-      "coverUploaded": "Lettera di presentazione aggiornata con successo",
-      "preferencesSaved": "Successo",
-      "preferencesSavedDesc": "Preferenze salvate con successo"
     }
   },
   "studentTalentPool": {
